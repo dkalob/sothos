@@ -9,3 +9,6 @@ Para instalar: npx shadcn@latest init
 Para usar componentes: npx shadcn@latest add (nome)
 Todos os componentes são criadaos na pasta components > ui 
 Eles usam a biblioteca de ícones do Lucide
+
+## TAILWIND
+Baixar a extensão que traduz Tailwind para CSS
