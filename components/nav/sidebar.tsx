@@ -57,7 +57,7 @@ const Sidebar = () => {
           </Button>
           <Button variant="ghost" className="justify-start gap-2 text-sm text-gray-600">
             <LogOut className="h-5 w-5" />
-            <span>Log-Out</span>
+            <span>Sair</span>
           </Button>
         </div>
       </div>
