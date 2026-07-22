@@ -1,19 +1,22 @@
 'use client'
 import { Bell } from 'lucide-react'
 import { SearchIcon } from "lucide-react"
-import { Input } from '../ui/input'
 import { Avatar, AvatarImage} from '../ui/avatar'
 import { Button } from '../ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger} from '../ui/dropdown-menu'
 import { Field } from '../ui/field'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '../ui/input-group'
+import { SidebarTrigger } from '../ui/sidebar'
 
 const Navbar = () => {
   return (
-    <header className='fixed left-64 right-0 top-0 flex h-16 items-center justify-between px-6'>
+    <header className='flex h-16 items-center justify-between px-4'>
+      
+      {/* BOTÃO DE FECHAR/ABRIR A SIDEBAR*/}
+      <SidebarTrigger/>
       
       {/* INPUT */}
-      <div className="flex-1">
+      <div className="flex-1 ml-2">
         <Field className="w-full max-w-1/3">
           <InputGroup className='bg-gray-100'>
             <InputGroupInput id="inline-start-input" placeholder="Pesquise um cliente, um produto ou uma campanha..." />
@@ -32,8 +35,8 @@ const Navbar = () => {
 
         {/* NOME */}
         <div className='flex flex-col'>
-          <span className='text-sm font-bold'>Nome do usuário</span>
-          <span className='self-end text-xs text-gray-600'>Cargo</span>
+          <span className='text-sm font-bold select-none'>Nome do usuário</span>
+          <span className='self-end text-xs text-gray-600 select-none'>Cargo</span>
         </div>
 
         {/* AVATAR */}
@@ -47,9 +50,9 @@ const Navbar = () => {
             }/>
             <DropdownMenuContent className='w-36'>
                 <DropdownMenuGroup>
-                    <DropdownMenuItem>Minha Loja</DropdownMenuItem>
-                    <DropdownMenuItem>Integrações</DropdownMenuItem>
-                    <DropdownMenuItem>Adicionar Crédito</DropdownMenuItem>
+                    <DropdownMenuItem className='data-highlighted:bg-indigo-100 data-highlighted:text-indigo-700'>Minha Loja</DropdownMenuItem>
+                    <DropdownMenuItem className='data-highlighted:bg-indigo-100 data-highlighted:text-indigo-700'>Integrações</DropdownMenuItem>
+                    <DropdownMenuItem className='data-highlighted:bg-indigo-100 data-highlighted:text-indigo-700'>Adicionar Crédito</DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>

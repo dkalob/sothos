@@ -1,69 +1,167 @@
-"use client"
-import { ChartSpline, User, ShoppingBasket, Brain, Megaphone, PictureInPicture, CircleQuestionMark, LogOut } from 'lucide-react';
-import { Button } from '../ui/button';
+'use client'
+import { CreditCard, ChartSpline, User, ShoppingBasket, Brain, Megaphone, PictureInPicture, CircleQuestionMark, LogOut, User2, ChevronUp, Settings2, LogOutIcon, ChevronRight, Plus, Users } from 'lucide-react';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, SidebarSeparator } from '../ui/sidebar';
+import Link from 'next/link';
+import Image from 'next/image';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { Separator } from '../ui/separator';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import { Avatar, AvatarImage } from '../ui/avatar';
 
-const menuItems = [
-  { label: 'INDICADORES', icon: ChartSpline },
-  { label: 'CLIENTES', icon: User },
-  { label: 'PRODUTOS', icon: ShoppingBasket },
-  { label: 'IA', icon: Brain },
-  { label: 'CAMPANHAS', icon: Megaphone },
-  { label: 'POP-UPS', icon: PictureInPicture },
+const items = [
+  { 
+    label: 'Indicadores', 
+    icon: ChartSpline, 
+    url: '#'
+  },
+  { 
+    label: 'Clientes', 
+    icon: Users, 
+    url: '#',
+    subMenus: [
+      { label: 'Ver Clientes', url: '#'},
+      { label: 'Adicionar Cliente', icon: Plus, url: '#'},
+    ]
+  },
+  { 
+    label: 'Produtos', 
+    icon: ShoppingBasket, 
+    url: '#',
+    subMenus: [
+      { label: 'Ver Produtos', url: '#'},
+      { label: 'Adicionar Produto', icon: Plus, url: '#'},
+    ]
+  },
+  { 
+    label: 'Campanhas', 
+    icon: Megaphone, 
+    url: '#',
+    subMenus: [
+      { label: 'Ver Campanhas', url: '#'},
+      { label: 'Adicionar Campanha', icon: Plus, url: '#'},
+    ]
+  },
+  { 
+    label: 'IA', 
+    icon: Brain, 
+    url: '#'
+  },  
+  { 
+    label: 'Pop-ups', 
+    icon: PictureInPicture, 
+    url: '#'
+  }
 ]
 
-const Sidebar = () => {
+const SidebarComponent = () => {
   return (
-    <aside className="fixed left-0 top-0 flex h-screen w-64 flex-col border-r bg-gray-100 p-4">
-      
-      {/* LOGO */}
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center">
-          Logo
-        </div>
-        <div className="flex flex-col">
-          <span className="text-lg font-bold">Sothos</span>
-          <span className="text-xs text-gray-500">Venda com IA</span>
-        </div>
-      </div>
-
-      {/* MENU */}
-      <nav className="mt-12 flex flex-col gap-3">
-        {menuItems.map(({ label, icon: Icon }) => (
-          <Button
-            key={label}
-            variant="ghost"
-            className="w-full justify-start gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-indigo-100 hover:text-indigo-700"
-          >
-            <Icon className="h-5 w-5" />
-            <span>{label}</span>
-          </Button>
-        ))}
-      </nav>
-
-      {/* Espaçador: empurra o rodapé pro final */}
-      <div className="flex-1" />
-
-      {/* RODAPÉ */}
-      <div className="flex flex-col gap-4">
-        
-        <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
-          UPGRADE DE PLANO
-        </Button>
-
-        <div className="flex flex-col gap-3 border-t pt-4">
-          <Button variant="ghost" className="justify-start gap-2 text-sm text-gray-600">
-            <CircleQuestionMark className="h-5 w-5" />
-            <span>Ajuda</span>
-          </Button>
-          <Button variant="ghost" className="justify-start gap-2 text-sm text-gray-600">
-            <LogOut className="h-5 w-5" />
-            <span>Sair</span>
-          </Button>
-        </div>
-      </div>
-
-    </aside>
+    <Sidebar collapsible='icon'>
+      <SidebarHeader className='py-4'>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+            render={
+              <Link href='/'>
+                {/*<Image scr='/logo.svg' alt='logo' width={20} height={20}/>*/}
+                <span className='font-bold text-indigo-500'>Sothos</span>
+              </Link>
+            }>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+      <SidebarSeparator style={{ width: 'auto' }}/>
+      <SidebarContent >
+      <SidebarGroup>
+        <SidebarGroupLabel>Menu</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {items.map(item => {
+              if (!item.subMenus) {
+                return (
+                  <SidebarMenuItem key={item.label}>
+                    <SidebarMenuButton
+                      className='hover:bg-indigo-100 hover:text-indigo-700' 
+                      render={
+                        <Link href={item.url}>
+                          <item.icon/>
+                          <span>{item.label}</span>
+                        </Link>
+                        }
+                  >
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+                )   
+              }
+                return (
+                  <Collapsible key={item.label} className='group/collapsible'>
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger
+                        render={
+                          <SidebarMenuButton className='hover:bg-indigo-100 hover:text-indigo-700'>
+                            <item.icon />
+                            <span>{item.label}</span>
+                            <ChevronRight className='ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90' />
+                          </SidebarMenuButton>
+                        }
+                      />
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          {item.subMenus.map((sub, index) => (
+                            <SidebarMenuSubItem key={`${item.label}-${index}`}>
+                              <SidebarMenuSubButton
+                                className='hover:bg-indigo-100 hover:text-indigo-700' 
+                                render={
+                                <Link href={sub.url} className='flex items-center gap-2'>
+                                  {sub.icon && <sub.icon className='h-4 w-4' />}
+                                  {sub.label}
+                                </Link>}
+                              />
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+                )
+              })}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+      </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger 
+              render={
+                <SidebarMenuButton className='hover:bg-indigo-100 hover:text-indigo-700'>
+                  <User2/> Usuário <ChevronUp className='ml-auto'/>
+                </SidebarMenuButton>
+              }>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <div className='flex items-center gap-4'>
+                  <Avatar>
+                        <AvatarImage src='https://github.com/shadcn.png' alt='shadcn' />
+                  </Avatar>
+                  <div className='flex flex-col'>
+                    <span className='text-sm font-semibold select-none'>Nome do usuário</span>
+                    <span className='text-xs font-md select-none'>usuario@email.com</span>
+                  </div>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className='data-highlighted:bg-indigo-100 data-highlighted:text-indigo-700'><CreditCard/>Adicionar crédito</DropdownMenuItem>
+                <DropdownMenuItem className='data-highlighted:bg-indigo-100 data-highlighted:text-indigo-700'><Settings2/>Configurações</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem variant='destructive'><LogOutIcon/>Sair</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
   )
-}
+};
 
-export default Sidebar
+export default SidebarComponent
