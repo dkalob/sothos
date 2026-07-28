@@ -8,7 +8,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <Sidebar />
       <SidebarInset>
         <Navbar/>
-        <main className='p-6'>
+        <main className='p-6 mt-5'>
           {children}
         </main>
       </SidebarInset>

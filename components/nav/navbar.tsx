@@ -50,9 +50,9 @@ const Navbar = () => {
             }/>
             <DropdownMenuContent className='w-36'>
                 <DropdownMenuGroup>
-                    <DropdownMenuItem className='data-highlighted:bg-indigo-100 data-highlighted:text-indigo-700'>Minha Loja</DropdownMenuItem>
-                    <DropdownMenuItem className='data-highlighted:bg-indigo-100 data-highlighted:text-indigo-700'>Integrações</DropdownMenuItem>
-                    <DropdownMenuItem className='data-highlighted:bg-indigo-100 data-highlighted:text-indigo-700'>Adicionar Crédito</DropdownMenuItem>
+                    <DropdownMenuItem className='data-highlighted:bg-secondary data-highlighted:text-primary'>Minha Loja</DropdownMenuItem>
+                    <DropdownMenuItem className='data-highlighted:bg-secondary data-highlighted:text-primary'>Integrações</DropdownMenuItem>
+                    <DropdownMenuItem className='data-highlighted:bg-secondary data-highlighted:text-primary'>Adicionar Crédito</DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>

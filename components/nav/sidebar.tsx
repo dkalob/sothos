@@ -63,7 +63,7 @@ const SidebarComponent = () => {
             render={
               <Link href='/'>
                 {/*<Image scr='/logo.svg' alt='logo' width={20} height={20}/>*/}
-                <span className='font-bold text-indigo-500'>Sothos</span>
+                <span className='font-bold text-primary'>Sothos</span>
               </Link>
             }>
             </SidebarMenuButton>
@@ -73,7 +73,7 @@ const SidebarComponent = () => {
       <SidebarSeparator style={{ width: 'auto' }}/>
       <SidebarContent >
       <SidebarGroup>
-        <SidebarGroupLabel>Menu</SidebarGroupLabel>
+        <SidebarGroupLabel className='select-none'>Menu</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
             {items.map(item => {
@@ -81,7 +81,7 @@ const SidebarComponent = () => {
                 return (
                   <SidebarMenuItem key={item.label}>
                     <SidebarMenuButton
-                      className='hover:bg-indigo-100 hover:text-indigo-700' 
+                      className='hover:bg-secondary hover:text-primary' 
                       render={
                         <Link href={item.url}>
                           <item.icon/>
@@ -98,7 +98,7 @@ const SidebarComponent = () => {
                     <SidebarMenuItem>
                       <CollapsibleTrigger
                         render={
-                          <SidebarMenuButton className='hover:bg-indigo-100 hover:text-indigo-700'>
+                          <SidebarMenuButton className='hover:bg-secondary hover:text-primary'>
                             <item.icon />
                             <span>{item.label}</span>
                             <ChevronRight className='ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90' />
@@ -110,7 +110,7 @@ const SidebarComponent = () => {
                           {item.subMenus.map((sub, index) => (
                             <SidebarMenuSubItem key={`${item.label}-${index}`}>
                               <SidebarMenuSubButton
-                                className='hover:bg-indigo-100 hover:text-indigo-700' 
+                                className='hover:bg-secondary hover:text-primary' 
                                 render={
                                 <Link href={sub.url} className='flex items-center gap-2'>
                                   {sub.icon && <sub.icon className='h-4 w-4' />}
@@ -135,7 +135,7 @@ const SidebarComponent = () => {
             <DropdownMenu>
               <DropdownMenuTrigger 
               render={
-                <SidebarMenuButton className='hover:bg-indigo-100 hover:text-indigo-700'>
+                <SidebarMenuButton className='hover:bg-secondary hover:text-primary'>
                   <User2/> Usuário <ChevronUp className='ml-auto'/>
                 </SidebarMenuButton>
               }>
@@ -151,8 +151,8 @@ const SidebarComponent = () => {
                   </div>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className='data-highlighted:bg-indigo-100 data-highlighted:text-indigo-700'><CreditCard/>Adicionar crédito</DropdownMenuItem>
-                <DropdownMenuItem className='data-highlighted:bg-indigo-100 data-highlighted:text-indigo-700'><Settings2/>Configurações</DropdownMenuItem>
+                <DropdownMenuItem className='focus:bg-secondary focus:text-primary not-data-[variant=destructive]:focus:**:text-primary'><CreditCard/>Adicionar crédito</DropdownMenuItem>
+                <DropdownMenuItem className='focus:bg-secondary focus:text-primary not-data-[variant=destructive]:focus:**:text-primary'><Settings2/>Configurações</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem variant='destructive'><LogOutIcon/>Sair</DropdownMenuItem>
               </DropdownMenuContent>
