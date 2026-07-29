@@ -1,12 +1,16 @@
-"use client"
-import { Button } from "@/components/ui/button"
-import React from "react"
-import { DateRange } from "react-day-picker"
-import { addDays, format } from "date-fns"
-import { Field, FieldLabel } from "@/components/ui/field"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-import { CalendarIcon } from "lucide-react"
+"use client";
+import { Button } from "@/components/ui/button";
+import React from "react";
+import { DateRange } from "react-day-picker";
+import { addDays, format } from "date-fns";
+import { Field, FieldLabel } from "@/components/ui/field";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
 
 // COMPONENTE DO FILTRO DA DATA:
 // https://ui.shadcn.com/docs/components/base/date-picker
@@ -15,14 +19,18 @@ export function DatePickerWithRange() {
   const [date, setDate] = React.useState<DateRange | undefined>({
     from: new Date(new Date().getFullYear(), 0, 20),
     to: addDays(new Date(new Date().getFullYear(), 0, 20), 20),
-  })
+  });
 
   return (
     <Field className="mx-auto w-60">
       <Popover>
-        <PopoverTrigger 
+        <PopoverTrigger
           render={
-            <Button variant="outline" id="date-picker-range" className="justify-start px-2.5 font-normal">
+            <Button
+              variant="outline"
+              id="date-picker-range"
+              className="justify-start px-2.5 font-normal"
+            >
               <CalendarIcon data-icon="inline-start" />
               {date?.from ? (
                 date.to ? (
@@ -37,7 +45,7 @@ export function DatePickerWithRange() {
                 <span>Pick a date</span>
               )}
             </Button>
-          } 
+          }
         />
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
@@ -50,5 +58,5 @@ export function DatePickerWithRange() {
         </PopoverContent>
       </Popover>
     </Field>
-  )
+  );
 }

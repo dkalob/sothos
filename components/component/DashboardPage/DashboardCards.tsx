@@ -1,39 +1,52 @@
-import { Progress, ProgressLabel, ProgressValue } from "@/components/ui/progress"
-import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react"
+import {
+  Progress,
+  ProgressLabel,
+  ProgressValue,
+} from "@/components/ui/progress";
+import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
 
 type DashboardCardProps = {
-    icon: LucideIcon
-    title: string
-    value: string | number 
-    trend: {
-        direction: "up" | "down"
-        value: string
-    }
-    footer?: {
-        label: string
-        value: string | number 
-    }[]
-    progress?: {
-        label: string
-        value: number
-    }
-}
+  icon: LucideIcon;
+  title: string;
+  value: string | number;
+  trend: {
+    direction: "up" | "down";
+    value: string;
+  };
+  footer?: {
+    label: string;
+    value: string | number;
+  }[];
+  progress?: {
+    label: string;
+    value: number;
+  };
+};
 
-const DashboardCard = ({ icon: Icon, title, value, trend, footer, progress }: DashboardCardProps) => {
+const DashboardCard = ({
+  icon: Icon,
+  title,
+  value,
+  trend,
+  footer,
+  progress,
+}: DashboardCardProps) => {
+  const isUp = trend.direction === "up";
+  const TrendIcon = isUp ? TrendingUp : TrendingDown;
 
-    const isUp = trend.direction === "up"
-    const TrendIcon = isUp ? TrendingUp : TrendingDown
-
-    return (
-    
+  return (
     <div className="flex flex-col bg-gray-100 p-5 rounded-lg w-full max-w-sm">
-      
       {/* ÍCONE + PORCENTAGEM */}
       <div className="flex justify-between items-center">
-        <Icon size={36} className="rounded-full bg-primary/30 border border-primary/50 p-2" />
+        <Icon
+          size={36}
+          className="rounded-full bg-primary/30 border border-primary/50 p-2"
+        />
         <div className="flex gap-2">
           <TrendIcon size={20} />
-          <span className={`text-sm font-medium ${isUp ? "text-green-600" : "text-red-600"}`}>
+          <span
+            className={`text-sm font-medium ${isUp ? "text-green-600" : "text-red-600"}`}
+          >
             {trend.value}
           </span>
         </div>
@@ -66,7 +79,7 @@ const DashboardCard = ({ icon: Icon, title, value, trend, footer, progress }: Da
         </div>
       )}
     </div>
-    )
-}
+  );
+};
 
-export default DashboardCard
+export default DashboardCard;
