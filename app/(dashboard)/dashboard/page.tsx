@@ -3,7 +3,7 @@ import PeriodSelector from "@/components/component/PeriodSelector";
 import { Ad, HandCoins, Users, Wallet } from "lucide-react";
 import DownloadReportButton from "@/components/component/DownloadReportButton";
 import DashboardChart from "@/components/component/DashboardPage/DashboardChart";
-import DashboardCard from "@/components/component/DashboardPage/DashboardCards";
+import PageCards from "@/components/component/PageCards";
 import DashboardTable from "@/components/component/DashboardPage/DashboardTable/page";
 import PageHeader from "@/components/component/PageHeader";
 
@@ -26,7 +26,7 @@ const Dashboard = () => {
 
       {/* CARDS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 justify-items-start mt-8 gap-4">
-        <DashboardCard
+        <PageCards
           icon={Users}
           title="Clientes totais"
           value="20.435"
@@ -37,7 +37,7 @@ const Dashboard = () => {
           ]}
         />
 
-        <DashboardCard
+        <PageCards
           icon={Wallet}
           title="Lucro Total"
           value="R$1.24M"
@@ -45,7 +45,7 @@ const Dashboard = () => {
           progress={{ label: "Meta Atingida", value: 76 }}
         />
 
-        <DashboardCard
+        <PageCards
           icon={Ad}
           title="Campanhas em andamento"
           value={6}
@@ -53,7 +53,7 @@ const Dashboard = () => {
           footer={[{ label: "Clientes atingidos", value: 847 }]}
         />
 
-        <DashboardCard
+        <PageCards
           icon={HandCoins}
           title="Saldo de créditos"
           value="1.230"

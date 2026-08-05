@@ -20,11 +20,11 @@ const DownloadReportButton = () => {
       />
       <DropdownMenuContent className="w-36">
         <DropdownMenuGroup>
-          <DropdownMenuItem className="data-highlighted:bg-secondary data-highlighted:text-primary">
+          <DropdownMenuItem className="focus:bg-secondary focus:text-primary not-data-[variant=destructive]:focus:**:text-primary">
             <FileSpreadsheet />
             Em CSV
           </DropdownMenuItem>
-          <DropdownMenuItem className="data-highlighted:bg-secondary data-highlighted:text-primary">
+          <DropdownMenuItem className="focus:bg-secondary focus:text-primary not-data-[variant=destructive]:focus:**:text-primary">
             <FileSpreadsheet />
             Em XLS
           </DropdownMenuItem>

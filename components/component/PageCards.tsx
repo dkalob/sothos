@@ -5,7 +5,7 @@ import {
 } from "@/components/ui/progress";
 import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
 
-type DashboardCardProps = {
+type PageCardsProps = {
   icon: LucideIcon;
   title: string;
   value: string | number;
@@ -15,7 +15,7 @@ type DashboardCardProps = {
   };
   footer?: {
     label: string;
-    value: string | number;
+    value?: string | number;
   }[];
   progress?: {
     label: string;
@@ -23,24 +23,19 @@ type DashboardCardProps = {
   };
 };
 
-const DashboardCard = ({
-  icon: Icon,
-  title,
-  value,
-  trend,
-  footer,
-  progress,
-}: DashboardCardProps) => {
+const PageCards = ({ icon: Icon, title, value, trend, footer, progress }: PageCardsProps) => {
+  
   const isUp = trend.direction === "up";
   const TrendIcon = isUp ? TrendingUp : TrendingDown;
 
   return (
     <div className="flex flex-col bg-gray-100 p-5 rounded-lg w-full max-w-sm">
+
       {/* ÍCONE + PORCENTAGEM */}
       <div className="flex justify-between items-center">
         <Icon
           size={36}
-          className="rounded-full bg-primary/30 border border-primary/50 p-2"
+          className="rounded-full bg-primary/40 border border-primary/10 p-2"
         />
         <div className="flex gap-2">
           <TrendIcon size={20} />
@@ -73,7 +68,7 @@ const DashboardCard = ({
           {footer.map((item) => (
             <div key={item.label} className="flex flex-col">
               <span className="text-sm font-normal">{item.label}</span>
-              <span className="font-bold">{item.value}</span>
+              <span className="font-bold text-primary">{item.value}</span>
             </div>
           ))}
         </div>
@@ -82,4 +77,4 @@ const DashboardCard = ({
   );
 };
 
-export default DashboardCard;
+export default PageCards;

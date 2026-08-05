@@ -1,5 +1,5 @@
 import { DashboardTableColumns, columns } from "./columns";
-import { DataTable } from "./dataTable";
+import { DataTable } from "../../DataTable";
 
 const getData = async (): Promise<DashboardTableColumns[]> => {
   return [
