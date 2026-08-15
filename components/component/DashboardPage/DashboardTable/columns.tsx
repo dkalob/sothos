@@ -19,7 +19,7 @@ export const columns: ColumnDef<DashboardTableColumns>[] = [
       const cliente = row.getValue("cliente") as string;
       const email = row.original.email;
       return (
-        <div className="flex items-center gap-3">
+        <div className="flex gap-3">
           <div className="flex flex-col">
             <span className="font-semibold">{cliente}</span>
             <span className="text-sm text-muted-foreground">{email}</span>

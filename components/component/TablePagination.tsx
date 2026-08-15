@@ -1,3 +1,6 @@
+
+// COMPONENTE QUE CRIA A PAGINAÇÃO DE TODAS AS TABELAS, SOMENTE TRADUZI
+
 import { type Table } from "@tanstack/react-table"
 import {
   ChevronLeft,

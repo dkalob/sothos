@@ -8,6 +8,8 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 
+// COMPONENTE DE BOTÃO DE "BAIXAR RELATÓRIO"
+
 const DownloadReportButton = () => {
   return (
     <DropdownMenu>

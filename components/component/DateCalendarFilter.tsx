@@ -12,7 +12,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 
-// COMPONENTE DO FILTRO DA DATA:
+// COMPONENTE DO FILTRO DE CALENDÁRIO:
 // https://ui.shadcn.com/docs/components/base/date-picker
 
 export function DatePickerWithRange() {

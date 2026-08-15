@@ -4,7 +4,10 @@ import { useState } from "react";
 import { Button } from "../ui/button";
 import { ButtonGroup } from "../ui/button-group";
 
+// COMPONENTE DE FILTRO DE PERÍODO COM 3 BOTÕES
+
 const opcoes = ["Diário", "Semanal", "Mensal"];
+
 
 const PeriodSelector = () => {
   const [periodo, setPeriodo] = useState("Diário");

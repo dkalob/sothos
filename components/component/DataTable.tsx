@@ -1,9 +1,13 @@
 "use client";
 
+// Componente que gera as tabelas
+
 import {
   ColumnDef,
+  ColumnFiltersState,
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
@@ -16,27 +20,59 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import { DataTablePagination } from "./TablePagination";
+import { Input } from "@/components/ui/input";
+import React from "react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  hasFilter?: boolean; // props que coloca o filtro por alguma coluna
+  filterColumn?: string; // props que você passa o nome da coluna que será filtrada
+  filterPlaceholder?: string; // o que aparece dentro do input
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  hasFilter = false,
+  filterColumn,
+  filterPlaceholder,
 }: DataTableProps<TData, TValue>) {
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
+
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    onColumnFiltersChange: setColumnFilters,
+    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    state: {
+      columnFilters,
+    },
   });
 
   return (
     <div>
-      <div className="overflow-hidden rounded-md border bg-white">
+      {hasFilter && filterColumn && (
+        <div className="flex items-center py-4">
+          <Input
+            placeholder={filterPlaceholder}
+            value={
+              (table.getColumn(filterColumn)?.getFilterValue() as string) ?? ""
+            }
+            onChange={(event) =>
+              table.getColumn(filterColumn)?.setFilterValue(event.target.value)
+            }
+            className="max-w-sm"
+          />
+        </div>
+      )}
+      <div className="overflow-hidden rounded-md border bg-white shadow-sm">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -86,7 +122,7 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <DataTablePagination table={table}/>
+      <DataTablePagination table={table} />
     </div>
   );
 }

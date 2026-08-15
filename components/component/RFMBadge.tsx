@@ -1,5 +1,7 @@
 import { Badge } from "@/components/ui/badge"
 
+// COMPONENTE QUE CRIA E ESTILIZA AS TAGS RFM
+
 export type RFMSegmento =
   | "Campeões"
   | "Leais"

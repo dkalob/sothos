@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import RFMBadge, { RFMSegmento } from "../RFMBadge";
-import { BookUser, MoreVertical, Trash2 } from "lucide-react"
+import { BookUser, MoreVertical, Trash2, Trash2Icon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -11,25 +11,43 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { useState } from "react";
 
-export type ClientTableColumns = {
+
+export type ClientTableColumns = { //Aqui define as colunas da tabela clientes
   cliente: string;
   email: string;
   segmento: "Campeões" | "Leais" | "Potenciais Leais" | "Recém-Chegados" | "Promissores" | 
             "Precisam de Atenção" | "À Beira de Dormir" | "Em Risco" | "Não Podem Perder" |
             "Hibernando" | "Perdidos"
   pedidos: number;
+  campanhas: number;
   valor: number;
   data: Date;
 };
 
-export type GroupTableColumns = {
+export type GroupTableColumns = { //Aqui define as colunas da tabela grupos
   data: Date;
   nome: string;
   campanhas:  number;
   clientes: number;
   valor: number;
 };
+
+// Abaixo é como será a formatação das colunas. Sempre usar acessorKey 
+// e header (por enquanto) quando conectar com o BD talvez seja por id
 
 export const columnsClient: ColumnDef<ClientTableColumns>[] = [
   {
@@ -39,11 +57,9 @@ export const columnsClient: ColumnDef<ClientTableColumns>[] = [
       const cliente = row.getValue("cliente") as string;
       const email = row.original.email;
       return (
-        <div className="flex items-center gap-3">
-          <div className="flex flex-col">
-            <span className="font-semibold">{cliente}</span>
-            <span className="text-sm text-muted-foreground">{email}</span>
-          </div>
+        <div className="flex flex-col">
+          <span className="font-semibold">{cliente}</span>
+          <span className="text-sm text-muted-foreground">{email}</span>
         </div>
       );
     },
@@ -55,6 +71,10 @@ export const columnsClient: ColumnDef<ClientTableColumns>[] = [
         const segmento = row.getValue("segmento") as RFMSegmento;
         return <RFMBadge segmento={segmento} />
     }
+  },
+    {
+    accessorKey: "campanhas",
+    header: "Campanhas que participou",
   },
   {
     accessorKey: "pedidos",
@@ -99,31 +119,69 @@ export const columnsClient: ColumnDef<ClientTableColumns>[] = [
   {
   header: "Gerenciar",
   cell: ({ row }) => {
-    const r = row.original
+    const r = row.original;
+    const [open, setOpen] = useState(false);
+
     return (
-      <DropdownMenu>
-        <DropdownMenuTrigger 
-          render={
-            <Button variant="ghost">
-              <span className="sr-only">Abrir menu</span>
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          }
-        />
-        <DropdownMenuContent align="end" className="w-36">
-          <DropdownMenuGroup>
-            <DropdownMenuItem>
-              <BookUser/>
-              Ver cliente
-            </DropdownMenuItem>
-            <DropdownMenuItem variant="destructive">
-              <Trash2/>
-              Excluir Cliente
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    )
+      <>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button variant="ghost">
+                <span className="sr-only">Abrir menu</span>
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            }
+          />
+
+          <DropdownMenuContent align="end" className="w-36">
+            <DropdownMenuGroup>
+              <DropdownMenuItem>
+                <BookUser />
+                Ver cliente
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => setOpen(true)}
+              >
+                <Trash2 />
+                Excluir Cliente
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <AlertDialog open={open} onOpenChange={setOpen}>
+          <AlertDialogContent size="sm">
+            <AlertDialogHeader>
+              <AlertDialogMedia className="bg-destructive/10 text-destructive dark:bg-destructive/20">
+                <Trash2Icon />
+              </AlertDialogMedia>
+
+              <AlertDialogTitle>
+                Excluir Cliente?
+              </AlertDialogTitle>
+
+              <AlertDialogDescription>
+                Essa ação irá excluir permanentemente o cliente{" "}
+                <strong>{r.cliente}</strong>. Essa ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+
+            <AlertDialogFooter>
+              <AlertDialogCancel variant="outline">
+                Cancelar
+              </AlertDialogCancel>
+
+              <AlertDialogAction variant="destructive">
+                Deletar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
+    );
   },
 },
 ];
@@ -183,34 +241,72 @@ export const columnsGroup: ColumnDef<GroupTableColumns>[] = [
       return <div className="font-medium">{formatted}</div>;
     },
   }, 
-  {
+   {
   header: "Gerenciar",
   cell: ({ row }) => {
-    const r = row.original
+    const r = row.original;
+    const [open, setOpen] = useState(false);
+
     return (
-      <DropdownMenu>
-        <DropdownMenuTrigger 
-          render={
-            <Button variant="ghost">
-              <span className="sr-only">Abrir menu</span>
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          }
-        />
-        <DropdownMenuContent align="end" className="w-36">
-          <DropdownMenuGroup>
-            <DropdownMenuItem>
-              <BookUser/>
-              Ver Grupo
-            </DropdownMenuItem>
-            <DropdownMenuItem variant="destructive">
-              <Trash2/>
-              Excluir Grupo
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    )
+      <>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button variant="ghost">
+                <span className="sr-only">Abrir menu</span>
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            }
+          />
+
+          <DropdownMenuContent align="end" className="w-36">
+            <DropdownMenuGroup>
+              <DropdownMenuItem>
+                <BookUser />
+                Ver clientes
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => setOpen(true)}
+              >
+                <Trash2 />
+                Excluir Grupo
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <AlertDialog open={open} onOpenChange={setOpen}>
+          <AlertDialogContent size="sm">
+            <AlertDialogHeader>
+              <AlertDialogMedia className="bg-destructive/10 text-destructive dark:bg-destructive/20">
+                <Trash2Icon />
+              </AlertDialogMedia>
+
+              <AlertDialogTitle>
+                Excluir Cliente?
+              </AlertDialogTitle>
+
+              <AlertDialogDescription>
+                Essa ação irá excluir permanentemente o grupo de clientes{" "}
+                <strong>{r.nome}</strong>. Essa ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+
+            <AlertDialogFooter>
+              <AlertDialogCancel variant="outline">
+                Cancelar
+              </AlertDialogCancel>
+
+              <AlertDialogAction variant="destructive">
+                Deletar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
+    );
   },
 },
 ];

@@ -5,6 +5,9 @@ import {
 } from "@/components/ui/progress";
 import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
 
+// COMPONENTES DOS 4 CARDS QUE APARECEM APÓS O CABEÇALHOS NAS PÁGINAS:
+// DASHBOARD, CLIENTES E PRODUTOS
+
 type PageCardsProps = {
   icon: LucideIcon;
   title: string;
