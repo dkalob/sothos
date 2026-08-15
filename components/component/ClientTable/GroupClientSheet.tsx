@@ -25,7 +25,7 @@ const ClientSheet = ({ open, onOpenChange }: ClientSheetProps) => {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>Adicionar Cliente</SheetTitle>
+          <SheetTitle>Adicionar Grupo de cliente</SheetTitle>
           <SheetDescription>
             Preencha todos os campos para cadastrar um cliente.
           </SheetDescription>
