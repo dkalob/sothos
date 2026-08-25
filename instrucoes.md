@@ -18,6 +18,7 @@ Para usar componentes: npx shadcn@latest add (nome)
 Todos os componentes são criadaos na pasta components > ui
 Eles usam a biblioteca de ícones do Lucide
 Não usa mais asChild e sim render={}
+Os componentes podem ser usados juntos com outros componentes, desde seja criado um useState para isso
 
 ## TAILWIND
 

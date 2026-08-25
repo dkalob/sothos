@@ -1,3 +1,6 @@
+// Essa página será responsável por trazer os dados do BD e 
+// envia-los como props para ClientTableView
+
 import {
   ClientTableColumns,
   GroupTableColumns,

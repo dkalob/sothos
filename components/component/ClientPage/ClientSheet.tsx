@@ -3,6 +3,7 @@
 // outro lugar, mudar para a pasta 'component'
 
 import { Button } from "@/components/ui/button";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,35 +26,53 @@ const ClientSheet = ({ open, onOpenChange }: ClientSheetProps) => {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>Adicionar Grupo de cliente</SheetTitle>
+          <SheetTitle>Adicionar Cliente</SheetTitle>
           <SheetDescription>
             Preencha todos os campos para cadastrar um cliente.
           </SheetDescription>
         </SheetHeader>
         <div className="grid flex-1 auto-rows-min gap-6 px-4">
           <div className="grid gap-3">
-            <Label>Nome</Label>
-            <Input />
+            <Field>
+              <div className="flex gap-0.5">
+                <FieldLabel>Nome</FieldLabel>
+                <span className="text-destructive">*</span>
+              </div>
+              <Input type="text" required />
+              <FieldDescription>Esse campo deve ser preenchido</FieldDescription>
+            </Field>
           </div>
           <div className="grid gap-3">
-            <Label>Email</Label>
-            <Input />
+            <Field>
+              <div className="flex gap-0.5">
+                <FieldLabel>Email</FieldLabel>
+                <span className="text-destructive">*</span>
+              </div>
+              <Input type="email" required />
+              <FieldDescription>Esse campo deve ser preenchido</FieldDescription>
+            </Field>
           </div>
           <div className="grid gap-3">
-            <Label>Telefone</Label>
-            <Input />
+            <Field>
+              <div className="flex gap-0.5">
+                <FieldLabel>Telefone</FieldLabel>
+                <span className="text-destructive">*</span>
+              </div>
+              <Input type="number" required />
+              <FieldDescription>Esse campo deve ser preenchido</FieldDescription>
+            </Field>
           </div>
           <div className="grid gap-3">
             <Label>CPF</Label>
-            <Input />
+            <Input type="number" />
           </div>
           <div className="grid gap-3">
             <Label>Cidade</Label>
-            <Input />
+            <Input type="text" />
           </div>
           <div className="grid gap-3">
             <Label>Estado</Label>
-            <Input />
+            <Input type="text" />
           </div>
         </div>
         <SheetFooter>

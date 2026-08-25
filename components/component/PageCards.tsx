@@ -32,7 +32,7 @@ const PageCards = ({ icon: Icon, title, value, trend, footer, progress }: PageCa
   const TrendIcon = isUp ? TrendingUp : TrendingDown;
 
   return (
-    <div className="flex flex-col bg-gray-100 p-5 rounded-lg w-full max-w-sm">
+    <div className="flex flex-col bg-gray-100 p-5 rounded-lg w-full max-w-sm shadow-md">
 
       {/* ÍCONE + PORCENTAGEM */}
       <div className="flex justify-between items-center">

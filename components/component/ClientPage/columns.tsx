@@ -1,5 +1,7 @@
 "use client";
 
+// Essa página formata a tabela
+
 import { ColumnDef } from "@tanstack/react-table";
 import RFMBadge, { RFMSegmento } from "../RFMBadge";
 import { BookUser, MoreVertical, Trash2, Trash2Icon } from "lucide-react"
@@ -21,7 +23,6 @@ import {
   AlertDialogHeader,
   AlertDialogMedia,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useState } from "react";
 
@@ -66,7 +67,7 @@ export const columnsClient: ColumnDef<ClientTableColumns>[] = [
   },
   {
     accessorKey: "segmento",
-    header: "RFM",
+    header: "Segmento RFM",
     cell:  ({ row }) => {
         const segmento = row.getValue("segmento") as RFMSegmento;
         return <RFMBadge segmento={segmento} />

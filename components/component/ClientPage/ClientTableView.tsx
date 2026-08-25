@@ -1,19 +1,10 @@
 "use client";
 
+// Esta página formata tudo que vem depois de nav , PageHeader e PageCards
+// Ela recebe os dados do BD vindo de ClientTable
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import { DataTable } from "../DataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { ClientTableColumns, GroupTableColumns } from "./columns";
@@ -124,6 +115,7 @@ const ClientTableView = ({
           <DataTable
             columns={columnsClient}
             data={clientesData}
+            hasRFMFilter
             hasFilter
             filterColumn="cliente"
             filterPlaceholder="Filtrar clientes por nome..."

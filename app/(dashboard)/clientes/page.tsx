@@ -1,4 +1,4 @@
-import ClientTable from "@/components/component/ClientTable/ClientTable";
+import ClientTable from "@/components/component/ClientPage/ClientTable";
 import PageCards from "@/components/component/PageCards";
 import PageHeader from "@/components/component/PageHeader";
 import { Megaphone, Users, UsersRound, UserStar } from "lucide-react";
@@ -6,11 +6,12 @@ import { Megaphone, Users, UsersRound, UserStar } from "lucide-react";
 const Clientes = () => {
   return (
     <div>
-    <PageHeader
-      title="Gerenciamento de Clientes"
-      subtitle="Gerencie seu portifólio de clientes e acompanhe o crescimento."
-      importButton={{ value: "Clientes" }}
-    />
+      
+      <PageHeader
+        title="Gerenciamento de Clientes"
+        subtitle="Gerencie seu portifólio de clientes e acompanhe o crescimento."
+        importButton={{ value: "Clientes" }}
+      />
 
     {/* CARDS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 justify-items-start mt-8 gap-4">
@@ -58,7 +59,6 @@ const Clientes = () => {
       </div>
 
       {/* TABELA */}
-      
       <ClientTable/>
 
     </div>

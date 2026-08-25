@@ -3,6 +3,15 @@
 // Componente que gera as tabelas
 
 import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+import {
   ColumnDef,
   ColumnFiltersState,
   flexRender,
@@ -24,10 +33,26 @@ import {
 import { DataTablePagination } from "./TablePagination";
 import { Input } from "@/components/ui/input";
 import React from "react";
+import RFMBadge, { RFMSegmento } from "./RFMBadge";
+
+export const rfmSegmentos: RFMSegmento[] = [
+  "Campeões",
+  "Leais",
+  "Potenciais Leais",
+  "Recém-Chegados",
+  "Promissores",
+  "Precisam de Atenção",
+  "À Beira de Dormir",
+  "Em Risco",
+  "Não Podem Perder",
+  "Hibernando",
+  "Perdidos",
+];
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  hasRFMFilter?: boolean; // para a tabela da página clientes, filtra por tag RFM
   hasFilter?: boolean; // props que coloca o filtro por alguma coluna
   filterColumn?: string; // props que você passa o nome da coluna que será filtrada
   filterPlaceholder?: string; // o que aparece dentro do input
@@ -36,6 +61,7 @@ interface DataTableProps<TData, TValue> {
 export function DataTable<TData, TValue>({
   columns,
   data,
+  hasRFMFilter = false,
   hasFilter = false,
   filterColumn,
   filterPlaceholder,
@@ -43,6 +69,7 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
   );
+  const [selectInstanceKey, setSelectInstanceKey] = React.useState(0);
 
   const table = useReactTable({
     data,
@@ -59,7 +86,7 @@ export function DataTable<TData, TValue>({
   return (
     <div>
       {hasFilter && filterColumn && (
-        <div className="flex items-center py-4">
+        <div className="flex items-center gap-3 py-4">
           <Input
             placeholder={filterPlaceholder}
             value={
@@ -70,6 +97,39 @@ export function DataTable<TData, TValue>({
             }
             className="max-w-sm"
           />
+          {hasRFMFilter && (
+            <Select
+              key={selectInstanceKey}
+              value={
+                (table.getColumn("segmento")?.getFilterValue() as string) ??
+                "Todos os segmentos"
+              }
+              onOpenChange={(open) => {
+                if (!open) {
+                  setSelectInstanceKey((key) => key + 1);
+                }
+              }}
+              onValueChange={(value) =>
+                table
+                  .getColumn("segmento")
+                  ?.setFilterValue(value === "todos" ? undefined : value)
+              }
+            >
+              <SelectTrigger className="w-45">
+                <SelectValue placeholder="Segmento RFM" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="todos">Todos os segmentos</SelectItem>
+                  {rfmSegmentos.map((segmento) => (
+                    <SelectItem key={segmento} value={segmento}>
+                      <RFMBadge segmento={segmento} />
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          )}
         </div>
       )}
       <div className="overflow-hidden rounded-md border bg-white shadow-sm">
