@@ -2,20 +2,16 @@
 import {
   CreditCard,
   ChartSpline,
-  User,
   ShoppingBasket,
   Brain,
   Megaphone,
   PictureInPicture,
-  CircleQuestionMark,
-  LogOut,
   User2,
   ChevronUp,
   Settings2,
   LogOutIcon,
-  ChevronRight,
-  Plus,
   Users,
+  Store,
 } from "lucide-react";
 import {
   Sidebar,
@@ -54,38 +50,31 @@ const items = [
   {
     label: "Indicadores",
     icon: ChartSpline,
-    url: "#",
+    url: "/dashboard",
   },
   {
     label: "Clientes",
     icon: Users,
-    url: "#",
-    subMenus: [
-      { label: "Ver Clientes", url: "#" },
-      { label: "Adicionar Cliente", icon: Plus, url: "#" },
-    ],
+    url: "/clientes",
   },
   {
     label: "Produtos",
     icon: ShoppingBasket,
+    url: "/produtos",
+  },
+    {
+    label: "Pedidos",
+    icon: Store,
+    url: "/pedidos",
+  },
+    {
+    label: "IA",
+    icon: Brain,
     url: "#",
-    subMenus: [
-      { label: "Ver Produtos", url: "#" },
-      { label: "Adicionar Produto", icon: Plus, url: "#" },
-    ],
   },
   {
     label: "Campanhas",
     icon: Megaphone,
-    url: "#",
-    subMenus: [
-      { label: "Ver Campanhas", url: "#" },
-      { label: "Adicionar Campanha", icon: Plus, url: "#" },
-    ],
-  },
-  {
-    label: "IA",
-    icon: Brain,
     url: "#",
   },
   {
@@ -119,7 +108,6 @@ const SidebarComponent = () => {
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
-                if (!item.subMenus) {
                   return (
                     <SidebarMenuItem key={item.label}>
                       <SidebarMenuButton
@@ -133,44 +121,6 @@ const SidebarComponent = () => {
                       ></SidebarMenuButton>
                     </SidebarMenuItem>
                   );
-                }
-                return (
-                  <Collapsible key={item.label} className="group/collapsible">
-                    <SidebarMenuItem>
-                      <CollapsibleTrigger
-                        render={
-                          <SidebarMenuButton className="hover:bg-secondary hover:text-primary">
-                            <item.icon />
-                            <span>{item.label}</span>
-                            <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                          </SidebarMenuButton>
-                        }
-                      />
-                      <CollapsibleContent>
-                        <SidebarMenuSub>
-                          {item.subMenus.map((sub, index) => (
-                            <SidebarMenuSubItem key={`${item.label}-${index}`}>
-                              <SidebarMenuSubButton
-                                className="hover:bg-secondary hover:text-primary"
-                                render={
-                                  <Link
-                                    href={sub.url}
-                                    className="flex items-center gap-2"
-                                  >
-                                    {sub.icon && (
-                                      <sub.icon className="h-4 w-4" />
-                                    )}
-                                    {sub.label}
-                                  </Link>
-                                }
-                              />
-                            </SidebarMenuSubItem>
-                          ))}
-                        </SidebarMenuSub>
-                      </CollapsibleContent>
-                    </SidebarMenuItem>
-                  </Collapsible>
-                );
               })}
             </SidebarMenu>
           </SidebarGroupContent>

@@ -28,7 +28,7 @@ const ClientSheet = ({ open, onOpenChange }: ClientSheetProps) => {
         <SheetHeader>
           <SheetTitle>Adicionar Cliente</SheetTitle>
           <SheetDescription>
-            Preencha todos os campos para cadastrar um cliente.
+            Preencha os campos para cadastrar um cliente.
           </SheetDescription>
         </SheetHeader>
         <div className="grid flex-1 auto-rows-min gap-6 px-4">

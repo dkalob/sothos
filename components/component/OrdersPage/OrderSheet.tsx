@@ -16,62 +16,53 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-interface ProductSheetProps {
+interface OrderSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const ProductSheet = ({ open, onOpenChange }: ProductSheetProps) => {
+const OrderSheet = ({ open, onOpenChange }: OrderSheetProps) => {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>Adicionar Produto</SheetTitle>
+          <SheetTitle>Cadastrar pedido</SheetTitle>
           <SheetDescription>
-            Preencha os campos para cadastrar um produto.
+            Preencha todos os campos para cadastrar um pedido.
           </SheetDescription>
         </SheetHeader>
         <div className="grid flex-1 auto-rows-min gap-6 px-4">
           <div className="grid gap-3">
             <Field>
-              <div className="flex gap-0.5">
-                <FieldLabel>Nome</FieldLabel>
-                <span className="text-destructive">*</span>
-              </div>
-              <Input type="text" required />
-              <FieldDescription>Esse campo deve ser preenchido</FieldDescription>
+              <FieldLabel>Id no E-commerce / ERP</FieldLabel>
+              <Input type="number" required />
             </Field>
           </div>
           <div className="grid gap-3">
             <Field>
-              <div className="flex gap-0.5">
-                <FieldLabel>Categoria</FieldLabel>
-                <span className="text-destructive">*</span>
-              </div>
+              <FieldLabel>Selecionar Cliente</FieldLabel>
+
               <Input type="text" required />
-              <FieldDescription>Esse campo deve ser preenchido</FieldDescription>
             </Field>
           </div>
           <div className="grid gap-3">
             <Field>
-              <div className="flex items-center gap-0.5">
-                <FieldLabel>SKU no Ecommerce</FieldLabel>
-                <span className="text-destructive">(Opcional)</span>
-              </div>
+              <FieldLabel>Selecionar Produto</FieldLabel>
+
               <Input type="text" required />
             </Field>
           </div>
           <div className="grid gap-3">
-            <Label>Estoque</Label>
+            <Label>Valor</Label>
             <Input type="number" />
           </div>
           <div className="grid gap-3">
-            <Label>Preço</Label>
-            <Input type="number" />
+            <Label>Data do pedido</Label>
+            <Input type="date" />
           </div>
         </div>
         <SheetFooter>
-          <Button type="submit">Cadastrar produto</Button>
+          <Button type="submit">Cadastrar pedido</Button>
           <SheetClose render={<Button variant="outline">Fechar</Button>} />
         </SheetFooter>
       </SheetContent>
@@ -79,4 +70,4 @@ const ProductSheet = ({ open, onOpenChange }: ProductSheetProps) => {
   );
 };
 
-export default ProductSheet;
+export default OrderSheet;
