@@ -24,11 +24,17 @@ Os componentes podem ser usados juntos com outros componentes, desde seja criado
 
 Baixar a extensão que traduz Tailwind para CSS
 
+## ZOD
+
+Uma extensão que controla formulários (clientes, produtos, pedidos)
+
 ## INSTRUÇÕES DO PROJETO
 A pasta app > (auth) contém o login e cadastro de usuário.
 A pasta app > (dashboard) está todo o restante da aplicação estruturada com sidebar+navbar+espaço da página
 A pasta components > nav contém a navbar e a sidebar que estão presentes em quase todas as páginas. Todas as páginas que forem utiliza-las precisam ser criadas dentro de app > (dashboard).
 Na pasta components > ui estão todos os components criados pelo shadcn
 Na pasta components > component estão a estilização de alguns components padrão e que podem ser compartilhados entre outras páginas. Dentro desta pasta também tem pastas de páginas específicas que possuem componenentes referentes somente a ela.
+
+
 
 

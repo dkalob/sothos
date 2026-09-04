@@ -47,6 +47,7 @@ export const rfmSegmentos: RFMSegmento[] = [
   "Não Podem Perder",
   "Hibernando",
   "Perdidos",
+  "Leads"
 ];
 
 interface DataTableProps<TData, TValue> {

@@ -16,7 +16,8 @@ export type RFMSegmento =
   | "Em Risco"
   | "Não Podem Perder"
   | "Hibernando"
-  | "Perdidos";
+  | "Perdidos"
+  | "Leads";
 
 const rfmColorMap: Record<RFMSegmento, string> = {
   "Campeões": "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
@@ -30,6 +31,7 @@ const rfmColorMap: Record<RFMSegmento, string> = {
   "Não Podem Perder": "bg-pink-50 text-pink-700 dark:bg-pink-950 dark:text-pink-300",
   "Hibernando": "bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300",
   "Perdidos": "bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+  "Leads": "bg-white-300 border text-black dark:bg-black dark:text-white"
 };
 
 const rfmDescriptionMap: Record<RFMSegmento, string> = {
@@ -44,6 +46,7 @@ const rfmDescriptionMap: Record<RFMSegmento, string> = {
   "Precisam de Atenção": "Clientes que compraram recentemente, mas com baixa frequência ou valor. Precisam de estímulo para engajamento.",
   "Promissores": "Clientes novos que compraram recentemente, mas ainda não demonstraram frequência ou valor alto.",
   "Recém-Chegados": "Clientes que fizeram a primeira compra há pouco tempo. Estão começando o relacionamento.",
+  "Leads": "Clientes que nunca realizaram uma compra. É ideal engajá-los."
 };
 
 interface RFMBadgeProps {

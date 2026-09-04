@@ -32,7 +32,7 @@ export type ClientTableColumns = { //Aqui define as colunas da tabela clientes
   email: string;
   segmento: "Campeões" | "Leais" | "Potenciais Leais" | "Recém-Chegados" | "Promissores" | 
             "Precisam de Atenção" | "À Beira de Dormir" | "Em Risco" | "Não Podem Perder" |
-            "Hibernando" | "Perdidos"
+            "Hibernando" | "Perdidos" | "Leads"
   pedidos: number;
   campanhas: number;
   valor: number;
