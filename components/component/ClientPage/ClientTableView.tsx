@@ -11,6 +11,7 @@ import { ClientTableColumns, GroupTableColumns } from "./columns";
 import { Download, Plus } from "lucide-react";
 import ClientSheet from "./ClientSheet";
 import GroupClientSheet from "./GroupClientSheet";
+import DownloadReportButton from "../DownloadReportButton";
 
 interface ClientTableViewProps {
   columnsClient: ColumnDef<ClientTableColumns>[];
@@ -79,11 +80,13 @@ const ClientTableView = ({
           <div className="flex gap-2 items-center">
             <div className="flex gap-2 items-center">
               
-              <Button variant="outline" className="w-40 truncate">
-                <Download />
-                {aba === "clientes" ? "Exportar Clientes" : "Exportar Grupos"}
-              </Button>
-              
+              <DownloadReportButton
+                title={
+                  aba === "clientes" ? "Exportar Clientes" : "Exportar Grupos"
+                }
+                btnVariant="secondary"
+              />
+
               <Button
                 variant="default"
                 className="w-32 truncate"
@@ -97,15 +100,11 @@ const ClientTableView = ({
                 {aba === "clientes" ? "Novo cliente" : "Novo Grupo"}
               </Button>
 
-              <ClientSheet 
-                open={clienteSheet} 
-                onOpenChange={setClienteSheet} 
-              />
+              <ClientSheet open={clienteSheet} onOpenChange={setClienteSheet} />
               <GroupClientSheet
                 open={grupoSheet}
                 onOpenChange={setGrupoSheet}
               />
-
             </div>
           </div>
         </div>

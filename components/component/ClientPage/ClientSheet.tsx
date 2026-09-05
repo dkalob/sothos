@@ -117,14 +117,13 @@ const ClientSheet = ({ open, onOpenChange }: ClientSheetProps) => {
   useEffect(() => {
     setCidades([]);
     setForm((prev) => ({ ...prev, cidade: "" }));
-    
+
     if (!form.estado) return;
-    
+
     carregarCidades(form.estado);
   }, [form.estado]);
 
   // USAR ESSA FUNÇÃO PARA CADASTRAR NO BANCO
-
   function cadastrarCliente() {}
 
   return (
@@ -205,21 +204,21 @@ const ClientSheet = ({ open, onOpenChange }: ClientSheetProps) => {
           </div>
           <div className="grid gap-3">
             <Field>
-            <FieldLabel>CPF</FieldLabel>
-            <Input
-              placeholder="123.456.789-00"
-              value={form.cpf}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, cpf: e.target.value }))
-              }
-              type="text"
-              aria-invalid={!!errors.cpf}
-            />
-            <FieldDescription
+              <FieldLabel>CPF</FieldLabel>
+              <Input
+                placeholder="123.456.789-00"
+                value={form.cpf}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, cpf: e.target.value }))
+                }
+                type="text"
+                aria-invalid={!!errors.cpf}
+              />
+              <FieldDescription
                 className={errors.cpf ? "text-destructive" : undefined}
               >
                 {errors.cpf}
-                </FieldDescription>
+              </FieldDescription>
             </Field>
           </div>
           <div className="grid gap-3">
@@ -269,9 +268,7 @@ const ClientSheet = ({ open, onOpenChange }: ClientSheetProps) => {
           </div>
         </div>
         <SheetFooter>
-          <Button onClick={cadastrarCliente}>
-            Cadastrar cliente
-          </Button>
+          <Button onClick={cadastrarCliente}>Cadastrar cliente</Button>
           <SheetClose render={<Button variant="outline">Fechar</Button>} />
         </SheetFooter>
       </SheetContent>

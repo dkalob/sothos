@@ -7,16 +7,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { VariantProps } from "class-variance-authority";
 
 // COMPONENTE DE BOTÃO DE "BAIXAR RELATÓRIO"
 
-const DownloadReportButton = () => {
+interface DownloadReportButtonProps {
+  title: string,
+  btnVariant?: VariantProps<typeof buttonVariants>["variant"]
+}
+
+const DownloadReportButton = ({title, btnVariant}: DownloadReportButtonProps ) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <button className={buttonVariants({ variant: "default" })}>
-            Baixar Relatório <ChevronDown />
+          <button className={buttonVariants({ variant: btnVariant })}>
+            {title} <ChevronDown />
           </button>
         }
       />

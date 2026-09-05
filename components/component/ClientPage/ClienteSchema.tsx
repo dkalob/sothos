@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const clienteSchema = z.object({
   nome: z.string().trim().min(3, "Nome deve ter pelo menos 3 letras"),
-  email: z.string().trim().email("Email Inválido"),
+  email: z.email("Email Inválido"),
   telefone: z
     .string()
     .trim()

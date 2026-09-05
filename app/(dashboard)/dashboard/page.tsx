@@ -20,7 +20,10 @@ const Dashboard = () => {
         <div className="flex gap-6">
           <PeriodSelector />
           <DatePickerWithRange />
-          <DownloadReportButton />
+          <DownloadReportButton
+            title="Baixar Relatório"
+            btnVariant="default"
+          />
         </div>
       </div>
 
