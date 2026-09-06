@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,7 +70,7 @@ const Login = () => {
                       Senha
                     </FieldLabel>
                     <a
-                      href="#"
+                      href="password"
                       className="ml-auto inline-block text-sm text-primary underline-offset-4 hover:underline"
                     >
                       Esqueceu sua senha?
