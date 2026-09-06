@@ -19,7 +19,6 @@ import {
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { RegisterFormErrors } from "../schemas/RegisterSchema";
 
@@ -159,10 +158,9 @@ const Cadastro = () => {
 
               <div className="grid gap-2">
                 <Field>
-                    <FieldLabel className="text-md" htmlFor="password">
+                    <FieldLabel className="text-md">
                       Senha
                     </FieldLabel>
-                  <div className="relative">
                     <Input
                       id="password"
                       className="p-4"
@@ -174,12 +172,14 @@ const Cadastro = () => {
                       }
                       aria-invalid={!!errors.senha}
                     />
-                    {errors.senha && (
-                      <FieldDescription className="text-destructive">
-                        {errors.senha}
-                      </FieldDescription>
-                    )}
-                  </div>
+                    <FieldDescription
+                    className={
+                      errors.senha ? "text-destructive" : undefined
+                    }
+                  >
+                    {errors.senha ??
+                      "Sua senha deve conter pelo menos 6 caracteres e um caracter especial"}
+                  </FieldDescription>
                 </Field>
               </div>
             </div>
