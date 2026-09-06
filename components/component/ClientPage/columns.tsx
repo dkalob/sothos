@@ -28,6 +28,7 @@ import { useState } from "react";
 
 
 export type ClientTableColumns = { //Aqui define as colunas da tabela clientes
+  id: string;
   cliente: string;
   email: string;
   segmento: "Campeões" | "Leais" | "Potenciais Leais" | "Recém-Chegados" | "Promissores" | 
@@ -122,6 +123,7 @@ export const columnsClient: ColumnDef<ClientTableColumns>[] = [
   cell: ({ row }) => {
     const r = row.original;
     const [open, setOpen] = useState(false);
+    const id = row.original.id; 
 
     return (
       <>
@@ -137,7 +139,7 @@ export const columnsClient: ColumnDef<ClientTableColumns>[] = [
 
           <DropdownMenuContent align="end" className="w-36">
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem render={<a href={`/clientes/${id}`} />}>
                 <BookUser />
                 Ver cliente
               </DropdownMenuItem>
