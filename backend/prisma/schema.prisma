@@ -127,9 +127,24 @@ model Usuario {
   conta              Conta       @relation(fields: [contaId], references: [id], onDelete: Cascade)
   campanhasCriadas   Campanha[]  @relation("CampanhaCriadaPor")
   campanhasAprovadas Campanha[]  @relation("CampanhaAprovadaPor")
+  tokensRecuperacao  TokenRecuperacaoSenha[]
 
   @@index([contaId])
   @@map("usuario")
+}
+
+model TokenRecuperacaoSenha {
+  id        String    @id @default(uuid())
+  usuarioId String    @map("id_usuario")
+  tokenHash String    @unique @map("token_hash") @db.VarChar(255)
+  expiraEm  DateTime  @map("expira_em")
+  usadoEm   DateTime? @map("usado_em")
+  criadoEm  DateTime  @default(now()) @map("criado_em")
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+  @@map("token_recuperacao_senha")
 }
 
 // =====================================================================
