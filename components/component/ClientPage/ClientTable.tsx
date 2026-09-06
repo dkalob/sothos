@@ -12,6 +12,7 @@ import ClientTableView from "./ClientTableView";
 const getClienteData = async (): Promise<ClientTableColumns[]> => {
   return [
     {
+      id: "1",
       cliente: "João",
       email: "joao@email.com",
       segmento: "Leais",
@@ -21,6 +22,7 @@ const getClienteData = async (): Promise<ClientTableColumns[]> => {
       data: new Date("2026-04-20"),
     },
     {
+      id: "2",
       cliente: "Maria",
       email: "maria@email.com",
       segmento: "Precisam de Atenção",
