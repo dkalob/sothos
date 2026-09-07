@@ -11,7 +11,7 @@ import {
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { passwordSchema, PasswordFormErrors } from "../schemas/PasswordSchema";
 import { apiPost } from "@/lib/api";
@@ -21,7 +21,7 @@ type PasswordForm = {
   confirmarSenha: string;
 };
 
-const Password = () => {
+const PasswordForm = () => {
   const [form, setForm] = useState<PasswordForm>({
     novaSenha: "",
     confirmarSenha: "",
@@ -175,5 +175,11 @@ const Password = () => {
     </main>
   );
 };
+
+const Password = () => (
+  <Suspense fallback={<div />}>
+    <PasswordForm />
+  </Suspense>
+);
 
 export default Password;

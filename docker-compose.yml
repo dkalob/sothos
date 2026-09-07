@@ -17,6 +17,7 @@ services:
       retries: 10
 
   api:
+    image: marcellamaia/sothos-api
     build: ./backend
     container_name: sothos-api
     depends_on:
@@ -24,11 +25,26 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://sothos:sothos_dev@db:5432/sothos?schema=public
-      JWT_SECRET: ${JWT_SECRET}
+      JWT_SECRET: ${JWT_SECRET:-sothos_dev_secret_trocar_em_producao}
       PORT: 3001
-      FRONTEND_URL: http://localhost:3000
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      EMAIL_HOST: ${EMAIL_HOST:-smtp.gmail.com}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_USER: ${EMAIL_USER:-}
+      EMAIL_PASS: ${EMAIL_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-Sothos}
     ports:
       - "3001:3001"
+
+  web:
+    build: ./
+    container_name: sothos-web
+    depends_on:
+      - api
+    environment:
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
 
 volumes:
   sothos_pgdata:
