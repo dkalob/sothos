@@ -15,6 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import { loginSchema, LoginFormErrors } from "../schemas/LoginSchema";
+import { useRouter } from "next/navigation";
+import { apiPost } from "@/lib/api";
 
 type LoginForm = {
   email: string;
@@ -24,10 +26,45 @@ type LoginForm = {
 const Login = () => {
   const [form, setForm] = useState<LoginForm>({ email: "", senha: "" });
   const [errors, setErrors] = useState<LoginFormErrors>({});
+  const [carregando, setCarregando] = useState(false);
+  const [erroGeral, setErroGeral] = useState("");
+  const router = useRouter();
 
-  async function validaUsuario({ email, senha }: LoginForm) {
-    // implementar validação do usuário
-    console.log(email, senha);
+  async function validaUsuario(dados: LoginForm) {
+    setErroGeral("");
+    setErrors({});
+
+    const resultado = loginSchema.safeParse(dados);
+
+    if (!resultado.success) {
+      const novosErros: LoginFormErrors = {};
+      resultado.error.issues.forEach((issue) => {
+        const campo = issue.path[0] as keyof LoginForm;
+        if (!novosErros[campo]) novosErros[campo] = issue.message;
+      });
+      setErrors(novosErros);
+      return;
+    }
+
+    setCarregando(true);
+
+    try {
+      const resposta = await apiPost<{ token: string; usuario: unknown }>(
+        "/auth/login",
+        { email: dados.email, senha: dados.senha }
+      );
+
+      localStorage.setItem("sothos_token", resposta.token);
+      localStorage.setItem("sothos_usuario", JSON.stringify(resposta.usuario));
+
+      router.push("/dashboard");
+    } catch (erro) {
+      setErroGeral(
+        erro instanceof Error ? erro.message : "Erro ao entrar"
+      );
+    } finally {
+      setCarregando(false);
+    }
   }
 
   return (
@@ -70,7 +107,7 @@ const Login = () => {
                       Senha
                     </FieldLabel>
                     <a
-                      href="password"
+                      href="recuperar-senha"
                       className="ml-auto inline-block text-sm text-primary underline-offset-4 hover:underline"
                     >
                       Esqueceu sua senha?
@@ -111,9 +148,13 @@ const Login = () => {
           <Button
             className="w-full text-lg p-6 cursor-pointer"
             onClick={() => validaUsuario(form)}
+            disabled={carregando}
           >
-            Entrar
+            {carregando ? "Entrando..." : "Entrar"}
           </Button>
+          {erroGeral && (
+            <p className="text-sm text-destructive text-center">{erroGeral}</p>
+          )}
           <div className="flex items-center gap-4 py-3 text-center">
             <span>Não tem uma conta? </span>
             <a

@@ -20,7 +20,9 @@ import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { RegisterFormErrors } from "../schemas/RegisterSchema";
+import { registerSchema, RegisterFormErrors } from "../schemas/RegisterSchema";
+import { useRouter } from "next/navigation";
+import { apiPost } from "@/lib/api";
 
 type RegisterForm = {
   nomeLoja: string;
@@ -61,14 +63,44 @@ const Cadastro = () => {
     senha: "",
   });
   const [errors, setErrors] = useState<RegisterFormErrors>({});
+  const [carregando, setCarregando] = useState(false);
+  const [erroGeral, setErroGeral] = useState("");
+  const router = useRouter();
 
-  async function validaUsuario({
-    nomeLoja,
-    ramoLoja,
-    email,
-    senha,
-  }: RegisterForm) {
-    // implementar validação do usuário
+  async function validaUsuario(dados: RegisterForm) {
+    setErroGeral("");
+    setErrors({});
+
+    const resultado = registerSchema.safeParse(dados);
+
+    if (!resultado.success) {
+      const novosErros: RegisterFormErrors = {};
+      resultado.error.issues.forEach((issue) => {
+        const campo = issue.path[0] as keyof RegisterForm;
+        if (!novosErros[campo]) novosErros[campo] = issue.message;
+      });
+      setErrors(novosErros);
+      return;
+    }
+
+    setCarregando(true);
+
+    try {
+      await apiPost("/auth/cadastro", {
+        nomeLoja: dados.nomeLoja,
+        ramoLoja: dados.ramoLoja,
+        email: dados.email,
+        senha: dados.senha,
+      });
+
+      router.push("/login");
+    } catch (erro) {
+      setErroGeral(
+        erro instanceof Error ? erro.message : "Erro ao criar conta"
+      );
+    } finally {
+      setCarregando(false);
+    }
   }
 
   return (
@@ -190,9 +222,13 @@ const Cadastro = () => {
           <Button
             className="w-full text-lg p-6 cursor-pointer"
             onClick={() => validaUsuario(form)}
+            disabled={carregando}
           >
-            Criar Conta
+            {carregando ? "Criando conta..." : "Criar Conta"}
           </Button>
+          {erroGeral && (
+            <p className="text-sm text-destructive text-center">{erroGeral}</p>
+          )}
           <div className="flex items-center gap-4 py-3 text-center">
             <span>Já tem uma conta? </span>
             <a

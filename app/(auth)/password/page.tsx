@@ -12,7 +12,9 @@ import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { passwordSchema, PasswordFormErrors } from "../schemas/PasswordSchema";
+import { apiPost } from "@/lib/api";
 
 type PasswordForm = {
   novaSenha: string;
@@ -25,9 +27,50 @@ const Password = () => {
     confirmarSenha: "",
   });
   const [errors, setErrors] = useState<PasswordFormErrors>({});
+  const [carregando, setCarregando] = useState(false);
+  const [erroGeral, setErroGeral] = useState("");
+  const [sucesso, setSucesso] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");  
 
-  async function validaSenha({ novaSenha, confirmarSenha }: PasswordForm) {
-    // implementar validação do usuário
+  async function validaSenha(dados: PasswordForm) {
+    setErroGeral("");
+    setErrors({});
+
+    if (!token) {
+      setErroGeral("Link inválido. Solicite a recuperação novamente.");
+      return;
+    }
+
+    const resultado = passwordSchema.safeParse(dados);
+
+    if (!resultado.success) {
+      const novosErros: PasswordFormErrors = {};
+      resultado.error.issues.forEach((issue) => {
+        const campo = issue.path[0] as keyof PasswordForm;
+        if (!novosErros[campo]) novosErros[campo] = issue.message;
+      });
+      setErrors(novosErros);
+      return;
+    }
+
+    setCarregando(true);
+
+    try {
+      await apiPost("/auth/redefinir-senha", {
+        token,
+        senha: dados.novaSenha,
+      });
+      setSucesso(true);
+      setTimeout(() => router.push("/login"), 2000);
+    } catch (erro) {
+      setErroGeral(
+        erro instanceof Error ? erro.message : "Erro ao alterar senha"
+      );
+    } finally {
+      setCarregando(false);
+    }
   }
 
   return (
@@ -101,12 +144,26 @@ const Password = () => {
           </form>
         </CardContent>
         <CardFooter className="flex-col gap-2">
-          <Button
-            className="w-full text-lg p-6 cursor-pointer"
-            onClick={() => validaSenha(form)}
-          >
-            Alterar Senha
-          </Button>
+          {sucesso ? (
+            <p className="text-sm text-center">
+              Senha alterada com sucesso. Redirecionando para o login...
+            </p>
+          ) : (
+            <>
+              <Button
+                className="w-full text-lg p-6 cursor-pointer"
+                onClick={() => validaSenha(form)}
+                disabled={carregando}
+              >
+                {carregando ? "Alterando..." : "Alterar Senha"}
+              </Button>
+              {erroGeral && (
+                <p className="text-sm text-destructive text-center">
+                  {erroGeral}
+                </p>
+              )}
+            </>
+          )}
           <a
             href="/login"
             className="text-sm text-primary underline-offset-4 hover:underline"
