@@ -7,6 +7,7 @@
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/toast";
 import {
@@ -28,6 +29,8 @@ import {
 } from "@/components/ui/combobox";
 import { useEffect, useState } from "react";
 import { clienteSchema, type ClienteFormErrors } from "./ClienteSchema";
+import { useLocalidades } from "@/hooks/use-localidades";
+
 
 interface ClientSheetProps {
   open: boolean;
@@ -36,17 +39,6 @@ interface ClientSheetProps {
 
 // TIPAGENS
 
-interface Estado {
-  id: number;
-  sigla: string;
-  nome: string;
-}
-
-interface Cidade {
-  id: number;
-  nome: string;
-}
-
 type ClienteForm = {
   nome: string;
   email: string;
@@ -54,6 +46,7 @@ type ClienteForm = {
   cpf: string;
   estado: string;
   cidade: string;
+  aceita_marketing: boolean;
 };
 
 const initialForm: ClienteForm = {
@@ -63,49 +56,15 @@ const initialForm: ClienteForm = {
   cpf: "",
   estado: "",
   cidade: "",
+  aceita_marketing: true,
 };
 
 const ClientSheet = ({ open, onOpenChange }: ClientSheetProps) => {
   const [form, setForm] = useState<ClienteForm>(initialForm);
-  const [estados, setEstados] = useState<Estado[]>([]);
-  const [cidades, setCidades] = useState<Cidade[]>([]);
   const [errors, setErrors] = useState<ClienteFormErrors>({});
+  const { estados, cidades, carregarEstados, carregarCidades, setCidades } =
+    useLocalidades();
 
-  // FUNÇÃO QUE TRAZ OS ESTADOS DA API DO IBGE E SALVA EM UM ARRAY
-  async function carregarEstados() {
-    try {
-      const response = await fetch(
-        "https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome",
-      );
-
-      if (!response.ok) {
-        throw new Error("Erro ao buscar estados");
-      }
-
-      const estados = await response.json();
-      setEstados(estados);
-    } catch (error) {
-      console.error("Erro:", error);
-    }
-  }
-
-  // FUNÇÃO QUE TRAZ AS CIDADES DA API DO IBGE E SALVA EM UM ARRAY
-  async function carregarCidades(uf: string) {
-    try {
-      const response = await fetch(
-        `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`,
-      );
-
-      if (!response.ok) {
-        throw new Error("Erro ao buscar cidades");
-      }
-
-      const cidades = await response.json();
-      setCidades(cidades);
-    } catch (error) {
-      console.error("Erro:", error);
-    }
-  }
 
   // EXECUTA A FUNÇÃO QUANDO RENDERIZA PELA 1ª VEZ
   useEffect(() => {
@@ -265,6 +224,19 @@ const ClientSheet = ({ open, onOpenChange }: ClientSheetProps) => {
                 </ComboboxList>
               </ComboboxContent>
             </Combobox>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="aceita-marketing"
+              checked={form.aceita_marketing}
+              onCheckedChange={(checked) =>
+                setForm((prev) => ({
+                  ...prev,
+                  aceita_marketing: checked,
+                }))
+              }
+            />
+            <Label>Aceita receber campanhas</Label>
           </div>
         </div>
         <SheetFooter>
