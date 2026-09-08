@@ -20,7 +20,7 @@ export type RFMSegmento =
   | "Leads";
 
 const rfmColorMap: Record<RFMSegmento, string> = {
-  "Campeões": "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
+  "Campeões": "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300",
   "Leais": "bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300",
   "Potenciais Leais": "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300",
   "Recém-Chegados": "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
@@ -30,8 +30,8 @@ const rfmColorMap: Record<RFMSegmento, string> = {
   "Em Risco": "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
   "Não Podem Perder": "bg-pink-50 text-pink-700 dark:bg-pink-950 dark:text-pink-300",
   "Hibernando": "bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300",
-  "Perdidos": "bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-  "Leads": "bg-white-300 border text-black dark:bg-black dark:text-white"
+  "Perdidos": "bg-stone-100 text-amber-800 dark:bg-stone-800 dark:text-amber-200",
+  "Leads": "bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
 };
 
 const rfmDescriptionMap: Record<RFMSegmento, string> = {

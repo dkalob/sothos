@@ -18,7 +18,9 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  //npm run start:devurl      = env("DATABASE_URL")
+  // comentei pq nossa versão do prisma é a 6, já está na 7 e nela não tem esse comando url = env
+  // se quiser mudar alguma coisa na tabela (schema.prisma) , é preciso descomenta-la 
 }
 
 // =====================================================================
@@ -212,11 +214,12 @@ model Sincronizacao {
 
 model Cliente {
   id             String    @id @default(uuid())
-  lojaId         String    @map("id_loja")
+  lojaId         String?    @map("id_loja")
   idExterno      String?   @map("id_externo") @db.VarChar(80)
   nome           String    @db.VarChar(160)
-  email          String?   @db.VarChar(180)
-  telefone       String?   @db.VarChar(30)
+  email          String   @db.VarChar(180)
+  telefone       String   @db.VarChar(30)
+  cpf            String?   @db.VarChar(30)
   cidade         String?   @db.VarChar(120)
   estado         String?   @db.Char(2)
   aceitaMarketing Boolean  @default(false) @map("aceita_marketing") // LGPD: base para envio de campanha
@@ -224,7 +227,7 @@ model Cliente {
   criadoEm       DateTime  @default(now()) @map("criado_em")
   alteradoEm     DateTime  @updatedAt @map("alterado_em")
 
-  loja     LojaConectada  @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  loja     LojaConectada?  @relation(fields: [lojaId], references: [id], onDelete: Cascade)
   pedidos  Pedido[]
   analises AnaliseRfm[]
   grupos   ClienteGrupo[]

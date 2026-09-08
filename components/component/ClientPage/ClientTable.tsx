@@ -8,30 +8,20 @@ import {
   columnsGroup,
 } from "./columns";
 import ClientTableView from "./ClientTableView";
+import { apiGet } from "@/lib/api";
+
+
+type ClienteApi = Omit<ClientTableColumns, "data"> & {
+  data: string;
+};
 
 const getClienteData = async (): Promise<ClientTableColumns[]> => {
-  return [
-    {
-      id: "1",
-      cliente: "João",
-      email: "joao@email.com",
-      segmento: "Leais",
-      pedidos: 10,
-      campanhas: 0,
-      valor: 345,
-      data: new Date("2026-04-20"),
-    },
-    {
-      id: "2",
-      cliente: "Maria",
-      email: "maria@email.com",
-      segmento: "Precisam de Atenção",
-      pedidos: 0,
-      campanhas: 3,
-      valor: 0,
-      data: new Date("2026-04-19"),
-    },
-  ];
+  const clientes = await apiGet<ClienteApi[]>("/clientes");
+
+  return clientes.map((cliente) => ({
+    ...cliente,
+    data: new Date(cliente.data),
+  }));
 };
 
 const getGrupoData = async (): Promise<GroupTableColumns[]> => {

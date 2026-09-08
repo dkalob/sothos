@@ -5,6 +5,7 @@ type InsightCardProps = {
   value?: number;
   valueType?: "currency" | "number";
   date?: Date;
+  empty?: string;
 };
 
 const InsightCard = ({
@@ -14,6 +15,7 @@ const InsightCard = ({
   value,
   valueType,
   date,
+  empty,
 }: InsightCardProps) => {
   
     const formattedValue =
@@ -35,7 +37,7 @@ const InsightCard = ({
         </span>
       </div>
       {value !== undefined && <span>{formattedValue}</span>}
-      {date && <span>{date.toLocaleDateString()}</span>}
+      {date && (<span>{date.toLocaleDateString()}</span>)}
     </div>
   );
 };

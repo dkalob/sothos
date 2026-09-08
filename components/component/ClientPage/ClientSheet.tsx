@@ -30,7 +30,8 @@ import {
 import { useEffect, useState } from "react";
 import { clienteSchema, type ClienteFormErrors } from "./ClienteSchema";
 import { useLocalidades } from "@/hooks/use-localidades";
-
+import { apiPost } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 interface ClientSheetProps {
   open: boolean;
@@ -65,6 +66,7 @@ const ClientSheet = ({ open, onOpenChange }: ClientSheetProps) => {
   const { estados, cidades, carregarEstados, carregarCidades, setCidades } =
     useLocalidades();
 
+  const router = useRouter();
 
   // EXECUTA A FUNÇÃO QUANDO RENDERIZA PELA 1ª VEZ
   useEffect(() => {
@@ -83,7 +85,44 @@ const ClientSheet = ({ open, onOpenChange }: ClientSheetProps) => {
   }, [form.estado]);
 
   // USAR ESSA FUNÇÃO PARA CADASTRAR NO BANCO
-  function cadastrarCliente() {}
+  async function cadastrarCliente() {
+    const result = clienteSchema.safeParse(form);
+
+    // Se tiver algum erro nas regras do preenchimento, mostra  o erro
+    if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors;
+      setErrors({
+        nome: fieldErrors.nome?.[0],
+        email: fieldErrors.email?.[0],
+        telefone: fieldErrors.telefone?.[0],
+        cpf: fieldErrors.cpf?.[0],
+        estado: fieldErrors.estado?.[0],
+        cidade: fieldErrors.cidade?.[0],
+      });
+      return;
+    }
+
+    // tenta cadastrar no banco
+    try {
+      await apiPost("/clientes", {
+        nome: form.nome,
+        email: form.email,
+        telefone: form.telefone,
+        cpf: form.cpf,
+        cidade: form.cidade,
+        estado: form.estado,
+        aceitaMarketing: form.aceita_marketing,
+      });
+
+      // se for positivo, exibe ao usuário, fecha a janela e limpa o formulário
+      toast.add({ title: "Cliente cadastrado com sucesso!", type: "success", });
+      onOpenChange(false);
+      setForm(initialForm);
+      router.refresh();
+    } catch (error) {
+      toast.add({ title: "Não foi possível cadastrar o cliente", type: "error", });
+    }
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>

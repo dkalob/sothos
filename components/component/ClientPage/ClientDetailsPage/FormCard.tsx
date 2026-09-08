@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/combobox";
 import { useEffect, useState } from "react";
 import { useLocalidades } from "@/hooks/use-localidades";
-import { ClienteFormErrors } from "../ClienteSchema";
+import { ClienteFormErrors, clienteSchema } from "../ClienteSchema";
 import { Button } from "@/components/ui/button";
 import { PencilIcon, CheckIcon, XIcon } from "lucide-react";
 import {
@@ -23,27 +23,43 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { apiPut } from "@/lib/api";
 
 // TIPAGEM DOS FORMS PARA O BANCO
 type ClienteForm = {
+  id: string;
   nome: string;
   email: string;
   telefone: string;
   cpf: string;
   estado: string;
   cidade: string;
-  aceita_marketing: boolean;
+  aceitaMarketing: boolean;
 };
 
 const initialForm: ClienteForm = {
+  id: "",
   nome: "",
   email: "",
   telefone: "",
   cpf: "",
   estado: "",
   cidade: "",
-  aceita_marketing: true,
+  aceitaMarketing: true,
 };
+
+interface FormCardProps {
+  cliente: {
+    id: string;
+    nome: string;
+    email: string;
+    telefone: string;
+    cpf: string | null;
+    estado: string | null;
+    cidade: string | null;
+    aceitaMarketing: boolean;
+  };
+}
 
 const inputStyle = `
   h-10
@@ -115,7 +131,7 @@ const FormField = ({
   );
 };
 
-const FormCard = () => {
+const FormCard = ({ cliente }: FormCardProps) => {
   const [form, setForm] = useState<ClienteForm>(initialForm);
   const [errors, setErrors] = useState<ClienteFormErrors>({});
   const [edit, setEdit] = useState(false);
@@ -127,18 +143,34 @@ const FormCard = () => {
   const { estados, cidades, carregarEstados, carregarCidades, setCidades } =
     useLocalidades();
 
+  // Caarrega os estados quando abre a página
   useEffect(() => {
     carregarEstados();
   }, []);
 
+  // Carrega as cidades quando o estado muda
   useEffect(() => {
-    setCidades([]);
-    setForm((prev) => ({ ...prev, cidade: "" }));
-
-    if (!form.estado) return;
+    if (!form.estado) {
+      setCidades([]);
+      return;
+    }
 
     carregarCidades(form.estado);
   }, [form.estado]);
+
+  // Coloca os dados vinda do banco no form
+  useEffect(() => {
+    setForm({
+      id: cliente.id,
+      nome: cliente.nome ?? "",
+      email: cliente.email ?? "",
+      telefone: cliente.telefone ?? "",
+      cpf: cliente.cpf ?? "",
+      estado: cliente.estado ?? "",
+      cidade: cliente.cidade ?? "",
+      aceitaMarketing: cliente.aceitaMarketing ?? false,
+    });
+  }, [cliente]);
 
   function iniciarEdicao() {
     setSnapshot(form); // guarda o estado atual antes de editar
@@ -152,13 +184,67 @@ const FormCard = () => {
   }
 
   function salvarEdicao() {
-    // TODO: validar campos aqui antes de salvar (setErrors se inválido)
+    const resultado = clienteSchema.safeParse({
+      nome: form.nome,
+      email: form.email,
+      telefone: form.telefone,
+      cpf: form.cpf,
+      estado: form.estado,
+      cidade: form.cidade,
+    });
+
+    if (!resultado.success) {
+
+      toast.add({
+        title: "Corrija os campos antes de salvar",
+        type: "warning",
+      });
+
+      const novosErros: ClienteFormErrors = {};
+
+      resultado.error.issues.forEach((issue) => {
+        const campo = issue.path[0] as keyof ClienteFormErrors;
+
+        if (!novosErros[campo]) {
+          novosErros[campo] = issue.message;
+        }
+      });
+
+      setErrors(novosErros);
+      return;
+    }
+
+    // Se chegou aqui, está tudo válido
+    setErrors({});
     editarCliente();
-    
-    setEdit(false);
   }
 
-  function editarCliente() {}
+  async function editarCliente() {
+    try {
+      await apiPut(`/clientes/${form.id}`, {
+        nome: form.nome,
+        email: form.email,
+        telefone: form.telefone,
+        cpf: form.cpf || null,
+        estado: form.estado,
+        cidade: form.cidade,
+        aceitaMarketing: form.aceitaMarketing,
+      });
+
+      toast.add({
+        title: "Cliente atualizado com sucesso!",
+        type: "success",
+      });
+
+      setSnapshot(form);
+      setEdit(false);
+    } catch (error) {
+      toast.add({
+        title: "Não foi possível atualizar o cliente",
+        type: "error",
+      });
+    }
+  }
 
   return (
     <div className="bg-primary-foreground p-4 rounded-lg shadow-sm">
@@ -187,7 +273,9 @@ const FormCard = () => {
                 </Button>
               }
             />
-            <HoverCardContent className="w-fit px-2 py-1 text-xs">Editar</HoverCardContent>
+            <HoverCardContent className="w-fit px-2 py-1 text-xs">
+              Editar
+            </HoverCardContent>
           </HoverCard>
         )}
       </div>
@@ -259,7 +347,11 @@ const FormCard = () => {
                     items={estados}
                     value={form.estado}
                     onValueChange={(value) =>
-                      setForm((prev) => ({ ...prev, estado: value as string }))
+                      setForm((prev) => ({
+                        ...prev,
+                        estado: value as string,
+                        cidade: "",
+                      }))
                     }
                   >
                     <ComboboxInput
@@ -359,10 +451,10 @@ const FormCard = () => {
             </div>
             <Switch
               id="aceita-marketing"
-              checked={form.aceita_marketing}
+              checked={form.aceitaMarketing}
               disabled={!edit}
               onCheckedChange={(checked) =>
-                setForm((prev) => ({ ...prev, aceita_marketing: checked }))
+                setForm((prev) => ({ ...prev, aceitaMarketing: checked }))
               }
             />
           </div>
