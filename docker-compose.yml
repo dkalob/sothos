@@ -37,6 +37,7 @@ services:
       - "3001:3001"
 
   web:
+    image: marcellamaia/sothos-web
     build: ./
     container_name: sothos-web
     depends_on:

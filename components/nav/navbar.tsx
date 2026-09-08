@@ -1,4 +1,5 @@
 "use client";
+import { useUsuario } from "@/hooks/use-usuario";
 import { Bell } from "lucide-react";
 import { SearchIcon } from "lucide-react";
 import { Avatar, AvatarImage } from "../ui/avatar";
@@ -20,7 +21,10 @@ import {
 import { SidebarTrigger } from "../ui/sidebar";
 
 const Navbar = () => {
+  const { usuario, sair } = useUsuario();
+
   return (
+    
     <header className="flex h-16 items-center justify-between px-4">
       {/* BOTÃO DE FECHAR/ABRIR A SIDEBAR*/}
       <SidebarTrigger />
@@ -47,9 +51,11 @@ const Navbar = () => {
 
         {/* NOME */}
         <div className="flex flex-col">
-          <span className="text-sm font-bold select-none">Nome do usuário</span>
+          <span className="text-sm font-bold select-none">
+            {usuario?.nome ?? "—"}
+          </span>
           <span className="self-end text-xs text-gray-600 select-none">
-            Cargo
+            {usuario?.papel === "ADMIN" ? "Administrador" : "Operador"}
           </span>
         </div>
 
@@ -81,8 +87,9 @@ const Navbar = () => {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem variant="destructive">Sair</DropdownMenuItem>
-            </DropdownMenuGroup>
+              <DropdownMenuItem variant="destructive" onClick={sair}>
+                Sair
+              </DropdownMenuItem>            </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

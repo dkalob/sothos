@@ -18,6 +18,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
   //npm run start:devurl      = env("DATABASE_URL")
   // comentei pq nossa versão do prisma é a 6, já está na 7 e nela não tem esse comando url = env
   // se quiser mudar alguma coisa na tabela (schema.prisma) , é preciso descomenta-la 
