@@ -1,4 +1,5 @@
 "use client";
+import { useUsuario } from "@/hooks/use-usuario";
 import {
   CreditCard,
   ChartSpline,
@@ -85,6 +86,7 @@ const items = [
 ];
 
 const SidebarComponent = () => {
+  const { usuario, sair } = useUsuario();
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="py-4">
@@ -147,10 +149,10 @@ const SidebarComponent = () => {
                   </Avatar>
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold select-none">
-                      Nome do usuário
+                      {usuario?.nome ?? "—"}
                     </span>
                     <span className="text-xs font-md select-none">
-                      usuario@email.com
+                      {usuario?.email ?? "—"}
                     </span>
                   </div>
                 </div>
@@ -164,7 +166,7 @@ const SidebarComponent = () => {
                   Configurações
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive">
+                <DropdownMenuItem variant="destructive" onClick={sair}>
                   <LogOutIcon />
                   Sair
                 </DropdownMenuItem>
