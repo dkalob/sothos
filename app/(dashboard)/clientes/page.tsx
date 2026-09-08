@@ -3,6 +3,8 @@ import PageCards from "@/components/component/PageCards";
 import PageHeader from "@/components/component/PageHeader";
 import { Megaphone, Users, UsersRound, UserStar } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 const Clientes = () => {
   return (
     <div>

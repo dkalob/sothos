@@ -1,4 +1,9 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const API_URL =
+  typeof window === "undefined"
+    ? (process.env.NEXT_PUBLIC_API_URL ?? "http://api:3001")
+    : "http://localhost:3001";
+
+
 
 type ApiError = { message: string | string[]; statusCode: number };
 

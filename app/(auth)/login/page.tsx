@@ -57,7 +57,7 @@ const Login = () => {
       localStorage.setItem("sothos_token", resposta.token);
       localStorage.setItem("sothos_usuario", JSON.stringify(resposta.usuario));
 
-      router.push("/dashboard");
+      router.push("/clientes");
     } catch (erro) {
       setErroGeral(
         erro instanceof Error ? erro.message : "Erro ao entrar"
