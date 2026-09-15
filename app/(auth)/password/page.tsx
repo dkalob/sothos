@@ -15,6 +15,7 @@ import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { passwordSchema, PasswordFormErrors } from "../schemas/PasswordSchema";
 import { apiPost } from "@/lib/api";
+import { toast } from "@/components/ui/toast";
 
 type PasswordForm = {
   novaSenha: string;
@@ -32,7 +33,7 @@ const PasswordForm = () => {
   const [sucesso, setSucesso] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");  
+  const token = searchParams.get("token");
 
   async function validaSenha(dados: PasswordForm) {
     setErroGeral("");
@@ -47,10 +48,13 @@ const PasswordForm = () => {
 
     if (!resultado.success) {
       const novosErros: PasswordFormErrors = {};
+
       resultado.error.issues.forEach((issue) => {
         const campo = issue.path[0] as keyof PasswordForm;
+
         if (!novosErros[campo]) novosErros[campo] = issue.message;
       });
+
       setErrors(novosErros);
       return;
     }
@@ -58,15 +62,22 @@ const PasswordForm = () => {
     setCarregando(true);
 
     try {
-      await apiPost("/auth/redefinir-senha", {
-        token,
-        senha: dados.novaSenha,
-      });
+      await toast.promise(
+        apiPost("/auth/redefinir-senha", {
+          token,
+          senha: dados.novaSenha,
+        }),
+        {
+          loading: "Alterando...",
+          success: "Senha alterada com sucesso!",
+          error: "Não foi possível alterar.",
+        },
+      );
       setSucesso(true);
       setTimeout(() => router.push("/login"), 2000);
     } catch (erro) {
       setErroGeral(
-        erro instanceof Error ? erro.message : "Erro ao alterar senha"
+        erro instanceof Error ? erro.message : "Erro ao alterar senha",
       );
     } finally {
       setCarregando(false);
@@ -144,12 +155,6 @@ const PasswordForm = () => {
           </form>
         </CardContent>
         <CardFooter className="flex-col gap-2">
-          {sucesso ? (
-            <p className="text-sm text-center">
-              Senha alterada com sucesso. Redirecionando para o login...
-            </p>
-          ) : (
-            <>
               <Button
                 className="w-full text-lg p-6 cursor-pointer"
                 onClick={() => validaSenha(form)}
@@ -162,8 +167,6 @@ const PasswordForm = () => {
                   {erroGeral}
                 </p>
               )}
-            </>
-          )}
           <a
             href="/login"
             className="text-sm text-primary underline-offset-4 hover:underline"

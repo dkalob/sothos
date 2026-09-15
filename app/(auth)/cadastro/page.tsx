@@ -23,6 +23,7 @@ import { useState } from "react";
 import { registerSchema, RegisterFormErrors } from "../schemas/RegisterSchema";
 import { useRouter } from "next/navigation";
 import { apiPost } from "@/lib/api";
+import { toast } from "@/components/ui/toast";
 
 type RegisterForm = {
   nomeLoja: string;
@@ -54,7 +55,6 @@ const ramos: Ramo[] = [
   { id: 15, nome: "Outros" },
 ];
 
-
 const Cadastro = () => {
   const [form, setForm] = useState<RegisterForm>({
     nomeLoja: "",
@@ -75,10 +75,13 @@ const Cadastro = () => {
 
     if (!resultado.success) {
       const novosErros: RegisterFormErrors = {};
+
       resultado.error.issues.forEach((issue) => {
         const campo = issue.path[0] as keyof RegisterForm;
+
         if (!novosErros[campo]) novosErros[campo] = issue.message;
       });
+
       setErrors(novosErros);
       return;
     }
@@ -86,17 +89,24 @@ const Cadastro = () => {
     setCarregando(true);
 
     try {
-      await apiPost("/auth/cadastro", {
-        nomeLoja: dados.nomeLoja,
-        ramoLoja: dados.ramoLoja,
-        email: dados.email,
-        senha: dados.senha,
-      });
+      await toast.promise(
+        apiPost("/auth/cadastro", {
+          nomeLoja: dados.nomeLoja,
+          ramoLoja: dados.ramoLoja,
+          email: dados.email,
+          senha: dados.senha,
+        }),
+        {
+          loading: "Cadastrando..",
+          success: "Cadastro criado com sucesso!",
+          error: "Não foi possível se cadastrar.",
+        },
+      );
 
       router.push("/login");
     } catch (erro) {
       setErroGeral(
-        erro instanceof Error ? erro.message : "Erro ao criar conta"
+        erro instanceof Error ? erro.message : "Erro ao criar conta",
       );
     } finally {
       setCarregando(false);
@@ -190,24 +200,20 @@ const Cadastro = () => {
 
               <div className="grid gap-2">
                 <Field>
-                    <FieldLabel className="text-md">
-                      Senha
-                    </FieldLabel>
-                    <Input
-                      id="password"
-                      className="p-4"
-                      type="password"
-                      placeholder="*******"
-                      value={form.senha}
-                      onChange={(e) =>
-                        setForm((prev) => ({ ...prev, senha: e.target.value }))
-                      }
-                      aria-invalid={!!errors.senha}
-                    />
-                    <FieldDescription
-                    className={
-                      errors.senha ? "text-destructive" : undefined
+                  <FieldLabel className="text-md">Senha</FieldLabel>
+                  <Input
+                    id="password"
+                    className="p-4"
+                    type="password"
+                    placeholder="*******"
+                    value={form.senha}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, senha: e.target.value }))
                     }
+                    aria-invalid={!!errors.senha}
+                  />
+                  <FieldDescription
+                    className={errors.senha ? "text-destructive" : undefined}
                   >
                     {errors.senha ??
                       "Sua senha deve conter pelo menos 6 caracteres e um caracter especial"}

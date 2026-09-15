@@ -17,6 +17,7 @@ import { useState } from "react";
 import { loginSchema, LoginFormErrors } from "../schemas/LoginSchema";
 import { useRouter } from "next/navigation";
 import { apiPost } from "@/lib/api";
+import { toast } from "@/components/ui/toast";
 
 type LoginForm = {
   email: string;
@@ -38,10 +39,14 @@ const Login = () => {
 
     if (!resultado.success) {
       const novosErros: LoginFormErrors = {};
+
       resultado.error.issues.forEach((issue) => {
         const campo = issue.path[0] as keyof LoginForm;
-        if (!novosErros[campo]) novosErros[campo] = issue.message;
+
+        if (!novosErros[campo]) 
+          novosErros[campo] = issue.message;
       });
+      
       setErrors(novosErros);
       return;
     }
@@ -49,9 +54,16 @@ const Login = () => {
     setCarregando(true);
 
     try {
-      const resposta = await apiPost<{ token: string; usuario: unknown }>(
-        "/auth/login",
-        { email: dados.email, senha: dados.senha }
+      const resposta = await toast.promise(
+        apiPost<{ token: string; usuario: unknown }>("/auth/login", {
+          email: dados.email,
+          senha: dados.senha,
+        }),
+        {
+          loading: "Entrando..",
+          success: "Login realizado com sucesso!",
+          error: "Não foi possível entrar.",
+        },
       );
 
       localStorage.setItem("sothos_token", resposta.token);
@@ -59,9 +71,7 @@ const Login = () => {
 
       router.push("/dashboard");
     } catch (erro) {
-      setErroGeral(
-        erro instanceof Error ? erro.message : "Erro ao entrar"
-      );
+      setErroGeral(erro instanceof Error ? erro.message : "Erro ao entrar");
     } finally {
       setCarregando(false);
     }
@@ -99,7 +109,7 @@ const Login = () => {
                   )}
                 </div>
               </Field>
-              
+
               <div className="grid gap-2">
                 <Field>
                   <div className="flex items-center">
@@ -126,12 +136,12 @@ const Login = () => {
                       aria-invalid={!!errors.senha}
                     />
                     {errors.senha && (
-                    <FieldDescription className="text-destructive">
-                      {errors.senha}
-                    </FieldDescription>
-                  )}
-                </div>
-              </Field>
+                      <FieldDescription className="text-destructive">
+                        {errors.senha}
+                      </FieldDescription>
+                    )}
+                  </div>
+                </Field>
               </div>
             </div>
             <div className="flex items-center mt-4 gap-3">
