@@ -109,8 +109,12 @@ model Conta {
   criadoEm   DateTime @default(now()) @map("criado_em")
   alteradoEm DateTime @updatedAt @map("alterado_em")
 
-  usuarios Usuario[]
-  lojas    LojaConectada[]
+  usuarios  Usuario[]
+  lojas     LojaConectada[]
+  clientes  Cliente[]
+  grupos    GrupoCliente[]
+  produtos  Produto[]
+  campanhas Campanha[]
 
   @@map("conta")
 }
@@ -214,28 +218,31 @@ model Sincronizacao {
 // =====================================================================
 
 model Cliente {
-  id             String    @id @default(uuid())
-  lojaId         String?    @map("id_loja")
-  idExterno      String?   @map("id_externo") @db.VarChar(80)
-  nome           String    @db.VarChar(160)
-  email          String   @db.VarChar(180)
-  telefone       String   @db.VarChar(30)
-  cpf            String?   @db.VarChar(30)
-  cidade         String?   @db.VarChar(120)
-  estado         String?   @db.Char(2)
-  aceitaMarketing Boolean  @default(false) @map("aceita_marketing") // LGPD: base para envio de campanha
-  criadoEmOrigem DateTime? @map("criado_em_origem")
-  criadoEm       DateTime  @default(now()) @map("criado_em")
-  alteradoEm     DateTime  @updatedAt @map("alterado_em")
+  id              String    @id @default(uuid())
+  contaId         String    @map("id_conta")
+  lojaId          String?   @map("id_loja")
+  idExterno       String?   @map("id_externo") @db.VarChar(80)
+  nome            String    @db.VarChar(160)
+  email           String    @db.VarChar(180)
+  telefone        String    @db.VarChar(30)
+  cpf             String?   @db.VarChar(30)
+  cidade          String?   @db.VarChar(120)
+  estado          String?   @db.Char(2)
+  aceitaMarketing Boolean   @default(false) @map("aceita_marketing") // LGPD: base para envio de campanha
+  criadoEmOrigem  DateTime? @map("criado_em_origem")
+  criadoEm        DateTime  @default(now()) @map("criado_em")
+  alteradoEm      DateTime  @updatedAt @map("alterado_em")
 
-  loja     LojaConectada?  @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-  pedidos  Pedido[]
-  analises AnaliseRfm[]
-  grupos   ClienteGrupo[]
+  conta     Conta           @relation(fields: [contaId], references: [id], onDelete: Cascade)
+  loja      LojaConectada?  @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  pedidos   Pedido[]
+  analises  AnaliseRfm[]
+  grupos    ClienteGrupo[]
   campanhas CampanhaCliente[]
 
   // Chave de deduplicação: impede duplicar cliente a cada re-sincronização
   @@unique([lojaId, idExterno])
+  @@index([contaId])
   @@index([lojaId, email])
   @@map("cliente")
 }
@@ -243,16 +250,19 @@ model Cliente {
 // Agrupamento MANUAL criado pelo usuário.
 // Não confundir com Segmento, que é gerado pelo K-Means.
 model GrupoCliente {
-  id         String   @id @default(uuid())
-  lojaId     String   @map("id_loja")
-  nome       String   @db.VarChar(120)
-  descricao  String?  @db.VarChar(255)
-  criadoEm   DateTime @default(now()) @map("criado_em")
-  alteradoEm DateTime @updatedAt @map("alterado_em")
+  id         String    @id @default(uuid())
+  contaId    String    @map("id_conta") 
+  lojaId     String?   @map("id_loja")
+  nome       String    @db.VarChar(120)
+  descricao  String?   @db.VarChar(255)
+  criadoEm   DateTime  @default(now()) @map("criado_em")
+  alteradoEm DateTime  @updatedAt @map("alterado_em")
 
-  loja     LojaConectada  @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  conta    Conta          @relation(fields: [contaId], references: [id], onDelete: Cascade)
+  loja     LojaConectada?  @relation(fields: [lojaId], references: [id], onDelete: Cascade)
   clientes ClienteGrupo[]
 
+  @@index([contaId])
   @@unique([lojaId, nome])
   @@map("grupo_cliente")
 }
@@ -270,22 +280,25 @@ model ClienteGrupo {
 }
 
 model Produto {
-  id             String   @id @default(uuid())
-  lojaId         String   @map("id_loja")
-  idExterno      String?  @map("id_externo") @db.VarChar(80)
-  nome           String   @db.VarChar(200)
-  sku            String?  @db.VarChar(80)
-  categoria      String?  @db.VarChar(120)
-  precoAtual     Decimal? @map("preco_atual") @db.Decimal(12, 2)
-  ativo          Boolean  @default(true)
+  id             String    @id @default(uuid())
+  contaId        String    @map("id_conta") 
+  lojaId         String?    @map("id_loja")
+  idExterno      String?   @map("id_externo") @db.VarChar(80)
+  nome           String    @db.VarChar(200)
+  sku            String?   @db.VarChar(80)
+  categoria      String?   @db.VarChar(120)
+  precoAtual     Decimal?  @map("preco_atual") @db.Decimal(12, 2)
+  ativo          Boolean   @default(true)
   criadoEmOrigem DateTime? @map("criado_em_origem")
-  criadoEm       DateTime @default(now()) @map("criado_em")
-  alteradoEm     DateTime @updatedAt @map("alterado_em")
+  criadoEm       DateTime  @default(now()) @map("criado_em")
+  alteradoEm     DateTime  @updatedAt @map("alterado_em")
 
-  loja      LojaConectada     @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  conta     Conta          @relation(fields: [contaId], references: [id], onDelete: Cascade)
+  loja      LojaConectada?  @relation(fields: [lojaId], references: [id], onDelete: Cascade)
   itens     ItemPedido[]
   campanhas CampanhaProduto[]
 
+  @@index([contaId])
   @@unique([lojaId, idExterno])
   @@index([lojaId, sku])
   @@map("produto")
@@ -293,7 +306,8 @@ model Produto {
 
 model Pedido {
   id             String       @id @default(uuid())
-  lojaId         String       @map("id_loja")
+  contaId        String       @map("id_conta") 
+  lojaId         String?       @map("id_loja")
   clienteId      String?      @map("id_cliente") // nulo permite pedido de visitante sem cadastro
   idExterno      String?      @map("id_externo") @db.VarChar(80)
   numero         String?      @db.VarChar(40)
@@ -307,12 +321,14 @@ model Pedido {
   criadoEm       DateTime     @default(now()) @map("criado_em")
   alteradoEm     DateTime     @updatedAt @map("alterado_em")
 
-  loja    LojaConectada @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-  cliente Cliente?      @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+  conta   Conta          @relation(fields: [contaId], references: [id], onDelete: Cascade)
+  loja    LojaConectada?  @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  cliente Cliente?       @relation(fields: [clienteId], references: [id], onDelete: SetNull)
   itens   ItemPedido[]
 
   @@unique([lojaId, idExterno])
   // Índice desenhado para a consulta de RFM
+  @@index([contaId])
   @@index([lojaId, clienteId, realizadoEm])
   @@index([lojaId, status, realizadoEm])
   @@map("pedido")
@@ -417,10 +433,11 @@ model AnaliseRfm {
 // =====================================================================
 
 model Campanha {
-  id           String         @id @default(uuid())
-  lojaId       String         @map("id_loja")
-  segmentoId   String?        @map("id_segmento") // nulo enquanto RASCUNHO (RN006 validado na transição de status)
-  criadoPorId  String?        @map("id_criado_por")
+  id            String        @id @default(uuid())
+  contaId       String        @map("id_conta") 
+  lojaId        String        @map("id_loja")
+  segmentoId    String?       @map("id_segmento") // nulo enquanto RASCUNHO (RN006 validado na transição de status)
+  criadoPorId   String?       @map("id_criado_por")
   aprovadoPorId String?       @map("id_aprovado_por")
   tipo         TipoCampanha
   status       StatusCampanha @default(RASCUNHO)
@@ -433,6 +450,7 @@ model Campanha {
   criadoEm     DateTime       @default(now()) @map("criado_em")
   alteradoEm   DateTime       @updatedAt @map("alterado_em")
 
+  conta       Conta             @relation(fields: [contaId], references: [id], onDelete: Cascade)
   loja        LojaConectada     @relation(fields: [lojaId], references: [id], onDelete: Cascade)
   segmento    Segmento?         @relation(fields: [segmentoId], references: [id], onDelete: SetNull)
   criadoPor   Usuario?          @relation("CampanhaCriadaPor", fields: [criadoPorId], references: [id], onDelete: SetNull)
@@ -441,6 +459,7 @@ model Campanha {
   produtos    CampanhaProduto[]
   execucoesIa ExecucaoIa[]
 
+  @@index([contaId])
   @@index([lojaId, status])
   @@map("campanha")
 }
