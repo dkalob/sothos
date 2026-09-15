@@ -6,7 +6,7 @@ import { ClienteDto } from './dto/client.dto';
 export class ClientesService {
   constructor(private prisma: PrismaService) {}
 
-  // Função para cadastrar cliente manualmente 
+  // Função para cadastrar cliente manualmente
   // (components > component > ClientPage > ClientSheet)
   async create(dto: ClienteDto) {
     return this.prisma.cliente.create({
@@ -22,7 +22,8 @@ export class ClientesService {
     });
   }
 
-  // Função para trazer todos os clientes do banco com os campos necessários 
+  // Função para trazer todos os clientes do banco
+  // com os campos necessários
   // (components > component > ClientPage > ClientTable)
   async findAll() {
     const clientes = await this.prisma.cliente.findMany({
@@ -123,7 +124,7 @@ export class ClientesService {
     });
   }
 
-  // Função para excluir do banco um cliente específico 
+  // Função para excluir do banco um cliente específico
   // (components > component > ClientPage > columns)
   async remove(id: string) {
     return this.prisma.cliente.delete({
@@ -131,9 +132,9 @@ export class ClientesService {
         id,
       },
     });
-}
-  
-  // Função para buscar do banco um cliente específico 
+  }
+
+  // Função para buscar do banco um cliente específico
   // (components > component > ClientPage > ClientDetailsPage)
   async findOne(id: string) {
     const cliente = await this.prisma.cliente.findUnique({
@@ -223,21 +224,17 @@ export class ClientesService {
   }
 
   async update(id: string, dto: ClienteDto) {
-  return this.prisma.cliente.update({
-    where: { id },
-    data: {
-      nome: dto.nome,
-      email: dto.email,
-      telefone: dto.telefone,
-      cpf: dto.cpf,
-      cidade: dto.cidade,
-      estado: dto.estado,
-      aceitaMarketing: dto.aceitaMarketing,
-    },
-  });
+    return this.prisma.cliente.update({
+      where: { id },
+      data: {
+        nome: dto.nome,
+        email: dto.email,
+        telefone: dto.telefone,
+        cpf: dto.cpf,
+        cidade: dto.cidade,
+        estado: dto.estado,
+        aceitaMarketing: dto.aceitaMarketing,
+      },
+    });
+  }
 }
-
-}
-
-
-

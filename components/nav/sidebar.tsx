@@ -39,12 +39,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { Separator } from "../ui/separator";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "../ui/collapsible";
 import { Avatar, AvatarImage } from "../ui/avatar";
 
 const items = [
@@ -63,12 +57,12 @@ const items = [
     icon: ShoppingBasket,
     url: "/produtos",
   },
-    {
+  {
     label: "Pedidos",
     icon: Store,
     url: "/pedidos",
   },
-    {
+  {
     label: "IA",
     icon: Brain,
     url: "#",
@@ -94,8 +88,8 @@ const SidebarComponent = () => {
           <SidebarMenuItem>
             <SidebarMenuButton
               render={
-                <Link href="/">
-                  {/*<Image scr='/logo.svg' alt='logo' width={20} height={20}/>*/}
+                <Link href="/dashboard">
+                  <Image src="/logo.svg" alt="logo" width={20} height={20} />
                   <span className="font-bold text-primary">Sothos</span>
                 </Link>
               }
@@ -110,19 +104,19 @@ const SidebarComponent = () => {
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
-                  return (
-                    <SidebarMenuItem key={item.label}>
-                      <SidebarMenuButton
-                        className="hover:bg-secondary hover:text-primary"
-                        render={
-                          <Link href={item.url}>
-                            <item.icon />
-                            <span>{item.label}</span>
-                          </Link>
-                        }
-                      ></SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
+                return (
+                  <SidebarMenuItem key={item.label}>
+                    <SidebarMenuButton
+                      className="hover:bg-secondary hover:text-primary"
+                      render={
+                        <Link href={item.url}>
+                          <item.icon />
+                          <span>{item.label}</span>
+                        </Link>
+                      }
+                    ></SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
               })}
             </SidebarMenu>
           </SidebarGroupContent>
