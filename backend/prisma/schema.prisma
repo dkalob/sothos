@@ -114,6 +114,7 @@ model Conta {
   clientes  Cliente[]
   grupos    GrupoCliente[]
   produtos  Produto[]
+  pedidos   Pedido[]
   campanhas Campanha[]
 
   @@map("conta")

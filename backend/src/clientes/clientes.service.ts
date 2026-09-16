@@ -8,9 +8,10 @@ export class ClientesService {
 
   // Função para cadastrar cliente manualmente
   // (components > component > ClientPage > ClientSheet)
-  async create(dto: ClienteDto) {
+  async create(dto: ClienteDto, contaId: string) {
     return this.prisma.cliente.create({
       data: {
+        contaId,
         nome: dto.nome,
         email: dto.email,
         telefone: dto.telefone,
@@ -25,8 +26,9 @@ export class ClientesService {
   // Função para trazer todos os clientes do banco
   // com os campos necessários
   // (components > component > ClientPage > ClientTable)
-  async findAll() {
+  async findAll(contaId: string) {
     const clientes = await this.prisma.cliente.findMany({
+      where: { contaId },
       include: {
         pedidos: {
           select: {
@@ -126,20 +128,22 @@ export class ClientesService {
 
   // Função para excluir do banco um cliente específico
   // (components > component > ClientPage > columns)
-  async remove(id: string) {
-    return this.prisma.cliente.delete({
-      where: {
-        id,
-      },
-    });
+  async remove(id: string, contaId: string) {
+    const cliente = await this.prisma.cliente.findUnique({ where: { id } });
+
+    if (!cliente || cliente.contaId !== contaId) {
+      throw new NotFoundException('Cliente não encontrado');
+    }
+
+    return this.prisma.cliente.delete({ where: { id } });
   }
 
   // Função para buscar do banco um cliente específico
   // (components > component > ClientPage > ClientDetailsPage)
-  async findOne(id: string) {
+  async findOne(id: string, contaId: string) {
     const cliente = await this.prisma.cliente.findUnique({
       where: {
-        id,
+        id
       },
       include: {
         pedidos: {
@@ -181,7 +185,7 @@ export class ClientesService {
       },
     });
 
-    if (!cliente) {
+    if (!cliente || cliente.contaId !== contaId) {
       throw new NotFoundException('Cliente não encontrado');
     }
 
@@ -223,7 +227,13 @@ export class ClientesService {
     };
   }
 
-  async update(id: string, dto: ClienteDto) {
+  async update(id: string, dto: ClienteDto, contaId: string) {
+    const cliente = await this.prisma.cliente.findUnique({ where: { id } });
+
+    if (!cliente || cliente.contaId !== contaId) { // NOVO — checa dono antes de editar
+      throw new NotFoundException('Cliente não encontrado');
+    }
+
     return this.prisma.cliente.update({
       where: { id },
       data: {
