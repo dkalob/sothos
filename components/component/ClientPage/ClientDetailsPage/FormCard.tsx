@@ -24,6 +24,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { apiPut } from "@/lib/api";
+import { useToken } from "@/hooks/use-token";
 
 // TIPAGEM DOS FORMS PARA O BANCO
 type ClienteForm = {
@@ -143,6 +144,8 @@ const FormCard = ({ cliente }: FormCardProps) => {
   const { estados, cidades, carregarEstados, carregarCidades, setCidades } =
     useLocalidades();
 
+  const token = useToken();
+
   // Caarrega os estados quando abre a página
   useEffect(() => {
     carregarEstados();
@@ -229,7 +232,9 @@ const FormCard = ({ cliente }: FormCardProps) => {
         estado: form.estado,
         cidade: form.cidade,
         aceitaMarketing: form.aceitaMarketing,
-      });
+      },
+      token ?? undefined,
+    );
 
       toast.add({
         title: "Cliente atualizado com sucesso!",

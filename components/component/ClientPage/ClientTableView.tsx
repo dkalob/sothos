@@ -1,69 +1,89 @@
-"use client";
+"use client"
 
-// Esta página formata tudo que vem depois de nav , PageHeader e PageCards
-// Ela recebe os dados do BD vindo de ClientTable
-
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { DataTable } from "../DataTable";
-import { ColumnDef } from "@tanstack/react-table";
-import { ClientTableColumns, GroupTableColumns } from "./columns";
-import { Download, Plus } from "lucide-react";
-import ClientSheet from "./ClientSheet";
-import GroupClientSheet from "./GroupClientSheet";
-import DownloadReportButton from "../DownloadReportButton";
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { DataTable } from "../DataTable"
+import { ColumnDef } from "@tanstack/react-table"
+import { ClientTableColumns, GroupTableColumns } from "./columns"
+import { Download, Plus } from "lucide-react"
+import { apiGet } from "@/lib/api"
+import { useToken } from "@/hooks/use-token"
+import ClientSheet from "./ClientSheet"
+import GroupClientSheet from "./GroupClientSheet"
 
 interface ClientTableViewProps {
-  columnsClient: ColumnDef<ClientTableColumns>[];
-  columnsGroup: ColumnDef<GroupTableColumns>[];
-  clientesData: ClientTableColumns[];
-  gruposData: GroupTableColumns[];
+  columnsClient: (
+    atualizarClientes: () => Promise<void>
+  ) => ColumnDef<ClientTableColumns>[]
+  columnsGroup: ColumnDef<GroupTableColumns>[]
 }
 
-const ClientTableView = ({
-  columnsClient,
-  columnsGroup,
-  clientesData,
-  gruposData,
-}: ClientTableViewProps) => {
-  const [aba, setAba] = useState<"clientes" | "grupos">("clientes");
-  //Controla as abas dos botões
+const ClientTableView = ({ columnsClient, columnsGroup }: ClientTableViewProps) => {
+  const [aba, setAba] = useState<"clientes" | "grupos">("clientes")
+  const [clientesData, setClientesData] = useState<ClientTableColumns[]>([])
+  const [gruposData, setGruposData] = useState<GroupTableColumns[]>([])
+  const [carregando, setCarregando] = useState(true)
+  const [clienteSheet, setClienteSheet] = useState(false)
+  const [grupoSheet, setGrupoSheet] = useState(false)
 
-  const [clienteSheet, setClienteSheet] = useState(false);
-  const [grupoSheet, setGrupoSheet] = useState(false);
-  // Chama os componentes de Sheet no onClick
+  const token = useToken()
+
+  async function buscarClientes() {
+    if (!token) return
+    try {
+      const clientes = await apiGet<ClientTableColumns[]>("/clientes", token)
+      setClientesData(clientes)
+    } catch (erro) {
+      console.error("Erro ao buscar clientes:", erro)
+    } finally {
+      setCarregando(false)
+    }
+  }
+
+  const atualizarClientes = async () => {
+  await buscarClientes();
+};
+
+
+  useEffect(() => {
+    buscarClientes()
+    // quando o módulo de grupos existir de verdade:
+    // buscarGrupos()
+  }, [token])
+
+  if (carregando) {
+    return <div className="mt-8">Carregando...</div>
+  }
 
   return (
     <div className="mt-8">
-      {/*BOTÕES DE CIMA */}
+      {/* ABAS */}
       <div className="flex items-center gap-2 mb-2">
         <Button
           variant="link"
-          className={aba === "clientes" ? "text-primary" : "text-gray-400"}
+          className={aba === "clientes" ? "text-black" : "text-gray-400"}
           onClick={() => setAba("clientes")}
         >
           Todos os clientes
         </Button>
         <Button
           variant="link"
-          className={aba === "grupos" ? "text-primary" : "text-gray-400"}
+          className={aba === "grupos" ? "text-black" : "text-gray-400"}
           onClick={() => setAba("grupos")}
         >
           Grupos de clientes
         </Button>
       </div>
 
-      <div className="flex flex-col gap-2 ml-2.5">
-        {/* HEADER E BOTÕES */}
+      <div className="flex flex-col gap-2">
         <div className="flex justify-between items-center">
-          {/* HEADER */}
-          <div className="flex flex-col">
+          {/* TÍTULO + SUBTÍTULO */}
+          <div className="flex flex-col ml-3">
             {aba === "clientes" ? (
               <>
                 <span className="text-md font-medium">Todos os clientes</span>
                 <span className="text-sm text-gray-600">
-                  Visualize e administre todos os clientes da sua loja em uma
-                  única tela
+                  Visualize e administre todos os clientes da sua loja em uma única tela
                 </span>
               </>
             ) : (
@@ -78,59 +98,42 @@ const ClientTableView = ({
 
           {/* BOTÕES */}
           <div className="flex gap-2 items-center">
-            <div className="flex gap-2 items-center">
-              
-              <DownloadReportButton
-                title={
-                  aba === "clientes" ? "Exportar Clientes" : "Exportar Grupos"
-                }
-                btnVariant="secondary"
-              />
+            <Button variant="outline" className="w-40 truncate">
+              <Download />
+              {aba === "clientes" ? "Exportar Clientes" : "Exportar Grupos"}
+            </Button>
+            <Button
+              variant="default"
+              className="w-32 truncate"
+              onClick={() => aba === "clientes" ? setClienteSheet(true) : setGrupoSheet(true)}
+            >
+              <Plus />
+              {aba === "clientes" ? "Novo cliente" : "Novo Grupo"}
+            </Button>
 
-              <Button
-                variant="default"
-                className="w-32 truncate"
-                onClick={() =>
-                  aba === "clientes"
-                    ? setClienteSheet(true)
-                    : setGrupoSheet(true)
-                }
-              >
-                <Plus />
-                {aba === "clientes" ? "Novo cliente" : "Novo Grupo"}
-              </Button>
-
-              <ClientSheet open={clienteSheet} onOpenChange={setClienteSheet} />
-              <GroupClientSheet
-                open={grupoSheet}
-                onOpenChange={setGrupoSheet}
-              />
-            </div>
+            <ClientSheet
+              open={clienteSheet}
+              onOpenChange={setClienteSheet}
+              onClienteCadastrado={buscarClientes}
+            />
+            <GroupClientSheet
+              open={grupoSheet}
+              onOpenChange={setGrupoSheet}
+            />
           </div>
         </div>
 
-        {/*  TABELA  */}
         {aba === "clientes" ? (
           <DataTable
-            columns={columnsClient}
+            columns={columnsClient(atualizarClientes)}
             data={clientesData}
-            hasRFMFilter
-            hasFilter
-            filterColumn="cliente"
-            filterPlaceholder="Filtrar clientes por nome..."
           />
         ) : (
-          <DataTable
-            columns={columnsGroup}
-            data={gruposData}
-            hasFilter
-            filterColumn="nome"
-            filterPlaceholder="Filtrar grupos por nome"
-          />
+          <DataTable columns={columnsGroup} data={gruposData} />
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ClientTableView;
+export default ClientTableView

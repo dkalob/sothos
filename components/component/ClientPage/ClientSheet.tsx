@@ -1,7 +1,3 @@
-// Componente responsável por abrir o Sheet de cadastro de cliente
-// A princípio vai ficar dentro desta pasta, mas se for utlizado em
-// outro lugar, mudar para a pasta 'component'
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -31,14 +27,13 @@ import { useEffect, useState } from "react";
 import { clienteSchema, type ClienteFormErrors } from "./ClienteSchema";
 import { useLocalidades } from "@/hooks/use-localidades";
 import { apiPost } from "@/lib/api";
-import { useRouter } from "next/navigation";
+import { useToken } from "@/hooks/use-token";
 
 interface ClientSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onClienteCadastrado: () => void | Promise<void>; // NOVO
 }
-
-// TIPAGENS
 
 type ClienteForm = {
   nome: string;
@@ -60,21 +55,18 @@ const initialForm: ClienteForm = {
   aceita_marketing: true,
 };
 
-const ClientSheet = ({ open, onOpenChange }: ClientSheetProps) => {
+const ClientSheet = ({ open, onOpenChange, onClienteCadastrado }: ClientSheetProps) => {
   const [form, setForm] = useState<ClienteForm>(initialForm);
   const [errors, setErrors] = useState<ClienteFormErrors>({});
   const { estados, cidades, carregarEstados, carregarCidades, setCidades } =
     useLocalidades();
 
-  const router = useRouter();
+  const token = useToken();
 
-  // EXECUTA A FUNÇÃO QUANDO RENDERIZA PELA 1ª VEZ
   useEffect(() => {
     carregarEstados();
   }, []);
 
-  // EXECUTA A FUNÇÃO carregarCidades TODA VEZ QUE O USUÁRIO ESCOLHE UM ESTADO
-  // TAMBÉM LIMPA O ARRAY E A CIDADE
   useEffect(() => {
     setCidades([]);
     setForm((prev) => ({ ...prev, cidade: "" }));
@@ -84,11 +76,9 @@ const ClientSheet = ({ open, onOpenChange }: ClientSheetProps) => {
     carregarCidades(form.estado);
   }, [form.estado]);
 
-  // USAR ESSA FUNÇÃO PARA CADASTRAR NO BANCO
   async function cadastrarCliente() {
     const result = clienteSchema.safeParse(form);
 
-    // Se tiver algum erro nas regras do preenchimento, mostra  o erro
     if (!result.success) {
       const fieldErrors = result.error.flatten().fieldErrors;
       setErrors({
@@ -102,25 +92,27 @@ const ClientSheet = ({ open, onOpenChange }: ClientSheetProps) => {
       return;
     }
 
-    // tenta cadastrar no banco
     try {
-      await apiPost("/clientes", {
-        nome: form.nome,
-        email: form.email,
-        telefone: form.telefone,
-        cpf: form.cpf,
-        cidade: form.cidade,
-        estado: form.estado,
-        aceitaMarketing: form.aceita_marketing,
-      });
+      await apiPost(
+        "/clientes",
+        {
+          nome: form.nome,
+          email: form.email,
+          telefone: form.telefone,
+          cpf: form.cpf,
+          cidade: form.cidade,
+          estado: form.estado,
+          aceitaMarketing: form.aceita_marketing,
+        },
+        token ?? undefined,
+      );
 
-      // se for positivo, exibe ao usuário, fecha a janela e limpa o formulário
-      toast.add({ title: "Cliente cadastrado com sucesso!", type: "success", });
+      toast.add({ title: "Cliente cadastrado com sucesso!", type: "success" });
       onOpenChange(false);
       setForm(initialForm);
-      router.refresh();
+      await onClienteCadastrado(); // ALTERADO — chama a função do pai, em vez de router.refresh()
     } catch (error) {
-      toast.add({ title: "Não foi possível cadastrar o cliente", type: "error", });
+      toast.add({ title: "Não foi possível cadastrar o cliente", type: "error" });
     }
   }
 

@@ -106,7 +106,7 @@ const Cadastro = () => {
       router.push("/login");
     } catch (erro) {
       setErroGeral(
-        erro instanceof Error ? erro.message : "Erro ao criar conta",
+        erro instanceof Error ? "Erro ao criar conta" : "Erro ao criar conta",
       );
     } finally {
       setCarregando(false);

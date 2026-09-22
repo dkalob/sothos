@@ -23,6 +23,7 @@ import { apiDelete } from "@/lib/api";
 import { toast } from "@/components/ui/toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useToken } from "@/hooks/use-token";
 
 type NameCardProps = {
   id: string;
@@ -33,10 +34,11 @@ type NameCardProps = {
 const NameCard = ({ id, cliente, segmento }: NameCardProps) => {
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const token = useToken();
 
   const deletarCliente = async () => {
     try {
-      await apiDelete(`/clientes/${id}`);
+      await apiDelete(`/clientes/${id}`, token ?? undefined);
       toast.add({
         title: "Cliente excluído com sucesso!",
         type: "success",

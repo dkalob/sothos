@@ -5,8 +5,17 @@ const API_URL =
 
 type ApiError = { message: string | string[]; statusCode: number };
 
-export async function apiGet<T>(caminho: string): Promise<T> {
-  const resposta = await fetch(`${API_URL}${caminho}`);
+function montarHeaders(token?: string, comJson = false): HeadersInit {
+  const headers: HeadersInit = {};
+  if (comJson) headers["Content-Type"] = "application/json";
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  return headers;
+}
+
+export async function apiGet<T>(caminho: string, token?: string): Promise<T> {
+  const resposta = await fetch(`${API_URL}${caminho}`,{
+    headers: montarHeaders(token)
+  });
 
   const dados = await resposta.json();
 
@@ -21,10 +30,10 @@ export async function apiGet<T>(caminho: string): Promise<T> {
   return dados as T;
 }
 
-export async function apiPost<T>(caminho: string, corpo: unknown): Promise<T> {
+export async function apiPost<T>(caminho: string, corpo: unknown, token?: string): Promise<T> {
   const resposta = await fetch(`${API_URL}${caminho}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: montarHeaders(token, true),
     body: JSON.stringify(corpo),
   });
 
@@ -41,9 +50,10 @@ export async function apiPost<T>(caminho: string, corpo: unknown): Promise<T> {
   return dados as T;
 }
 
-export async function apiDelete<T>(caminho: string): Promise<T> {
+export async function apiDelete<T>(caminho: string, token?: string): Promise<T> {
   const resposta = await fetch(`${API_URL}${caminho}`, {
     method: "DELETE",
+    headers: montarHeaders(token),
   });
 
   const dados = await resposta.json();
@@ -63,12 +73,10 @@ export async function apiDelete<T>(caminho: string): Promise<T> {
   return dados as T;
 }
 
-export async function apiPut<T>( caminho: string, corpo: unknown): Promise<T> {
+export async function apiPut<T>( caminho: string, corpo: unknown, token?: string): Promise<T> {
   const resposta = await fetch(`${API_URL}${caminho}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: montarHeaders(token, true),
     body: JSON.stringify(corpo),
   });
 

@@ -71,7 +71,7 @@ const Login = () => {
 
       router.push("/dashboard");
     } catch (erro) {
-      setErroGeral(erro instanceof Error ? erro.message : "Erro ao entrar");
+      setErroGeral(erro instanceof Error ? "Erro ao entrar" : "Erro ao entrar");
     } finally {
       setCarregando(false);
     }

@@ -28,6 +28,7 @@ import { useState } from "react";
 import { apiDelete } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/toast";
+import { useToken } from "@/hooks/use-token";
 
 export type ClientTableColumns = {
   //Aqui define as colunas da tabela clientes
@@ -53,7 +54,9 @@ export type GroupTableColumns = {
 // Abaixo é como será a formatação das colunas. Sempre usar acessorKey
 // e header (por enquanto) quando conectar com o BD talvez seja por id
 
-export const columnsClient: ColumnDef<ClientTableColumns>[] = [
+export const columnsClient = (
+  atualizarClientes: () => Promise<void>
+): ColumnDef<ClientTableColumns>[] => [
   {
     accessorKey: "cliente",
     header: "Cliente",
@@ -101,7 +104,8 @@ export const columnsClient: ColumnDef<ClientTableColumns>[] = [
     accessorKey: "data",
     header: "Última atividade",
     cell: ({ row }) => {
-      const data = row.getValue("data") as Date;
+      const dataValor = row.getValue("data") as Date;
+      const data = new Date(dataValor as unknown as string);
       const dataFormatada = new Intl.DateTimeFormat("pt-BR", {
         day: "2-digit",
         month: "short",
@@ -127,17 +131,18 @@ export const columnsClient: ColumnDef<ClientTableColumns>[] = [
       const [open, setOpen] = useState(false);
       const id = row.original.id;
       const router = useRouter();
+      const token = useToken();
 
       const deletarCliente = async () => {
         try {
-          await apiDelete(`/clientes/${id}`);
+          await apiDelete(`/clientes/${id}`, token ?? undefined);
           toast.add({
             title: "Cliente excluído com sucesso!",
             type: "success",
           });
 
           setOpen(false);
-          router.refresh();
+          await atualizarClientes();
         } catch (error) {
           console.error("Erro ao deletar cliente:", error);
           toast.add({
