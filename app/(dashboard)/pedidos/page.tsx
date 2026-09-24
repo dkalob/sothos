@@ -9,7 +9,7 @@ const Pedidos = () => {
       <PageHeader
         title="Gerenciamento de Pedidos"
         subtitle="Gerencie sua lista de pedidos e acompanhe o desempenho de sua loja."
-        importButton={{ value: "Pedidos" }}
+        //importButton={{ value: "Pedidos" }}
       />
 
       {/* CARDS */}

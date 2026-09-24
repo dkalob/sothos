@@ -1,58 +1,60 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { DataTable } from "../DataTable"
-import { ColumnDef } from "@tanstack/react-table"
-import { ClientTableColumns, GroupTableColumns } from "./columns"
-import { Download, Plus } from "lucide-react"
-import { apiGet } from "@/lib/api"
-import { useToken } from "@/hooks/use-token"
-import ClientSheet from "./ClientSheet"
-import GroupClientSheet from "./GroupClientSheet"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { DataTable } from "../DataTable";
+import { ColumnDef } from "@tanstack/react-table";
+import { ClientTableColumns, GroupTableColumns } from "./columns";
+import { Download, Plus } from "lucide-react";
+import { apiGet } from "@/lib/api";
+import { useToken } from "@/hooks/use-token";
+import ClientSheet from "./ClientSheet";
+import GroupClientSheet from "./GroupClientSheet";
 
 interface ClientTableViewProps {
   columnsClient: (
-    atualizarClientes: () => Promise<void>
-  ) => ColumnDef<ClientTableColumns>[]
-  columnsGroup: ColumnDef<GroupTableColumns>[]
+    atualizarClientes: () => Promise<void>,
+  ) => ColumnDef<ClientTableColumns>[];
+  columnsGroup: ColumnDef<GroupTableColumns>[];
 }
 
-const ClientTableView = ({ columnsClient, columnsGroup }: ClientTableViewProps) => {
-  const [aba, setAba] = useState<"clientes" | "grupos">("clientes")
-  const [clientesData, setClientesData] = useState<ClientTableColumns[]>([])
-  const [gruposData, setGruposData] = useState<GroupTableColumns[]>([])
-  const [carregando, setCarregando] = useState(true)
-  const [clienteSheet, setClienteSheet] = useState(false)
-  const [grupoSheet, setGrupoSheet] = useState(false)
+const ClientTableView = ({
+  columnsClient,
+  columnsGroup,
+}: ClientTableViewProps) => {
+  const [aba, setAba] = useState<"clientes" | "grupos">("clientes");
+  const [clientesData, setClientesData] = useState<ClientTableColumns[]>([]);
+  const [gruposData, setGruposData] = useState<GroupTableColumns[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [clienteSheet, setClienteSheet] = useState(false);
+  const [grupoSheet, setGrupoSheet] = useState(false);
 
-  const token = useToken()
+  const token = useToken();
 
   async function buscarClientes() {
-    if (!token) return
+    if (!token) return;
     try {
-      const clientes = await apiGet<ClientTableColumns[]>("/clientes", token)
-      setClientesData(clientes)
+      const clientes = await apiGet<ClientTableColumns[]>("/clientes", token);
+      setClientesData(clientes);
     } catch (erro) {
-      console.error("Erro ao buscar clientes:", erro)
+      console.error("Erro ao buscar clientes:", erro);
     } finally {
-      setCarregando(false)
+      setCarregando(false);
     }
   }
 
   const atualizarClientes = async () => {
-  await buscarClientes();
-};
-
+    await buscarClientes();
+  };
 
   useEffect(() => {
-    buscarClientes()
+    buscarClientes();
     // quando o módulo de grupos existir de verdade:
     // buscarGrupos()
-  }, [token])
+  }, [token]);
 
   if (carregando) {
-    return <div className="mt-8">Carregando...</div>
+    return <div className="mt-8">Carregando...</div>;
   }
 
   return (
@@ -83,7 +85,8 @@ const ClientTableView = ({ columnsClient, columnsGroup }: ClientTableViewProps) 
               <>
                 <span className="text-md font-medium">Todos os clientes</span>
                 <span className="text-sm text-gray-600">
-                  Visualize e administre todos os clientes da sua loja em uma única tela
+                  Visualize e administre todos os clientes da sua loja em uma
+                  única tela
                 </span>
               </>
             ) : (
@@ -102,10 +105,16 @@ const ClientTableView = ({ columnsClient, columnsGroup }: ClientTableViewProps) 
               <Download />
               {aba === "clientes" ? "Exportar Clientes" : "Exportar Grupos"}
             </Button>
+            <Button variant="outline" className="w-40 truncate">
+              <Download className="rotate-180"/>
+              {aba === "clientes" ? "Importar Clientes" : "Importar Grupos"}
+            </Button>
             <Button
               variant="default"
               className="w-32 truncate"
-              onClick={() => aba === "clientes" ? setClienteSheet(true) : setGrupoSheet(true)}
+              onClick={() =>
+                aba === "clientes" ? setClienteSheet(true) : setGrupoSheet(true)
+              }
             >
               <Plus />
               {aba === "clientes" ? "Novo cliente" : "Novo Grupo"}
@@ -116,9 +125,9 @@ const ClientTableView = ({ columnsClient, columnsGroup }: ClientTableViewProps) 
               onOpenChange={setClienteSheet}
               onClienteCadastrado={buscarClientes}
             />
-            <GroupClientSheet
-              open={grupoSheet}
-              onOpenChange={setGrupoSheet}
+            <GroupClientSheet 
+              open={grupoSheet} 
+              onOpenChange={setGrupoSheet} 
             />
           </div>
         </div>
@@ -127,13 +136,23 @@ const ClientTableView = ({ columnsClient, columnsGroup }: ClientTableViewProps) 
           <DataTable
             columns={columnsClient(atualizarClientes)}
             data={clientesData}
+            hasRFMFilter
+            hasFilter
+            filterColumn="cliente"
+            filterPlaceholder="Pesquisar cliente por nome"
           />
         ) : (
-          <DataTable columns={columnsGroup} data={gruposData} />
+          <DataTable
+            columns={columnsGroup}
+            data={gruposData}
+            hasFilter
+            filterColumn="nome"
+            filterPlaceholder="Pesquisar grupo por nome"
+          />
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ClientTableView
+export default ClientTableView;

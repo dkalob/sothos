@@ -55,7 +55,11 @@ const initialForm: ClienteForm = {
   aceita_marketing: true,
 };
 
-const ClientSheet = ({ open, onOpenChange, onClienteCadastrado }: ClientSheetProps) => {
+const ClientSheet = ({
+  open,
+  onOpenChange,
+  onClienteCadastrado,
+}: ClientSheetProps) => {
   const [form, setForm] = useState<ClienteForm>(initialForm);
   const [errors, setErrors] = useState<ClienteFormErrors>({});
   const { estados, cidades, carregarEstados, carregarCidades, setCidades } =
@@ -112,7 +116,10 @@ const ClientSheet = ({ open, onOpenChange, onClienteCadastrado }: ClientSheetPro
       setForm(initialForm);
       await onClienteCadastrado(); // ALTERADO — chama a função do pai, em vez de router.refresh()
     } catch (error) {
-      toast.add({ title: "Não foi possível cadastrar o cliente", type: "error" });
+      toast.add({
+        title: "Não foi possível cadastrar o cliente",
+        type: "error",
+      });
     }
   }
 
@@ -151,22 +158,22 @@ const ClientSheet = ({ open, onOpenChange, onClienteCadastrado }: ClientSheetPro
           <div className="grid gap-3">
             <Field>
               <div className="flex gap-0.5">
-                <FieldLabel>Email</FieldLabel>
+                <FieldLabel>CPF</FieldLabel>
                 <span className="text-destructive">*</span>
               </div>
               <Input
-                placeholder="ana@email.com"
-                value={form.email}
+                placeholder="123.456.789-00"
+                value={form.cpf}
                 onChange={(e) =>
-                  setForm((prev) => ({ ...prev, email: e.target.value }))
+                  setForm((prev) => ({ ...prev, cpf: e.target.value }))
                 }
-                type="email"
-                aria-invalid={!!errors.email}
+                type="text"
+                aria-invalid={!!errors.cpf}
               />
               <FieldDescription
-                className={errors.email ? "text-destructive" : undefined}
+                className={errors.cpf ? "text-destructive" : undefined}
               >
-                {errors.email ?? "Esse campo deve ser preenchido"}
+                {errors.cpf ?? "Esse campo deve ser preenchido"}
               </FieldDescription>
             </Field>
           </div>
@@ -194,23 +201,27 @@ const ClientSheet = ({ open, onOpenChange, onClienteCadastrado }: ClientSheetPro
           </div>
           <div className="grid gap-3">
             <Field>
-              <FieldLabel>CPF</FieldLabel>
+              <div className="flex gap-0.5">
+                <FieldLabel>Email</FieldLabel>
+                <span className="text-destructive">*</span>
+              </div>
               <Input
-                placeholder="123.456.789-00"
-                value={form.cpf}
+                placeholder="ana@email.com"
+                value={form.email}
                 onChange={(e) =>
-                  setForm((prev) => ({ ...prev, cpf: e.target.value }))
+                  setForm((prev) => ({ ...prev, email: e.target.value }))
                 }
-                type="text"
-                aria-invalid={!!errors.cpf}
+                type="email"
+                aria-invalid={!!errors.email}
               />
               <FieldDescription
-                className={errors.cpf ? "text-destructive" : undefined}
+                className={errors.email ? "text-destructive" : undefined}
               >
-                {errors.cpf}
+                {errors.email ?? "Esse campo deve ser preenchido"}
               </FieldDescription>
             </Field>
           </div>
+
           <div className="grid gap-3">
             <Label>Estado</Label>
             <Combobox
@@ -257,6 +268,7 @@ const ClientSheet = ({ open, onOpenChange, onClienteCadastrado }: ClientSheetPro
             </Combobox>
           </div>
           <div className="flex items-center space-x-2">
+            <Label>Aceita receber campanhas</Label>
             <Switch
               id="aceita-marketing"
               checked={form.aceita_marketing}
@@ -267,7 +279,6 @@ const ClientSheet = ({ open, onOpenChange, onClienteCadastrado }: ClientSheetPro
                 }))
               }
             />
-            <Label>Aceita receber campanhas</Label>
           </div>
         </div>
         <SheetFooter>

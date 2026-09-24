@@ -10,7 +10,7 @@ const Produtos = () => {
       <PageHeader
         title="Gerenciamento de Produtos"
         subtitle="Gerencie seu inventário de produtos e acompanhe seu desempenho em campanhas."
-        importButton={{ value: "Produtos" }}
+        //importButton={{ value: "Produtos" }}
       />
 
     {/* CARDS */}

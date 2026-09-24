@@ -48,6 +48,11 @@ const OrderTableView = ({
                 <Download />
                 Exportar Pedidos
               </Button>
+
+              <Button variant="outline" className="w-40 truncate">
+                <Download className="rotate-180"/>
+                Importar Pedidos
+              </Button>
               
               <Button
                 variant="default"

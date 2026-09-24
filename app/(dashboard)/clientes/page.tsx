@@ -10,7 +10,7 @@ const Clientes = () => {
       <PageHeader
         title="Gerenciamento de Clientes"
         subtitle="Gerencie seu portifólio de clientes e acompanhe o crescimento."
-        importButton={{ value: "Clientes" }}
+        //importButton={{ value: "Clientes" }}
       />
 
     {/* CARDS */}

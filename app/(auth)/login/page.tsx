@@ -43,10 +43,9 @@ const Login = () => {
       resultado.error.issues.forEach((issue) => {
         const campo = issue.path[0] as keyof LoginForm;
 
-        if (!novosErros[campo]) 
-          novosErros[campo] = issue.message;
+        if (!novosErros[campo]) novosErros[campo] = issue.message;
       });
-      
+
       setErrors(novosErros);
       return;
     }
@@ -110,12 +109,36 @@ const Login = () => {
                 </div>
               </Field>
 
-              <div className="grid gap-2">
-                <Field>
-                  <div className="flex items-center">
-                    <FieldLabel className="text-md" htmlFor="password">
-                      Senha
-                    </FieldLabel>
+              <Field>
+                <div className="grid gap-2">
+                  <FieldLabel className="text-md" htmlFor="password">
+                    Senha
+                  </FieldLabel>
+                  <Input
+                    id="password"
+                    className="p-4"
+                    type="password"
+                    placeholder="*******"
+                    value={form.senha}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, senha: e.target.value }))
+                    }
+                    aria-invalid={!!errors.senha}
+                  />
+                  {errors.senha && (
+                    <FieldDescription className="text-destructive">
+                      {errors.senha}
+                    </FieldDescription>
+                  )}
+                  <div className="flex mt-2">
+                    <div className="flex items-center gap-3 ">
+                      <span>Permanecer conectado</span>
+                      <Checkbox
+                        className="cursor-pointer justify-end"
+                        id="toggle-checkbox"
+                        name="toggle-checkbox"
+                      />
+                    </div>
                     <a
                       href="recuperar-senha"
                       className="ml-auto inline-block text-sm text-primary underline-offset-4 hover:underline"
@@ -123,34 +146,8 @@ const Login = () => {
                       Esqueceu sua senha?
                     </a>
                   </div>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      className="p-4"
-                      type="password"
-                      placeholder="*******"
-                      value={form.senha}
-                      onChange={(e) =>
-                        setForm((prev) => ({ ...prev, senha: e.target.value }))
-                      }
-                      aria-invalid={!!errors.senha}
-                    />
-                    {errors.senha && (
-                      <FieldDescription className="text-destructive">
-                        {errors.senha}
-                      </FieldDescription>
-                    )}
-                  </div>
-                </Field>
-              </div>
-            </div>
-            <div className="flex items-center mt-4 gap-3">
-              <Checkbox
-                className="cursor-pointer"
-                id="toggle-checkbox"
-                name="toggle-checkbox"
-              />
-              <span>Permanecer conectado</span>
+                </div>
+              </Field>
             </div>
           </form>
         </CardContent>

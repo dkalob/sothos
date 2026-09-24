@@ -48,6 +48,11 @@ const ProductTableView = ({
                 <Download />
                 Exportar Produtos
               </Button>
+
+              <Button variant="outline" className="w-40 truncate">
+                <Download className="rotate-180"/>
+                Importar Produtos
+              </Button>
               
               <Button
                 variant="default"
