@@ -32,7 +32,7 @@ import { useToken } from "@/hooks/use-token";
 interface ClientSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onClienteCadastrado: () => void | Promise<void>; // NOVO
+  onClienteCadastrado: () => void | Promise<void>; 
 }
 
 type ClienteForm = {

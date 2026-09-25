@@ -247,4 +247,22 @@ export class ClientesService {
       },
     });
   }
+
+  async findAllComboBox(contaId: string) {
+    return this.prisma.cliente.findMany({
+      where: { contaId },
+      select: {
+        id: true,
+        nome: true,
+        cpf: true,
+      },
+      orderBy: {
+        nome: 'asc',
+      },
+    });
+  }
+
+
+
+
 }

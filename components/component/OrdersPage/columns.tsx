@@ -75,7 +75,7 @@ export const columnsOrder: ColumnDef<OrderTableColumns>[] = [
   },
   {
     accessorKey: "data",
-    header: "Última compra",
+    header: "Data da compra",
     cell: ({ row }) => {
       const data = row.getValue("data") as Date;
       const dataFormatada = new Intl.DateTimeFormat("pt-BR", {

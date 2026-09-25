@@ -20,6 +20,12 @@ export class ClientesController {
     return this.clientesService.findAll(usuario.contaId);
   }
 
+  //Aparecer nas combobox de cliente
+  @Get('combobox')
+  async findAllComboBox(@UsuarioLogado() usuario: JwtPayload) {
+    return this.clientesService.findAllComboBox(usuario.contaId)
+  }
+
   @Get(":id")
   async findOne(@Param("id") id: string, @UsuarioLogado() usuario: JwtPayload) {
     return this.clientesService.findOne(id, usuario.contaId);
@@ -33,5 +39,7 @@ export class ClientesController {
   @Delete(":id")
   async remove(@Param("id") id: string, @UsuarioLogado() usuario: JwtPayload) {
     return this.clientesService.remove(id, usuario.contaId);
-}
+  }
+
+  
 }
