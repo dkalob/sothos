@@ -95,6 +95,13 @@ enum StatusExecucaoIa {
   FALHA
 }
 
+enum TipoCaracteristica {
+  TEXTO
+  NUMERO
+  BOOLEANO
+  OPCAO
+}
+
 // =====================================================================
 // CONTA E USUÁRIOS
 // A Conta é o "inquilino" (tenant). Todo dado do sistema pertence a uma
@@ -116,6 +123,8 @@ model Conta {
   produtos  Produto[]
   pedidos   Pedido[]
   campanhas Campanha[]
+  categoriasProduto      CategoriaProduto[]
+  caracteristicasProduto CaracteristicaProduto[]
 
   @@map("conta")
 }
@@ -283,11 +292,12 @@ model ClienteGrupo {
 model Produto {
   id             String    @id @default(uuid())
   contaId        String    @map("id_conta") 
-  lojaId         String?    @map("id_loja")
+  lojaId         String?   @map("id_loja")
+  categoriaId    String?   @map("id_categoria")
   idExterno      String?   @map("id_externo") @db.VarChar(80)
+  imagem         String?   @db.VarChar(1000)
   nome           String    @db.VarChar(200)
   sku            String?   @db.VarChar(80)
-  categoria      String?   @db.VarChar(120)
   precoAtual     Decimal?  @map("preco_atual") @db.Decimal(12, 2)
   ativo          Boolean   @default(true)
   criadoEmOrigem DateTime? @map("criado_em_origem")
@@ -296,14 +306,88 @@ model Produto {
 
   conta     Conta          @relation(fields: [contaId], references: [id], onDelete: Cascade)
   loja      LojaConectada?  @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  categoria CategoriaProduto? @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
+  
   itens     ItemPedido[]
   campanhas CampanhaProduto[]
+  caracteristicas ProdutoCaracteristica[]
 
   @@index([contaId])
+  @@index([categoriaId])
   @@unique([lojaId, idExterno])
   @@index([lojaId, sku])
   @@map("produto")
 }
+
+model CategoriaProduto {
+  id         String   @id @default(uuid())
+  contaId    String   @map("id_conta")
+  nome       String   @db.VarChar(120)
+  ativo      Boolean  @default(true)
+
+  criadoEm   DateTime @default(now()) @map("criado_em")
+  alteradoEm DateTime @updatedAt @map("alterado_em")
+
+  conta      Conta    @relation(fields: [contaId], references: [id], onDelete: Cascade)
+  produtos   Produto[]
+
+  @@unique([contaId, nome])
+  @@index([contaId])
+  @@map("categoria_produto")
+}
+
+// tabela que cria os campos personalizados do produto. (Ex: cor, tamanho, marca, etc..)
+model CaracteristicaProduto {
+  id         String             @id @default(uuid())
+  contaId    String             @map("id_conta")
+  nome       String             @db.VarChar(100)
+  tipo       TipoCaracteristica @default(TEXTO)
+  ativo      Boolean            @default(true)
+
+  criadoEm   DateTime           @default(now()) @map("criado_em")
+  alteradoEm DateTime           @updatedAt @map("alterado_em")
+
+  conta      Conta              @relation(fields: [contaId], references: [id], onDelete: Cascade)
+  opcoes     CaracteristicaOpcao[]
+  produtos   ProdutoCaracteristica[]
+
+  @@unique([contaId, nome])
+  @@index([contaId])
+  @@map("caracteristica_produto")
+}
+
+// tabela que cria as opções dos campos personalizados do produto. (Ex: cor: vermelha, tamanho: M, marca: adidas, etc..)
+model CaracteristicaOpcao {
+  id               String   @id @default(uuid())
+  caracteristicaId String   @map("id_caracteristica")
+  valor            String   @db.VarChar(150)
+  ordem            Int      @default(0)
+  ativo            Boolean  @default(true)
+
+  caracteristica CaracteristicaProduto @relation(fields: [caracteristicaId], references: [id], onDelete: Cascade)
+
+  @@unique([caracteristicaId, valor])
+  @@index([caracteristicaId])
+  @@map("caracteristica_opcao")
+}
+
+// tabela N pra N dos produtos com as caracteristicas
+model ProdutoCaracteristica {
+  id               String   @id @default(uuid())
+  produtoId        String   @map("id_produto")
+  caracteristicaId String   @map("id_caracteristica")
+  valor            String   @db.VarChar(500)
+
+  produto          Produto               @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  caracteristica   CaracteristicaProduto @relation(fields: [caracteristicaId], references: [id], onDelete: Cascade)
+
+  @@unique([produtoId, caracteristicaId])
+  @@index([produtoId])
+  @@index([caracteristicaId])
+  @@map("produto_caracteristica")
+}
+
+
 
 model Pedido {
   id             String       @id @default(uuid())

@@ -114,7 +114,7 @@ const ClientSheet = ({
       toast.add({ title: "Cliente cadastrado com sucesso!", type: "success" });
       onOpenChange(false);
       setForm(initialForm);
-      await onClienteCadastrado(); // ALTERADO — chama a função do pai, em vez de router.refresh()
+      await onClienteCadastrado(); 
     } catch (error) {
       toast.add({
         title: "Não foi possível cadastrar o cliente",

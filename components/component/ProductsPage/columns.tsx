@@ -29,10 +29,9 @@ export type ProductTableColumns = {
   //Aqui define as colunas da tabela clientes
   imagem: string;
   nome: string;
-  estoque: number;
-  campanhas: string;
-  preco: number;
-  data: Date;
+  sku: string;
+  campanhas: string[];
+  ultimaCompra: string | null;
 };
 
 // Abaixo é como será a formatação das colunas. Sempre usar acessorKey
@@ -40,64 +39,86 @@ export type ProductTableColumns = {
 
 export const columnsProduct: ColumnDef<ProductTableColumns>[] = [
   {
-  accessorKey: "nome",
-  header: "Nome",
-  cell: ({ row }) => {
-    const nome = row.getValue("nome") as string;
-    const imagem = row.original.imagem;
+    accessorKey: "nome",
+    header: "Nome",
+    cell: ({ row }) => {
+      const nome = row.getValue("nome") as string;
+      const sku = row.original.sku;
+      const imagem = row.original.imagem;
 
-    return (
-      <div className="flex items-center gap-2">
-        <img
-          src={imagem}
-          alt={nome}
-          className="h-8 w-8 rounded-md object-cover"
-        />
-        <span className="font-semibold">{nome}</span>
-      </div>
-    );
-  },
-},
-  {
-    accessorKey: "estoque",
-    header: "Qt. em estoque",
+      return (
+        <div className="flex items-center gap-3">
+          <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border bg-muted">
+            {imagem ? (
+              <img
+                src={imagem}
+                alt={nome}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+                Sem foto
+              </div>
+            )}
+          </div>
+
+          <div className="flex min-w-0 flex-col">
+            <span className="font-semibold">{nome}</span>
+
+            <span className="text-sm text-muted-foreground">
+              {sku ? `SKU: ${sku}` : "Sem SKU"}
+            </span>
+          </div>
+        </div>
+      );
+    },
   },
   {
     accessorKey: "campanhas",
     header: "Campanhas",
-  },
-  {
-    accessorKey: "preco",
-    header: () => <div>Preço</div>,
     cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("preco"));
-      const formatted = new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }).format(amount);
+      const campanhas = row.getValue("campanhas") as string[];
 
-      return <div className="font-medium">{formatted}</div>;
+      if (campanhas.length === 0) {
+        return <span className="text-muted-foreground">—</span>;
+      }
+
+      return (
+        <div className="flex flex-col gap-1">
+          {campanhas.map((campanha) => (
+            <span key={campanha}>{campanha}</span>
+          ))}
+        </div>
+      );
     },
   },
   {
-    accessorKey: "data",
+    accessorKey: "ultimaCompra",
     header: "Última compra",
     cell: ({ row }) => {
-      const data = row.getValue("data") as Date;
+      const data = row.getValue("ultimaCompra") as string | null;
+
+      if (!data) {
+        return <span className="text-muted-foreground">—</span>;
+      }
+
       const dataFormatada = new Intl.DateTimeFormat("pt-BR", {
         day: "2-digit",
         month: "short",
         year: "numeric",
-      }).format(data);
+      }).format(new Date(data));
+
       const horaFormatada = new Intl.DateTimeFormat("pt-BR", {
         hour: "2-digit",
         minute: "2-digit",
-      }).format(data);
+      }).format(new Date(data));
 
       return (
         <div className="flex flex-col">
           <span>{dataFormatada}</span>
-          <span className="text-sm text-muted-foreground">{horaFormatada}</span>
+          <span className="text-sm text-muted-foreground">
+            {horaFormatada}
+          </span>
         </div>
       );
     },
