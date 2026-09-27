@@ -68,7 +68,7 @@ const ClienteCombobox = ({ value, onChange }: ClienteComboboxProps) => {
 
         <ComboboxList>
           {clientes.map((cliente) => (
-            <ComboboxItem key={cliente.id} value={cliente.nome}>
+            <ComboboxItem key={cliente.id} value={cliente.id}>
               <span className="font-semibold">{cliente.nome}</span>-
               <span className="text-muted-foreground">
                 ({formatarCpf(cliente.cpf)})

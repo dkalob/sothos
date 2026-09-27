@@ -20,6 +20,12 @@ export class ProdutosController {
     return this.produtosService.create(usuario.contaId, dto);
   }
 
+  @Get('combobox')
+  @UseGuards(JwtAuthGuard)
+  async findForCombobox(@UsuarioLogado() usuario: { contaId: string },) {
+    return this.produtosService.findAllCombobox(usuario.contaId);
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard)
   async findAll(@UsuarioLogado() usuario: { contaId: string }, ) {

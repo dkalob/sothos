@@ -27,7 +27,7 @@ import { useState } from "react";
 
 export type OrderTableColumns = {
   //Aqui define as colunas da tabela clientes
-  id: number;
+  id: string;
   cliente: string;
   produto: string;
   valor: number;
@@ -77,12 +77,14 @@ export const columnsOrder: ColumnDef<OrderTableColumns>[] = [
     accessorKey: "data",
     header: "Data da compra",
     cell: ({ row }) => {
-      const data = row.getValue("data") as Date;
+      const data = new Date(row.getValue("data") as string);
+
       const dataFormatada = new Intl.DateTimeFormat("pt-BR", {
         day: "2-digit",
         month: "short",
         year: "numeric",
       }).format(data);
+
       const horaFormatada = new Intl.DateTimeFormat("pt-BR", {
         hour: "2-digit",
         minute: "2-digit",
@@ -91,7 +93,9 @@ export const columnsOrder: ColumnDef<OrderTableColumns>[] = [
       return (
         <div className="flex flex-col">
           <span>{dataFormatada}</span>
-          <span className="text-sm text-muted-foreground">{horaFormatada}</span>
+          <span className="text-sm text-muted-foreground">
+            {horaFormatada}
+          </span>
         </div>
       );
     },

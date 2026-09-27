@@ -48,12 +48,32 @@ export class ProdutosService {
     });
 
     return produtos.map((produto) => ({
-      imagem: produto.imagem ?? "",
+      imagem: produto.imagem ?? '',
       nome: produto.nome,
-      sku: produto.sku ?? "",
+      sku: produto.sku ?? '',
       campanhas: [],
       ultimaCompra: produto.itens[0]?.pedido.realizadoEm ?? null,
     }));
   }
 
+  async findAllCombobox(contaId: string) {
+    return this.prisma.produto.findMany({
+      where: {
+        contaId,
+        ativo: true,
+      },
+      select: {
+        id: true,
+        nome: true,
+        sku: true,
+        imagem: true,
+        precoAtual: true,
+      },
+      orderBy: {
+        nome: 'asc',
+      },
+    });
+  }
+
+  
 }
