@@ -101,6 +101,7 @@ const ProductTableView = ({ columnsProduct }: ProductTableViewProps) => {
           columns={columnsProduct}
           data={productsData}
           hasFilter
+          hasPagination
           filterColumn="nome"
           filterPlaceholder="Filtrar produtos por nome..."
         />

@@ -190,7 +190,7 @@ const CategoriaTableView = ({ columnsCategoria }: CategoriaTableViewProps) => {
     <div className="mt-8 mx-auto w-full max-w-[50vw]">
       <div className="flex items-center justify-between mb-4">
         <div className="flex flex-col">
-          <span className="font-bold text-2xl">Categorias</span>
+          <span className="font-bold text-2xl">Categorias de Produtos</span>
 
           <span className="text-sm text-gray-600">
             Crie e gerencie as categorias dos produtos da sua loja.
@@ -218,6 +218,7 @@ const CategoriaTableView = ({ columnsCategoria }: CategoriaTableViewProps) => {
           excluirCategoria,
         )}
         data={categoriasData}
+        hasPagination={false}
       />
     </div>
   );

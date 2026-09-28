@@ -17,6 +17,15 @@ export const clienteSchema = z.object({
   cidade: z.string().trim().min(1, "Selecione uma cidade"),
 });
 
+export const grupoSchema = z.object({
+  nome: z.string().trim().min(3, "Nome deve ter pelo menos 3 letras"),
+
+});
+
 export type ClienteFormErrors = Partial<
   Record<keyof z.infer<typeof clienteSchema>, string>
+>;
+
+export type GrupoFormErrors = Partial<
+  Record<keyof z.infer<typeof grupoSchema>, string>
 >;

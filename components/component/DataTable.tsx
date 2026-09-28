@@ -57,6 +57,7 @@ interface DataTableProps<TData, TValue> {
   hasFilter?: boolean; // props que coloca o filtro por alguma coluna
   filterColumn?: string; // props que você passa o nome da coluna que será filtrada
   filterPlaceholder?: string; // o que aparece dentro do input
+  hasPagination?: boolean; // controla a paginação das tabelas
 }
 
 export function DataTable<TData, TValue>({
@@ -64,6 +65,7 @@ export function DataTable<TData, TValue>({
   data,
   hasRFMFilter = false,
   hasFilter = false,
+  hasPagination = true,
   filterColumn,
   filterPlaceholder,
 }: DataTableProps<TData, TValue>) {
@@ -183,7 +185,9 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <DataTablePagination table={table} />
+      {hasPagination && (
+        <DataTablePagination table={table} />
+      )}
     </div>
   );
 }

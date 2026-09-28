@@ -110,6 +110,7 @@ const OrderTableView = ({
           columns={columnsOrder}
           data={orderData}
           hasFilter
+          hasPagination
           filterColumn="cliente"
           filterPlaceholder="Filtrar pedidos por cliente..."
         />

@@ -27,6 +27,7 @@ interface ClienteComboboxProps {
 const ClienteCombobox = ({ value, onChange }: ClienteComboboxProps) => {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [carregando, setCarregando] = useState(true);
+  
   const token = useToken();
 
   useEffect(() => {

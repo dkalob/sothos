@@ -146,6 +146,7 @@ const ClientTableView = ({
             columns={columnsGroup}
             data={gruposData}
             hasFilter
+            hasPagination
             filterColumn="nome"
             filterPlaceholder="Pesquisar grupo por nome"
           />
