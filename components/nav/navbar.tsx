@@ -1,6 +1,6 @@
 "use client";
 import { useUsuario } from "@/hooks/use-usuario";
-import { Bell } from "lucide-react";
+import { Bell, Settings2 } from "lucide-react";
 import { SearchIcon } from "lucide-react";
 import { Avatar, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
@@ -19,12 +19,12 @@ import {
   InputGroupInput,
 } from "../ui/input-group";
 import { SidebarTrigger } from "../ui/sidebar";
+import Link from "next/link";
 
 const Navbar = () => {
   const { usuario, sair } = useUsuario();
 
   return (
-    
     <header className="flex h-16 items-center justify-between px-4">
       {/* BOTÃO DE FECHAR/ABRIR A SIDEBAR*/}
       <SidebarTrigger />
@@ -81,15 +81,22 @@ const Navbar = () => {
               <DropdownMenuItem className="data-highlighted:bg-secondary data-highlighted:text-primary">
                 Integrações
               </DropdownMenuItem>
-              <DropdownMenuItem className="data-highlighted:bg-secondary data-highlighted:text-primary">
-                Adicionar Crédito
+              <DropdownMenuItem className="focus:bg-secondary focus:text-primary not-data-[variant=destructive]:focus:**:text-primary">
+                <Link
+                  href="/configuracoes"
+                  className="flex w-full items-center gap-2"
+                >
+                  <Settings2 />
+                  <span>Configurações</span>
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem variant="destructive" onClick={sair}>
                 Sair
-              </DropdownMenuItem>            </DropdownMenuGroup>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

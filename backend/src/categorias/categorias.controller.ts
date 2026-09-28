@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, UseGuards } from '@nestjs/common';
 import { CategoriasService } from './categorias.service';
 import { CriarCategoriaDto } from './dto/criar-categoria.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UsuarioLogado } from '../auth/usuario-logado.decorator';
 import type { JwtPayload } from '../auth/jwt.strategy';
+import { AtualizarCategoriaDto } from './dto/atualizar-categoria.dto';
 
 @Controller('categorias')
 @UseGuards(JwtAuthGuard)
@@ -20,5 +21,23 @@ export class CategoriasController {
         return this.categoriasService.findAll(usuario.contaId)
     }
 
+    @Put(':id')
+    async update(@Param('id') id: string, @Body() dto: CriarCategoriaDto, @UsuarioLogado() usuario: JwtPayload, ) {
+        return this.categoriasService.update(
+            usuario.contaId,
+            id,
+            dto,
+        );
+    }
 
+  @Delete(':id') 
+  async remove(@Param('id') id: string, @UsuarioLogado() usuario: JwtPayload, ) {
+        return this.categoriasService.remove(
+            usuario.contaId,
+            id,
+        );
+    }
 }
+
+
+

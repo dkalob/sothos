@@ -156,8 +156,10 @@ const SidebarComponent = () => {
                   Adicionar crédito
                 </DropdownMenuItem>
                 <DropdownMenuItem className="focus:bg-secondary focus:text-primary not-data-[variant=destructive]:focus:**:text-primary">
-                  <Settings2 />
-                  Configurações
+                  <Link href="/configuracoes" className="flex w-full items-center gap-2">
+                    <Settings2 />
+                    <span>Configurações</span>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem variant="destructive" onClick={sair}>

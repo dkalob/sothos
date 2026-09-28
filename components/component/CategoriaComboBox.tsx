@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import {
   Combobox,
   ComboboxContent,
-  ComboboxEmpty,
   ComboboxInput,
   ComboboxItem,
   ComboboxList,
@@ -12,6 +11,7 @@ import {
 import { apiGet } from "@/lib/api";
 import { useToken } from "@/hooks/use-token";
 import { toast } from "@/components/ui/toast";
+import Link from "next/link";
 
 export type Categoria = {
   id: string;
@@ -19,16 +19,14 @@ export type Categoria = {
 };
 
 interface CategoriaComboboxProps {
-  value: string;
-  onChange: (value: string) => void;
+  onSelect: (categoria: Categoria) => void;
 }
 
-const CategoriaCombobox = ({
-  value,
-  onChange,
-}: CategoriaComboboxProps) => {
+const CategoriaCombobox = ({ onSelect }: CategoriaComboboxProps) => {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [inputValue, setInputValue] = useState("");
+
   const token = useToken();
 
   useEffect(() => {
@@ -55,30 +53,69 @@ const CategoriaCombobox = ({
     buscarCategorias();
   }, [token]);
 
+  const categoriasFiltradas = categorias.filter((categoria) => {
+    const busca = inputValue.toLowerCase().trim();
+
+    return categoria.nome.toLowerCase().includes(busca);
+  });
+
+  const nenhumaCategoriaEncontrada = categoriasFiltradas.length === 0;
+
   return (
     <Combobox
       items={categorias}
-      value={value}
-      onValueChange={(value) => onChange((value as string) ?? "")}
+      onValueChange={(value) => {
+        const categoriaSelecionada = categorias.find(
+          (categoria) => categoria.nome === value,
+        );
+
+        if (!categoriaSelecionada) return;
+
+        onSelect(categoriaSelecionada);
+        setInputValue("");
+      }}
+      filter={null}
     >
-      <ComboboxInput placeholder="Selecione a categoria" />
+      <ComboboxInput
+        placeholder={
+          carregando ? "Carregando categorias..." : "Selecione a categoria"
+        }
+        onChange={(event) => setInputValue(event.target.value)}
+      />
 
       <ComboboxContent>
-        <ComboboxEmpty>
-          {carregando
-            ? "Carregando categorias..."
-            : "Nenhuma categoria encontrada."}
-        </ComboboxEmpty>
-
         <ComboboxList>
-          {categorias.map((categoria) => (
+          {carregando ? (
+            <div className="px-3 py-2 text-center text-sm text-muted-foreground">
+              Carregando categorias...
+            </div>
+          ) : nenhumaCategoriaEncontrada ? (
             <ComboboxItem
-              key={categoria.id}
-              value={categoria.id}
-            >
-              {categoria.nome}
-            </ComboboxItem>
-          ))}
+              className="text-sm text-muted-foreground hover:bg-secondary hover:text-primary"
+              render={
+                <Link href="/configuracoes">
+                  <span>Nenhuma categoria encontrada.</span>
+                </Link>
+              }
+            />
+          ) : (
+            <>
+              {categoriasFiltradas.map((categoria) => (
+                <ComboboxItem key={categoria.id} value={categoria.nome}>
+                  {categoria.nome}
+                </ComboboxItem>
+              ))}
+
+              <ComboboxItem
+                className="cursor-pointer text-sm text-muted-foreground hover:bg-secondary hover:text-primary"
+                render={
+                  <Link href="/configuracoes">
+                    <span>+ adicionar categoria</span>
+                  </Link>
+                }
+              />
+            </>
+          )}
         </ComboboxList>
       </ComboboxContent>
     </Combobox>
