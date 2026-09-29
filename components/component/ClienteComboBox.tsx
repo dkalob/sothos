@@ -27,7 +27,7 @@ interface ClienteComboboxProps {
 const ClienteCombobox = ({ value, onChange }: ClienteComboboxProps) => {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [carregando, setCarregando] = useState(true);
-  
+
   const token = useToken();
 
   useEffect(() => {
@@ -61,11 +61,18 @@ const ClienteCombobox = ({ value, onChange }: ClienteComboboxProps) => {
   }
 
   return (
-    <Combobox items={clientes} value={value} onValueChange={(value) => onChange(value as string ?? "")}>
-      <ComboboxInput placeholder="Selecione o cliente" />
+    <Combobox
+      items={clientes}
+      value={value}
+      onValueChange={(value) => onChange((value as string) ?? "")}
+    >
+      <ComboboxInput
+        placeholder="Selecione o cliente"
+        value={clientes.find((cliente) => cliente.id === value)?.nome ?? ""}
+      />
 
       <ComboboxContent>
-          <ComboboxEmpty>Nenhum cliente encontrado.</ComboboxEmpty> 
+        <ComboboxEmpty>Nenhum cliente encontrado.</ComboboxEmpty>
 
         <ComboboxList>
           {clientes.map((cliente) => (

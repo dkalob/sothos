@@ -24,7 +24,7 @@ import {
   ComboboxList,
 } from "@/components/ui/combobox";
 import { useState, useEffect } from "react";
-import { apiPost } from "@/lib/api";
+import { apiGet, apiPost, apiPut } from "@/lib/api";
 import { useToken } from "@/hooks/use-token";
 import { OrderFormErrors, orderSchema } from "./OrderSchema";
 import ClienteCombobox from "../ClienteComboBox";
@@ -36,14 +36,8 @@ interface OrderSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onPedidoCadastrado: () => Promise<void>;
+  pedidoId?: string | null;
 }
-
-
-type ClienteComboBox = {
-  id: string;
-  nome: string;
-  cpf: string;
-};
 
 type ItemPedido = {
   produtoId: string;
@@ -66,6 +60,23 @@ type OrderForm = {
   status: StatusPedido;
 };
 
+type PedidoDetalhado = {
+  id: string;
+  clienteId: string | null;
+  numero: string | null;
+  status: StatusPedido;
+  valorFrete: number;
+  valorDesconto: number;
+  realizadoEm: string;
+  itens: {
+    produtoId: string | null;
+    nomeProduto: string;
+    sku: string | null;
+    quantidade: number;
+    precoUnitario: number;
+  }[];
+};
+
 const initialForm: OrderForm = {
   cliente: "",
   itens: [],
@@ -77,6 +88,12 @@ const initialForm: OrderForm = {
   desconto: "",
   status: "PENDENTE",
 };
+
+type ClienteComboBox = {
+  id: string;
+  nome: string;
+  cpf: string;
+}
 
 type StatusPedido =
   | "PENDENTE"
@@ -95,14 +112,80 @@ const statusPedidos: StatusPedido[] = [
   "DEVOLVIDO",
 ];
 
-const OrderSheet = ({ open, onOpenChange, onPedidoCadastrado, }: OrderSheetProps) => {
+const OrderSheet = ({
+  open,
+  onOpenChange,
+  onPedidoCadastrado,
+  pedidoId,
+}: OrderSheetProps) => {
   const [form, setForm] = useState<OrderForm>(initialForm);
   const [errors, setErrors] = useState<OrderFormErrors>({});
-  const [clientes, setClientes] = useState<ClienteComboBox[]>([]);
   const [produtoDuplicado, setProdutoDuplicado] = useState(false);
+  const [clientes, setClientes] = useState<ClienteComboBox[]>([]);
 
   const token = useToken();
 
+  //Função para recarregar dados do pedido selecionado
+  useEffect(() => {
+    if (!open || !pedidoId || !token) return;
+
+    async function carregarPedido() {
+      try {
+        const pedido = await apiGet<PedidoDetalhado>(
+          `/pedidos/${pedidoId}`,
+          token ?? undefined,
+        );
+
+        setForm({
+          cliente: pedido.clienteId ?? "",
+
+          itens: pedido.itens.map((item) => ({
+            produtoId: item.produtoId ?? "",
+            nomeProduto: item.nomeProduto,
+            sku: item.sku,
+            imagem: null,
+            precoUnitario: String(item.precoUnitario),
+            quantidade: item.quantidade,
+          })),
+
+          idPedido: pedido.numero ?? "",
+
+          data: pedido.realizadoEm.split("T")[0],
+
+          temFrete: Number(pedido.valorFrete) > 0,
+          frete: Number(pedido.valorFrete) || "",
+
+          temDesconto: Number(pedido.valorDesconto) > 0,
+          desconto: Number(pedido.valorDesconto) || "",
+
+          status: pedido.status,
+        });
+
+        setErrors({});
+        setProdutoDuplicado(false);
+      } catch (error) {
+        console.error("Erro ao carregar pedido:", error);
+
+        toast.add({
+          title: "Não foi possível carregar o pedido",
+          type: "error",
+        });
+      }
+    }
+
+    carregarPedido();
+  }, [open, pedidoId, token]);
+
+  //Função para resetar o form quando o Sheet abrir sem pedidoId
+  useEffect(() => {
+    if (open && !pedidoId) {
+      setForm(initialForm);
+      setErrors({});
+      setProdutoDuplicado(false);
+    }
+  }, [open, pedidoId]);
+
+  //Função para calcular o valor do pedido com base nos itens e estoque
   function calcularValorTotal() {
     const valorProdutos = (form.itens ?? []).reduce((total, item) => {
       const preco = Number(item.precoUnitario);
@@ -118,7 +201,7 @@ const OrderSheet = ({ open, onOpenChange, onPedidoCadastrado, }: OrderSheetProps
   }
 
   //Função para cadastrar pedido
-  async function cadastrarPedido() {
+  async function salvarPedido() {
     const dadosPedido = {
       clienteId: form.cliente,
 
@@ -142,22 +225,37 @@ const OrderSheet = ({ open, onOpenChange, onPedidoCadastrado, }: OrderSheetProps
     };
 
     try {
-      const pedido = await apiPost("/pedidos", dadosPedido, token ?? undefined);
+      if (pedidoId) {
+        // EDITAR PEDIDO
+        await apiPut(`/pedidos/${pedidoId}`, dadosPedido, token ?? undefined);
 
-      toast.add({
-        title: "Pedido cadastrado com sucesso!",
-        type: "sucess",
-      });
-      
+        toast.add({
+          title: "Pedido atualizado com sucesso!",
+          type: "success",
+        });
+      } else {
+        // CADASTRAR PEDIDO
+        await apiPost("/pedidos", dadosPedido, token ?? undefined);
+
+        toast.add({
+          title: "Pedido cadastrado com sucesso!",
+          type: "success",
+        });
+      }
+
       await onPedidoCadastrado();
+
       onOpenChange(false);
+
       setForm(initialForm);
       setErrors({});
     } catch (error) {
       console.error(error);
 
       toast.add({
-        title: "Não foi possível cadastrar o pedido",
+        title: pedidoId
+          ? "Não foi possível atualizar o pedido"
+          : "Não foi possível cadastrar o pedido",
         type: "error",
       });
     }
@@ -167,9 +265,13 @@ const OrderSheet = ({ open, onOpenChange, onPedidoCadastrado, }: OrderSheetProps
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="flex h-full flex-col">
         <SheetHeader>
-          <SheetTitle>Cadastrar pedido</SheetTitle>
+          <SheetTitle>
+            {pedidoId ? "Editar Pedido" : "Cadastrar pedido"}
+          </SheetTitle>
           <SheetDescription>
-            Preencha todos os campos para cadastrar um pedido.
+            {pedidoId
+              ? "Altere os dados do pedido conforme necessário."
+              : "Preencha todos os campos para cadastrar um pedido."}
           </SheetDescription>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto px-4">
@@ -495,7 +597,9 @@ const OrderSheet = ({ open, onOpenChange, onPedidoCadastrado, }: OrderSheetProps
           </div>
         </div>
         <SheetFooter>
-          <Button onClick={cadastrarPedido}>Cadastrar pedido</Button>
+          <Button onClick={salvarPedido}>
+            {pedidoId ? "Salvar alterações" : "Cadastrar pedido"}
+          </Button>
           <SheetClose render={<Button variant="outline">Fechar</Button>} />
         </SheetFooter>
       </SheetContent>

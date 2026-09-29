@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Patch, UseGuards, Delete, Put } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { PedidoDto } from "./dto/pedido.dto";
 import { PedidosService } from "./pedidos.service";
@@ -19,7 +19,21 @@ export class PedidosController {
     @Get()
     async findAll(@UsuarioLogado() usuario: JwtPayload) {
         return this.pedidosService.findAll(usuario.contaId);
-}
+    }
 
+    @Get(":id")
+    async findOne(@Param("id") id: string, @UsuarioLogado() usuario: JwtPayload) {
+        return this.pedidosService.findOne(usuario.contaId, id)
+    }
+
+    @Put(':id')
+    async update(@Param('id') id: string, @Body() dto: PedidoDto, @UsuarioLogado() usuario: JwtPayload ) {
+        return this.pedidosService.update(usuario.contaId, id, dto);
+    }
+
+    @Delete(':id')
+    async remove(@Param('id') id: string, @UsuarioLogado() usuario: JwtPayload ) {
+        return this.pedidosService.remove(usuario.contaId, id);
+    }
 
 }

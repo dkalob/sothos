@@ -43,7 +43,7 @@ export type ClientTableColumns = {
 };
 
 export type GroupTableColumns = {
-  //Aqui define as colunas da tabela grupos
+  id: string;
   data: Date;
   nome: string;
   campanhas: number;
@@ -210,19 +210,20 @@ export const columnsClient = (
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
-          </AlertDialog>
+          </AlertDialog >
         </>
       );
     },
   },
 ];
 
-export const columnsGroup: ColumnDef<GroupTableColumns>[] = [
+export const columnsGroup = (atualizarGrupos: () => Promise<void>,): ColumnDef<GroupTableColumns>[] => [
   {
     accessorKey: "data",
-    header: "Data da última atualização",
+    header: "Última atividade",
     cell: ({ row }) => {
-      const data = row.getValue("data") as Date;
+      const dataValor = row.getValue("data") as Date;
+      const data = new Date(dataValor as unknown as string);
       const dataFormatada = new Intl.DateTimeFormat("pt-BR", {
         day: "2-digit",
         month: "short",
@@ -276,6 +277,29 @@ export const columnsGroup: ColumnDef<GroupTableColumns>[] = [
       const r = row.original;
       const [open, setOpen] = useState(false);
 
+      const token = useToken();
+
+      const deletarGrupo = async () => {
+        try {
+          await apiDelete(`/clientes/grupos/${r.id}`, token ?? undefined);
+
+          toast.add({
+            title: "Grupo excluído com sucesso!",
+            type: "success",
+          });
+
+          setOpen(false);
+          await atualizarGrupos();
+        } catch (error) {
+          console.error("Erro ao deletar grupo:", error);
+
+          toast.add({
+            title: "Não foi possível excluir o grupo",
+            type: "error",
+          });
+        }
+      };
+
       return (
         <>
           <DropdownMenu>
@@ -313,7 +337,7 @@ export const columnsGroup: ColumnDef<GroupTableColumns>[] = [
                   <Trash2Icon />
                 </AlertDialogMedia>
 
-                <AlertDialogTitle>Excluir Cliente?</AlertDialogTitle>
+                <AlertDialogTitle>Excluir Grupo?</AlertDialogTitle>
 
                 <AlertDialogDescription>
                   Essa ação irá excluir permanentemente o grupo de clientes{" "}
@@ -326,7 +350,10 @@ export const columnsGroup: ColumnDef<GroupTableColumns>[] = [
                   Cancelar
                 </AlertDialogCancel>
 
-                <AlertDialogAction variant="destructive">
+                <AlertDialogAction
+                  variant="destructive"
+                  onClick={deletarGrupo}
+                >
                   Deletar
                 </AlertDialogAction>
               </AlertDialogFooter>

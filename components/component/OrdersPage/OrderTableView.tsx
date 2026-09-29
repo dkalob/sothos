@@ -7,19 +7,24 @@ import { ColumnDef } from "@tanstack/react-table";
 import { OrderTableColumns } from "./columns";
 import { Download, Plus } from "lucide-react";
 import OrderSheet from "./OrderSheet";
-import { apiGet } from "@/lib/api";
+import { apiDelete, apiGet } from "@/lib/api";
 import { useToken } from "@/hooks/use-token";
+import { toast } from "@/components/ui/toast";
 
 interface OrderTableViewProps {
-  columnsOrder: ColumnDef<OrderTableColumns>[];
+  columnsOrder: (
+    onEditarPedido: (id: string) => void,
+    onExcluirPedido: (id: string) => Promise<void>,
+  ) => ColumnDef<OrderTableColumns>[];
 }
 
-const OrderTableView = ({
-  columnsOrder,
-}: OrderTableViewProps) => {
+const OrderTableView = ({ columnsOrder }: OrderTableViewProps) => {
   const [orderData, setOrderData] = useState<OrderTableColumns[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [orderSheet, setOrderSheet] = useState(false);
+  const [pedidoSelecionado, setPedidoSelecionado] = useState<string | null>(
+    null,
+  );
 
   const token = useToken();
 
@@ -27,10 +32,7 @@ const OrderTableView = ({
     if (!token) return;
 
     try {
-      const pedidos = await apiGet<OrderTableColumns[]>(
-        "/pedidos",
-        token
-      );
+      const pedidos = await apiGet<OrderTableColumns[]>("/pedidos", token);
 
       console.log("PEDIDOS RECEBIDOS DA API:", pedidos);
 
@@ -46,6 +48,27 @@ const OrderTableView = ({
     buscarPedidos();
   }, [token]);
 
+  async function excluirPedido(id: string) {
+    if (!token) return;
+
+    try {
+      await apiDelete(`/pedidos/${id}`, token);
+
+      toast.add({
+            title: "Pedido excluído com sucesso!",
+            type: "success",
+          });
+
+      await buscarPedidos();
+    } catch (erro) {
+      console.error("Erro ao excluir pedido:", erro);
+      toast.add({
+            title: "Não foi possível excluir o pedido",
+            type: "error",
+          });
+    }
+  }
+
   if (carregando) {
     return <div className="mt-8">Carregando...</div>;
   }
@@ -53,36 +76,25 @@ const OrderTableView = ({
   return (
     <div className="mt-8">
       <div className="flex flex-col gap-2 ml-2.5">
-
         {/* HEADER */}
         <div className="flex justify-between items-center">
-
           <div className="flex flex-col">
-            <span className="text-md font-medium">
-              Todos os pedidos
-            </span>
+            <span className="text-md font-medium">Todos os pedidos</span>
 
             <span className="text-sm text-gray-600">
-              Visualize e administre todos os pedidos da sua loja em uma
-              única tela
+              Visualize e administre todos os pedidos da sua loja em uma única
+              tela
             </span>
           </div>
 
           {/* BOTÕES */}
           <div className="flex gap-2 items-center">
-
-            <Button
-              variant="outline"
-              className="w-40 truncate"
-            >
+            <Button variant="outline" className="w-40 truncate">
               <Download />
               Exportar Pedidos
             </Button>
 
-            <Button
-              variant="outline"
-              className="w-40 truncate"
-            >
+            <Button variant="outline" className="w-40 truncate">
               <Download className="rotate-180" />
               Importar Pedidos
             </Button>
@@ -90,7 +102,10 @@ const OrderTableView = ({
             <Button
               variant="default"
               className="w-32 truncate"
-              onClick={() => setOrderSheet(true)}
+              onClick={() => {
+                setPedidoSelecionado(null);
+                setOrderSheet(true);
+              }}
             >
               <Plus />
               Novo Pedido
@@ -98,23 +113,30 @@ const OrderTableView = ({
 
             <OrderSheet
               open={orderSheet}
-              onOpenChange={setOrderSheet}
+              onOpenChange={(open) => {
+                setOrderSheet(open);
+                if (!open) {
+                  setPedidoSelecionado(null);
+                }
+              }}
+              pedidoId={pedidoSelecionado}
               onPedidoCadastrado={buscarPedidos}
             />
-
           </div>
         </div>
 
         {/* TABELA */}
         <DataTable
-          columns={columnsOrder}
+          columns={columnsOrder((id) => {
+            setPedidoSelecionado(id);
+            setOrderSheet(true);
+          }, excluirPedido)}
           data={orderData}
           hasFilter
           hasPagination
           filterColumn="cliente"
           filterPlaceholder="Filtrar pedidos por cliente..."
         />
-
       </div>
     </div>
   );

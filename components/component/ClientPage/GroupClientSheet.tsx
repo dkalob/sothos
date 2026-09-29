@@ -5,11 +5,7 @@ import { X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Field,
-  FieldDescription,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
 
@@ -23,11 +19,11 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-import ClienteCombobox, {Cliente} from "../ClienteComboBox";
+import ClienteCombobox, { Cliente } from "../ClienteComboBox";
 
-import { apiGet } from "@/lib/api";
+import { apiGet, apiPost } from "@/lib/api";
 import { useToken } from "@/hooks/use-token";
-import { GrupoFormErrors } from "./ClienteSchema";
+import { clienteSchema, GrupoFormErrors, grupoSchema } from "./ClienteSchema";
 
 interface GrupoSheetProps {
   open: boolean;
@@ -45,7 +41,11 @@ const initialForm: GrupoForm = {
   clientes: [],
 };
 
-const GrupoSheet = ({open, onOpenChange, onGrupoCadastrado }: GrupoSheetProps) => {
+const GrupoSheet = ({
+  open,
+  onOpenChange,
+  onGrupoCadastrado,
+}: GrupoSheetProps) => {
   const [form, setForm] = useState<GrupoForm>(initialForm);
   const [errors, setErrors] = useState<GrupoFormErrors>({});
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -79,12 +79,9 @@ const GrupoSheet = ({open, onOpenChange, onGrupoCadastrado }: GrupoSheetProps) =
   }, [token, open]);
 
   function adicionarCliente(clienteId: string) {
-    
     if (!clienteId) return;
 
-    const cliente = clientes.find(
-      (item) => item.id === clienteId,
-    );
+    const cliente = clientes.find((item) => item.id === clienteId);
 
     if (!cliente) return;
 
@@ -101,27 +98,68 @@ const GrupoSheet = ({open, onOpenChange, onGrupoCadastrado }: GrupoSheetProps) =
 
     setForm((prev) => ({
       ...prev,
-      clientes: [
-        ...prev.clientes,
-        cliente,
-      ],
+      clientes: [...prev.clientes, cliente],
     }));
 
-    // Limpa a seleção do Combobox
+    
     setClienteSelecionado("");
   }
 
   function removerCliente(clienteId: string) {
     setForm((prev) => ({
       ...prev,
-      clientes: prev.clientes.filter(
-        (cliente) => cliente.id !== clienteId,
-      ),
+      clientes: prev.clientes.filter((cliente) => cliente.id !== clienteId),
     }));
   }
 
   async function cadastrarGrupo() {
-    
+    // Valida o formulário usando o schema de GRUPO
+    const result = grupoSchema.safeParse(form);
+
+    if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors;
+
+      setErrors({
+        nome: fieldErrors.nome?.[0],
+        clientes: fieldErrors.clientes?.[0],
+      });
+
+      return;
+    }
+
+    try {
+      const payload = {
+        nome: form.nome,
+        clientesIds: form.clientes.map((cliente) => cliente.id),
+      };
+
+      await apiPost(
+        "/clientes/grupos",
+        payload,
+        token ?? undefined,
+      );
+
+      toast.add({
+        title: "Grupo cadastrado com sucesso!",
+        type: "success",
+      });
+
+      setForm(initialForm);
+      setErrors({});
+      setClienteSelecionado("");
+      setClienteDuplicado(false);
+
+      onOpenChange(false);
+
+      await onGrupoCadastrado();
+    } catch (error) {
+      console.error("Erro ao cadastrar grupo:", error);
+
+      toast.add({
+        title: "Não foi possível cadastrar o grupo",
+        type: "error",
+      });
+    }
   }
 
   function fecharSheet() {
@@ -134,8 +172,8 @@ const GrupoSheet = ({open, onOpenChange, onGrupoCadastrado }: GrupoSheetProps) =
   }
 
   return (
-    <Sheet 
-      open={open} 
+    <Sheet
+      open={open}
       onOpenChange={(valor) => {
         if (!valor) {
           fecharSheet();
@@ -171,7 +209,7 @@ const GrupoSheet = ({open, onOpenChange, onGrupoCadastrado }: GrupoSheetProps) =
                 aria-invalid={!!errors.nome}
               />
               <FieldDescription
-                className={errors.nome? "text-destructive" : undefined}
+                className={errors.nome ? "text-destructive" : undefined}
               >
                 {errors.nome ?? "Esse campo deve ser preenchido"}
               </FieldDescription>
@@ -207,16 +245,12 @@ const GrupoSheet = ({open, onOpenChange, onGrupoCadastrado }: GrupoSheetProps) =
                       {cliente.nome}
                       <button
                         type="button"
-                        onClick={() =>
-                          removerCliente(cliente.id)
-                        }
+                        onClick={() => removerCliente(cliente.id)}
                         className="ml-1 rounded-full p-0.5 hover:bg-destructive/20 hover:text-destructive"
                         title={`Remover ${cliente.nome}`}
                       >
                         <X className="size-3" />
-                        <span className="sr-only">
-                          Remover {cliente.nome}
-                        </span>
+                        <span className="sr-only">Remover {cliente.nome}</span>
                       </button>
                     </Badge>
                   ))}
@@ -227,8 +261,7 @@ const GrupoSheet = ({open, onOpenChange, onGrupoCadastrado }: GrupoSheetProps) =
         </div>
         <SheetFooter>
           <Button onClick={cadastrarGrupo}>Cadastrar grupo</Button>
-          <SheetClose
-            render={<Button variant="outline">Fechar</Button>}/>
+          <SheetClose render={<Button variant="outline">Fechar</Button>} />
         </SheetFooter>
       </SheetContent>
     </Sheet>

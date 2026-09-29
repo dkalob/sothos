@@ -3,7 +3,7 @@
 // Essa página formata a tabela
 
 import { ColumnDef } from "@tanstack/react-table";
-import { BookUser, MoreVertical, Trash2, Trash2Icon } from "lucide-react";
+import { MoreVertical, Pen, Trash2, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -28,6 +28,7 @@ import { useState } from "react";
 export type OrderTableColumns = {
   //Aqui define as colunas da tabela clientes
   id: string;
+  numero: string | null;
   cliente: string;
   produto: string;
   valor: number;
@@ -37,21 +38,24 @@ export type OrderTableColumns = {
 // Abaixo é como será a formatação das colunas. Sempre usar acessorKey
 // e header (por enquanto) quando conectar com o BD talvez seja por id
 
-export const columnsOrder: ColumnDef<OrderTableColumns>[] = [
+export const columnsOrder = (
+  onEditarPedido: (id: string) => void,
+  onExcluirPedido: (id: string) => Promise<void>,
+): ColumnDef<OrderTableColumns>[] => [
   {
-  accessorKey: "id",
-  header: "Id do pedido",
-  cell: ({ row }) => {
-    const id = row.getValue("id") as number;
+    accessorKey: "numero",
+    header: "Id do pedido",
+    cell: ({ row }) => {
+      const numero = row.getValue("numero") as string | null;
+      
 
-
-    return (
-      <div className="flex items-center gap-2">
-        <span className="font-semibold">{id}</span>
-      </div>
-    );
+      return (
+        <div className="flex items-center gap-2">
+          <span className="font-semibold">{numero ?? "-"}</span>
+        </div>
+      );
+    },
   },
-},
   {
     accessorKey: "cliente",
     header: "Cliente",
@@ -93,9 +97,7 @@ export const columnsOrder: ColumnDef<OrderTableColumns>[] = [
       return (
         <div className="flex flex-col">
           <span>{dataFormatada}</span>
-          <span className="text-sm text-muted-foreground">
-            {horaFormatada}
-          </span>
+          <span className="text-sm text-muted-foreground">{horaFormatada}</span>
         </div>
       );
     },
@@ -120,9 +122,10 @@ export const columnsOrder: ColumnDef<OrderTableColumns>[] = [
 
             <DropdownMenuContent align="end" className="w-36">
               <DropdownMenuGroup>
-                <DropdownMenuItem>
-                  <BookUser />
-                  Ver pedido
+                <DropdownMenuItem
+                  onClick={() => { onEditarPedido(r.id);}}>
+                  <Pen />
+                  Editar pedido
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
@@ -147,7 +150,7 @@ export const columnsOrder: ColumnDef<OrderTableColumns>[] = [
 
                 <AlertDialogDescription>
                   Essa ação irá excluir permanentemente o pedido{" "}
-                  <strong>{r.id}</strong>. Essa ação não pode ser desfeita.
+                  <strong>{r.numero}</strong>. Essa ação não pode ser desfeita.
                 </AlertDialogDescription>
               </AlertDialogHeader>
 
@@ -156,7 +159,13 @@ export const columnsOrder: ColumnDef<OrderTableColumns>[] = [
                   Cancelar
                 </AlertDialogCancel>
 
-                <AlertDialogAction variant="destructive">
+                <AlertDialogAction
+                  variant="destructive"
+                  onClick={async () => {
+                    await onExcluirPedido(r.id);
+                    setOpen(false);
+                  }}
+                >
                   Deletar
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -167,4 +176,3 @@ export const columnsOrder: ColumnDef<OrderTableColumns>[] = [
     },
   },
 ];
-

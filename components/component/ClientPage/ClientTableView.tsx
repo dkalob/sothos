@@ -15,7 +15,9 @@ interface ClientTableViewProps {
   columnsClient: (
     atualizarClientes: () => Promise<void>,
   ) => ColumnDef<ClientTableColumns>[];
-  columnsGroup: ColumnDef<GroupTableColumns>[];
+  columnsGroup: (
+    atualizarGrupos: () => Promise<void>,
+  ) => ColumnDef<GroupTableColumns>[];
 }
 
 const ClientTableView = ({
@@ -43,14 +45,28 @@ const ClientTableView = ({
     }
   }
 
+  async function buscarGrupos() {
+    if (!token) return;
+    try {
+      const grupos = await apiGet<GroupTableColumns[]>(
+        "/clientes/grupos",
+        token,
+      );
+      setGruposData(grupos);
+    } catch (erro) {
+      console.error("Erro ao buscar grupos:", erro);
+    }
+  }
+
+
+
   const atualizarClientes = async () => {
     await buscarClientes();
   };
 
   useEffect(() => {
     buscarClientes();
-    // quando o módulo de grupos existir de verdade:
-    // buscarGrupos()
+    buscarGrupos();
   }, [token]);
 
   if (carregando) {
@@ -127,7 +143,8 @@ const ClientTableView = ({
             />
             <GroupClientSheet 
               open={grupoSheet} 
-              onOpenChange={setGrupoSheet} 
+              onOpenChange={setGrupoSheet}
+              onGrupoCadastrado={buscarGrupos}
             />
           </div>
         </div>
@@ -143,7 +160,7 @@ const ClientTableView = ({
           />
         ) : (
           <DataTable
-            columns={columnsGroup}
+            columns={columnsGroup(buscarGrupos)}
             data={gruposData}
             hasFilter
             hasPagination

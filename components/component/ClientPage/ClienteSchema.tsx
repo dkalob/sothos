@@ -19,8 +19,11 @@ export const clienteSchema = z.object({
 
 export const grupoSchema = z.object({
   nome: z.string().trim().min(3, "Nome deve ter pelo menos 3 letras"),
-
+  clientes: z
+    .array(z.unknown())
+    .min(1, "Adicione pelo menos um cliente ao grupo"),
 });
+
 
 export type ClienteFormErrors = Partial<
   Record<keyof z.infer<typeof clienteSchema>, string>

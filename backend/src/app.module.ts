@@ -9,6 +9,7 @@ import { ClientesModule } from './clientes/clientes.module';
 import { CategoriasModule } from './categorias/categorias.module';
 import { ProdutosModule } from './produtos/produtos.module';
 import { PedidosModule } from './pedidos/pedidos.module';
+import { GrupoClientesModule } from './clientes/grupoDeClientes/grupo-clientes.module';
 
 
 @Module({
@@ -17,6 +18,7 @@ import { PedidosModule } from './pedidos/pedidos.module';
     PrismaModule,
     EmailModule,
     AuthModule,
+    GrupoClientesModule,
     ClientesModule,
     CategoriasModule,
     ProdutosModule,
