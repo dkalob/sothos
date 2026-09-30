@@ -21,7 +21,7 @@ import {
 
 import ClienteCombobox, { Cliente } from "../ClienteComboBox";
 
-import { apiGet, apiPost } from "@/lib/api";
+import { apiGet, apiPost, apiPut } from "@/lib/api";
 import { useToken } from "@/hooks/use-token";
 import { clienteSchema, GrupoFormErrors, grupoSchema } from "./ClienteSchema";
 
@@ -29,6 +29,7 @@ interface GrupoSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onGrupoCadastrado: () => Promise<void>;
+  grupoId?: string | null;
 }
 
 type GrupoForm = {
@@ -41,10 +42,20 @@ const initialForm: GrupoForm = {
   clientes: [],
 };
 
+type GrupoDetalhado = {
+  id: string;
+  nome: string;
+  itens: {
+    id: string;
+    nome: string;
+  }[];
+};
+
 const GrupoSheet = ({
   open,
   onOpenChange,
   onGrupoCadastrado,
+  grupoId,
 }: GrupoSheetProps) => {
   const [form, setForm] = useState<GrupoForm>(initialForm);
   const [errors, setErrors] = useState<GrupoFormErrors>({});
@@ -54,29 +65,58 @@ const GrupoSheet = ({
 
   const token = useToken();
 
-  // Busca os clientes para transformar o ID
-  // selecionado em um objeto Cliente
+  //Função para recarregar dados do grupo selecionado
   useEffect(() => {
     if (!token || !open) return;
 
-    async function buscarClientes() {
+    async function carregarDados() {
       try {
-        const dados = await apiGet<Cliente[]>(
+        // 1. Busca os clientes disponíveis no combobox
+        const dadosClientes = await apiGet<Cliente[]>(
           "/clientes/combobox",
           token ?? undefined,
         );
 
-        setClientes(dados);
+        setClientes(dadosClientes);
+
+        // 2. Se estiver editando, busca o grupo
+        if (grupoId) {
+          const grupo = await apiGet<GrupoDetalhado>(
+            `/clientes/grupos/${grupoId}`,
+            token ?? undefined,
+          );
+
+          // 3. Converte os itens do grupo em Cliente[]
+          const clientesDoGrupo = grupo.itens
+            .map((item) =>
+              dadosClientes.find((cliente) => cliente.id === item.id),
+            )
+            .filter((cliente): cliente is Cliente => cliente !== undefined);
+
+          setForm({
+            nome: grupo.nome,
+            clientes: clientesDoGrupo,
+          });
+        } else {
+          // Novo grupo
+          setForm(initialForm);
+        }
+
+        setErrors({});
+        setClienteSelecionado("");
+        setClienteDuplicado(false);
       } catch (error) {
+        console.error("Erro ao carregar dados do grupo:", error);
+
         toast.add({
-          title: "Não foi possível carregar os clientes",
+          title: "Não foi possível carregar os dados do grupo",
           type: "error",
         });
       }
     }
 
-    buscarClientes();
-  }, [token, open]);
+    carregarDados();
+  }, [token, open, grupoId]);
 
   function adicionarCliente(clienteId: string) {
     if (!clienteId) return;
@@ -101,7 +141,6 @@ const GrupoSheet = ({
       clientes: [...prev.clientes, cliente],
     }));
 
-    
     setClienteSelecionado("");
   }
 
@@ -112,8 +151,7 @@ const GrupoSheet = ({
     }));
   }
 
-  async function cadastrarGrupo() {
-    // Valida o formulário usando o schema de GRUPO
+  async function salvarGrupo() {
     const result = grupoSchema.safeParse(form);
 
     if (!result.success) {
@@ -133,16 +171,25 @@ const GrupoSheet = ({
         clientesIds: form.clientes.map((cliente) => cliente.id),
       };
 
-      await apiPost(
-        "/clientes/grupos",
-        payload,
-        token ?? undefined,
-      );
+      if (grupoId) {
+        await apiPut(
+          `/clientes/grupos/${grupoId}`,
+          payload,
+          token ?? undefined,
+        );
 
-      toast.add({
-        title: "Grupo cadastrado com sucesso!",
-        type: "success",
-      });
+        toast.add({
+          title: "Grupo atualizado com sucesso!",
+          type: "success",
+        });
+      } else {
+        await apiPost("/clientes/grupos", payload, token ?? undefined);
+
+        toast.add({
+          title: "Grupo cadastrado com sucesso!",
+          type: "success",
+        });
+      }
 
       setForm(initialForm);
       setErrors({});
@@ -153,10 +200,12 @@ const GrupoSheet = ({
 
       await onGrupoCadastrado();
     } catch (error) {
-      console.error("Erro ao cadastrar grupo:", error);
+      console.error("Erro ao salvar grupo:", error);
 
       toast.add({
-        title: "Não foi possível cadastrar o grupo",
+        title: grupoId
+          ? "Não foi possível atualizar o grupo"
+          : "Não foi possível cadastrar o grupo",
         type: "error",
       });
     }
@@ -184,9 +233,13 @@ const GrupoSheet = ({
     >
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>Adicionar Grupo de cliente</SheetTitle>
+          <SheetTitle>
+            {grupoId ? "Editar Grupo de cliente" : "Adicionar Grupo de cliente"}
+          </SheetTitle>
           <SheetDescription>
-            Preencha todos os campos para cadastrar um grupo de clientes.
+            {grupoId
+              ? "Altere os dados do grupo conforme necessário."
+              : "Preencha todos os campos para cadastrar um grupo de clientes."}
           </SheetDescription>
         </SheetHeader>
         <div className="grid flex-1 auto-rows-min gap-6 px-4">
@@ -260,7 +313,9 @@ const GrupoSheet = ({
           </div>
         </div>
         <SheetFooter>
-          <Button onClick={cadastrarGrupo}>Cadastrar grupo</Button>
+          <Button onClick={salvarGrupo}>
+            {grupoId ? "Salvar alterações" : "Cadastrar grupo"}
+          </Button>
           <SheetClose render={<Button variant="outline">Fechar</Button>} />
         </SheetFooter>
       </SheetContent>

@@ -20,10 +20,19 @@ export class GrupoClientesController {
     return this.grupoClientesService.findAll(usuario.contaId);
   }
 
+  @Get(":id")
+  async findOne(@Param("id") id: string, @UsuarioLogado() usuario: JwtPayload, ) {
+    return this.grupoClientesService.findOne(id, usuario.contaId);
+  }
+
+  @Put(":id")
+  async update(@Param("id") id: string, @Body() dto: GrupoClientesDto, @UsuarioLogado() usuario: JwtPayload, ) {
+    return this.grupoClientesService.update(id, usuario.contaId, dto);
+}
+
   @Delete(":id")
   async delete(@Param("id") id:string, @UsuarioLogado() usuario: JwtPayload) {
     return this.grupoClientesService.delete(id, usuario.contaId)
-
   }
 
 

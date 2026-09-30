@@ -4,7 +4,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import RFMBadge, { RFMSegmento } from "../RFMBadge";
-import { BookUser, MoreVertical, Trash2, Trash2Icon } from "lucide-react";
+import { BookUser, MoreVertical, Pen, Trash2, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -217,7 +217,10 @@ export const columnsClient = (
   },
 ];
 
-export const columnsGroup = (atualizarGrupos: () => Promise<void>,): ColumnDef<GroupTableColumns>[] => [
+export const columnsGroup = (
+  atualizarGrupos: () => Promise<void>,
+  editarGrupo: (grupoId: string) => void,
+): ColumnDef<GroupTableColumns>[] => [
   {
     accessorKey: "data",
     header: "Última atividade",
@@ -314,9 +317,11 @@ export const columnsGroup = (atualizarGrupos: () => Promise<void>,): ColumnDef<G
 
             <DropdownMenuContent align="end" className="w-36">
               <DropdownMenuGroup>
-                <DropdownMenuItem>
-                  <BookUser />
-                  Ver clientes
+                <DropdownMenuItem
+                  onClick={() => editarGrupo(r.id)}
+                >
+                  <Pen />
+                  Editar Grupo
                 </DropdownMenuItem>
 
                 <DropdownMenuItem

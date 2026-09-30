@@ -17,6 +17,7 @@ interface ClientTableViewProps {
   ) => ColumnDef<ClientTableColumns>[];
   columnsGroup: (
     atualizarGrupos: () => Promise<void>,
+    editarGrupo: (grupoId: string) => void,
   ) => ColumnDef<GroupTableColumns>[];
 }
 
@@ -30,6 +31,7 @@ const ClientTableView = ({
   const [carregando, setCarregando] = useState(true);
   const [clienteSheet, setClienteSheet] = useState(false);
   const [grupoSheet, setGrupoSheet] = useState(false);
+  const [grupoSelecionado, setGrupoSelecionado] = useState<string | null>(null);
 
   const token = useToken();
 
@@ -63,6 +65,11 @@ const ClientTableView = ({
   const atualizarClientes = async () => {
     await buscarClientes();
   };
+
+  const editarGrupo = (grupoId: string) => {
+  setGrupoSelecionado(grupoId);
+  setGrupoSheet(true);
+};
 
   useEffect(() => {
     buscarClientes();
@@ -142,10 +149,17 @@ const ClientTableView = ({
               onClienteCadastrado={buscarClientes}
             />
             <GroupClientSheet 
-              open={grupoSheet} 
-              onOpenChange={setGrupoSheet}
-              onGrupoCadastrado={buscarGrupos}
-            />
+  open={grupoSheet} 
+  onOpenChange={(open) => {
+    setGrupoSheet(open);
+
+    if (!open) {
+      setGrupoSelecionado(null);
+    }
+  }}
+  grupoId={grupoSelecionado}
+  onGrupoCadastrado={buscarGrupos}
+/>
           </div>
         </div>
 
@@ -160,7 +174,7 @@ const ClientTableView = ({
           />
         ) : (
           <DataTable
-            columns={columnsGroup(buscarGrupos)}
+            columns={columnsGroup(buscarGrupos, editarGrupo)}
             data={gruposData}
             hasFilter
             hasPagination

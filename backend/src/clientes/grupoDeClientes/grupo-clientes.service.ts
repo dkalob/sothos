@@ -216,4 +216,111 @@ export class GrupoClientesService {
       message: 'Grupo excluído com sucesso.',
     };
   }
+
+  // Função que trás os dados do grupo
+  async findOne(id: string, contaId: string) {
+    const grupo = await this.prisma.grupoCliente.findFirst({
+      where: {
+        id,
+        contaId,
+      },
+      include: {
+        clientes: {
+          include: {
+            cliente: {
+              select: {
+                id: true,
+                nome: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+
+    if (!grupo) {
+      throw new NotFoundException('Grupo não encontrado.');
+    }
+
+    return {
+      id: grupo.id,
+      nome: grupo.nome,
+      itens: grupo.clientes.map((item) => ({
+        id: item.cliente.id,
+        nome: item.cliente.nome,
+      })),
+    };
+  }
+
+  async update(id: string, contaId: string, dto: GrupoClientesDto) {
+    return this.prisma.$transaction(async (tx) => {
+    // 1. Verifica se o grupo pertence à conta
+    const grupo = await tx.grupoCliente.findFirst({
+      where: {
+        id,
+        contaId,
+      },
+    });
+
+    if (!grupo) {
+      throw new NotFoundException("Grupo não encontrado.");
+    }
+
+    // 2. Verifica se todos os clientes pertencem à conta
+    const clientes = await tx.cliente.findMany({
+      where: {
+        id: {
+          in: dto.clientesIds,
+        },
+        contaId,
+      },
+    });
+
+    if (clientes.length !== dto.clientesIds.length) {
+      throw new BadRequestException(
+        "Um ou mais clientes não foram encontrados.",
+      );
+    }
+
+    // 3. Remove os clientes atuais do grupo
+    await tx.clienteGrupo.deleteMany({
+      where: {
+        grupoId: id,
+      },
+    });
+
+    // 4. Atualiza o grupo e recria os relacionamentos
+    const grupoAtualizado = await tx.grupoCliente.update({
+      where: {
+        id,
+      },
+      data: {
+        nome: dto.nome,
+
+        clientes: {
+          create: dto.clientesIds.map((clienteId) => ({
+            cliente: {
+              connect: {
+                id: clienteId,
+              },
+            },
+          })),
+        },
+      },
+
+      include: {
+        clientes: {
+          include: {
+            cliente: true,
+          },
+        },
+      },
+    });
+
+    return grupoAtualizado;
+    });
+
+  }
+  
 }
