@@ -1,4 +1,6 @@
+import { Type } from 'class-transformer';
 import {
+  IsArray,
   IsBoolean,
   IsNumber,
   IsOptional,
@@ -7,7 +9,9 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
+import { ProdutoCaracteristicaValorDto } from '../caracteristicasProduto/dto/caracteristicas-produto-valor-dto';
 
 export class ProdutoDto {
   @IsString()
@@ -34,4 +38,10 @@ export class ProdutoDto {
 
   @IsBoolean()
   ativo: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProdutoCaracteristicaValorDto)
+  caracteristicas?: ProdutoCaracteristicaValorDto[];
 }

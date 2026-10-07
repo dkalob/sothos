@@ -1,3 +1,4 @@
+import CaracteristicaTable from "@/components/component/ConfiguracoesPage/Caracteristicas/CaracteristicaTable";
 import CategoriaTable from "@/components/component/ConfiguracoesPage/Categoria/CategoriaTable";
 import PageHeader from "@/components/component/PageHeader";
 
@@ -12,6 +13,11 @@ const Configuracoes = () => {
       <div className="flex flex-col gap-6 p-6">
         <CategoriaTable />
       </div>
+
+      <div className="flex flex-col gap-6 p-6">
+        <CaracteristicaTable />
+      </div>
+
     </div>
   );
 };

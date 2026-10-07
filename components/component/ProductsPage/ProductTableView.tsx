@@ -12,7 +12,9 @@ import { useToken } from "@/hooks/use-token";
 import { toast } from "@/components/ui/toast";
 
 interface ProductTableViewProps {
-  columnsProduct: ColumnDef<ProductTableColumns>[];
+  columnsProduct: (
+    atualizarProdutos: () => Promise<void>
+  ) => ColumnDef<ProductTableColumns>[];
 }
 
 const ProductTableView = ({ columnsProduct }: ProductTableViewProps) => {
@@ -98,7 +100,7 @@ const ProductTableView = ({ columnsProduct }: ProductTableViewProps) => {
         </div>
 
         <DataTable
-          columns={columnsProduct}
+          columns={columnsProduct(atualizarProdutos)}
           data={productsData}
           hasFilter
           hasPagination

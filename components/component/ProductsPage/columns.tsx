@@ -24,9 +24,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
+import { useToken } from "@/hooks/use-token";
+import { apiDelete } from "@/lib/api";
+import { toast } from "@/components/ui/toast";
+
 
 export type ProductTableColumns = {
-  //Aqui define as colunas da tabela clientes
+  //Aqui define as colunas da tabela produtos
+  id: string;
   imagem: string;
   nome: string;
   sku: string;
@@ -37,7 +42,9 @@ export type ProductTableColumns = {
 // Abaixo é como será a formatação das colunas. Sempre usar acessorKey
 // e header (por enquanto) quando conectar com o BD talvez seja por id
 
-export const columnsProduct: ColumnDef<ProductTableColumns>[] = [
+export const columnsProduct = (
+  atualizarProdutos: () => Promise<void>
+): ColumnDef<ProductTableColumns>[] => [
   {
     accessorKey: "nome",
     header: "Nome",
@@ -128,6 +135,28 @@ export const columnsProduct: ColumnDef<ProductTableColumns>[] = [
     cell: ({ row }) => {
       const r = row.original;
       const [open, setOpen] = useState(false);
+      const token = useToken();
+
+      const deletarProduto = async () => {
+        try {
+          await apiDelete(`/produtos/${r.id}`, token ?? undefined);
+
+          toast.add({
+            title: "Produto excluído com sucesso!",
+            type: "sucess"
+          })
+
+          setOpen(false);
+          await atualizarProdutos();
+        } catch (error) {
+          console.error("Erro ao deletar produto:", error)
+
+          toast.add({
+            title: "Não foi possível excluir o produto",
+            type: "error"
+          })
+        }
+      }
 
       return (
         <>
@@ -179,7 +208,10 @@ export const columnsProduct: ColumnDef<ProductTableColumns>[] = [
                   Cancelar
                 </AlertDialogCancel>
 
-                <AlertDialogAction variant="destructive">
+                <AlertDialogAction 
+                  variant="destructive"
+                  onClick={deletarProduto}
+                >
                   Deletar
                 </AlertDialogAction>
               </AlertDialogFooter>

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProdutoDto } from './dto/produtos.dto';
 
@@ -7,7 +7,27 @@ export class ProdutosService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(contaId: string, dto: ProdutoDto) {
-    return this.prisma.produto.create({
+  return this.prisma.$transaction(async (tx) => {
+    // 1. Se vieram características, confirma que todas pertencem à conta
+    if (dto.caracteristicas && dto.caracteristicas.length > 0) {
+      const idsEnviados = dto.caracteristicas.map((c) => c.caracteristicaId);
+
+      const caracteristicasValidas = await tx.caracteristicaProduto.findMany({
+        where: {
+          id: { in: idsEnviados },
+          contaId,
+        },
+      });
+
+      if (caracteristicasValidas.length !== idsEnviados.length) {
+        throw new BadRequestException(
+          'Uma ou mais características não foram encontradas.',
+        );
+      }
+    }
+
+    // 2. Cria o produto e suas características relacionadas de uma vez
+    const produto = await tx.produto.create({
       data: {
         contaId,
         categoriaId: dto.categoriaId,
@@ -16,9 +36,28 @@ export class ProdutosService {
         precoAtual: dto.preco,
         imagem: dto.imagem,
         ativo: dto.ativo,
+
+        caracteristicas: dto.caracteristicas?.length
+          ? {
+              create: dto.caracteristicas.map((item) => ({
+                caracteristicaId: item.caracteristicaId,
+                valor: item.valor,
+              })),
+            }
+          : undefined,
+      },
+      include: {
+        caracteristicas: {
+          include: {
+            caracteristica: true,
+          },
+        },
       },
     });
-  }
+
+    return produto;
+  });
+}
 
   async findAll(contaId: string) {
     const produtos = await this.prisma.produto.findMany({
@@ -48,6 +87,7 @@ export class ProdutosService {
     });
 
     return produtos.map((produto) => ({
+      id: produto.id,
       imagem: produto.imagem ?? '',
       nome: produto.nome,
       sku: produto.sku ?? '',
@@ -73,6 +113,30 @@ export class ProdutosService {
         nome: 'asc',
       },
     });
+  }
+
+  async delete(id: string, contaId: string) {
+    const produto = await this.prisma.produto.findFirst({
+      where: {
+        id,
+        contaId,
+      }
+    })
+
+    if (!produto) {
+      throw new NotFoundException("Produto não encontrado")
+    }
+    
+    await this.prisma.produto.delete({
+      where: {
+        id: produto.id
+      }
+    })
+
+    return {
+      message: "Produto Excluído"
+    }
+
   }
 
   

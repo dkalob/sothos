@@ -10,6 +10,7 @@ import { CategoriasModule } from './categorias/categorias.module';
 import { ProdutosModule } from './produtos/produtos.module';
 import { PedidosModule } from './pedidos/pedidos.module';
 import { GrupoClientesModule } from './clientes/grupoDeClientes/grupo-clientes.module';
+import { CaracteristicaProdutoModule } from './produtos/caracteristicasProduto/caracteristicas-produto-module';
 
 
 @Module({
@@ -23,6 +24,7 @@ import { GrupoClientesModule } from './clientes/grupoDeClientes/grupo-clientes.m
     CategoriasModule,
     ProdutosModule,
     PedidosModule,
+    CaracteristicaProdutoModule
   ],
   controllers: [AppController],
   providers: [AppService],

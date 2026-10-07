@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
@@ -17,15 +17,16 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-import { apiPost } from "@/lib/api";
+import { apiPost, apiPut } from "@/lib/api";
 import { useToken } from "@/hooks/use-token";
 
-import { categoriaSchema, type CategoriaFormErrors } from "./CategoriaSchema";
+import { categoriaSchema, type CategoriaFormErrors, type Categoria } from "./CategoriaSchema";
 
 interface CategoriaSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCategoriaCadastrada: () => void | Promise<void>;
+  categoriaEditando?: Categoria | null; // NOVO — se vier preenchido, é edição
 }
 
 type CategoriaForm = {
@@ -40,81 +41,77 @@ const CategoriaSheet = ({
   open,
   onOpenChange,
   onCategoriaCadastrada,
+  categoriaEditando,
 }: CategoriaSheetProps) => {
   const [form, setForm] = useState<CategoriaForm>(initialForm);
   const [errors, setErrors] = useState<CategoriaFormErrors>({});
-  const [salvando, setSalvando] = useState(false);
-
   const token = useToken();
 
-  const cadastrarCategoria = async () => {
+  const emEdicao = !!categoriaEditando;
+
+  // Preenche o form com os dados da categoria quando o Sheet abre em modo edição
+  useEffect(() => {
+    if (categoriaEditando) {
+      setForm({ nome: categoriaEditando.nome });
+    } else {
+      setForm(initialForm);
+    }
+    setErrors({});
+  }, [categoriaEditando, open]);
+
+  // USAR ESSA FUNÇÃO PARA CADASTRAR OU EDITAR NO BANCO
+  async function salvarCategoria() {
     const result = categoriaSchema.safeParse(form);
 
     if (!result.success) {
       const fieldErrors = result.error.flatten().fieldErrors;
-
-      setErrors({
-        nome: fieldErrors.nome?.[0],
-      });
-
+      setErrors({ nome: fieldErrors.nome?.[0] });
       return;
     }
 
-    if (!token || salvando) return;
-
     try {
-      setSalvando(true);
+      if (emEdicao && categoriaEditando) {
+        // MODO EDIÇÃO
+        await apiPut(
+          `/categorias/${categoriaEditando.id}`,
+          { nome: form.nome.trim() },
+          token ?? undefined,
+        );
+        toast.add({ title: "Categoria atualizada com sucesso!", type: "success" });
+      } else {
+        // MODO CRIAÇÃO
+        await apiPost(
+          "/categorias",
+          { nome: form.nome.trim() },
+          token ?? undefined,
+        );
+        toast.add({ title: "Categoria cadastrada com sucesso!", type: "success" });
+      }
 
-      await apiPost(
-        "/categorias",
-        {
-          nome: form.nome.trim(),
-        },
-        token,
-      );
-
-      toast.add({
-        title: "Categoria cadastrada com sucesso!",
-        type: "success",
-      });
-
-      setForm(initialForm);
-      setErrors({});
       onOpenChange(false);
-
+      setForm(initialForm);
       await onCategoriaCadastrada();
     } catch (error) {
       toast.add({
-        title:
-          error instanceof Error
-            ? error.message
-            : "Não foi possível cadastrar a categoria",
+        title: emEdicao
+          ? "Não foi possível atualizar a categoria"
+          : "Não foi possível cadastrar a categoria",
         type: "error",
       });
-    } finally {
-      setSalvando(false);
     }
-  };
-
-  const handleOpenChange = (novoEstado: boolean) => {
-    if (salvando) return;
-
-    if (!novoEstado) {
-      setForm(initialForm);
-      setErrors({});
-    }
-
-    onOpenChange(novoEstado);
-  };
+  }
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>Adicionar Categoria</SheetTitle>
-
+          <SheetTitle>
+            {emEdicao ? "Editar Categoria" : "Adicionar Categoria"}
+          </SheetTitle>
           <SheetDescription>
-            Preencha o campo abaixo para cadastrar uma nova categoria.
+            {emEdicao
+              ? "Altere o nome da categoria."
+              : "Preencha o campo abaixo para cadastrar uma nova categoria."}
           </SheetDescription>
         </SheetHeader>
 
@@ -128,20 +125,11 @@ const CategoriaSheet = ({
             <Input
               placeholder="Ex.: Eletrônicos"
               value={form.nome}
-              onChange={(event) => {
-                setForm((prev) => ({
-                  ...prev,
-                  nome: event.target.value,
-                }));
-
-                if (errors.nome) {
-                  setErrors({});
-                }
-              }}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, nome: e.target.value }))
+              }
               type="text"
               aria-invalid={!!errors.nome}
-              disabled={salvando}
-              autoFocus
             />
 
             <FieldDescription
@@ -153,17 +141,10 @@ const CategoriaSheet = ({
         </div>
 
         <SheetFooter>
-          <Button onClick={cadastrarCategoria} disabled={salvando}>
-            {salvando ? "Cadastrando..." : "Cadastrar categoria"}
+          <Button onClick={salvarCategoria}>
+            {emEdicao ? "Salvar categoria" : "Cadastrar categoria"}
           </Button>
-
-          <SheetClose
-            render={
-              <Button variant="outline" disabled={salvando}>
-                Fechar
-              </Button>
-            }
-          />
+          <SheetClose render={<Button variant="outline">Fechar</Button>} />
         </SheetFooter>
       </SheetContent>
     </Sheet>

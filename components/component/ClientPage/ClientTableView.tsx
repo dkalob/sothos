@@ -60,16 +60,14 @@ const ClientTableView = ({
     }
   }
 
-
-
   const atualizarClientes = async () => {
     await buscarClientes();
   };
 
   const editarGrupo = (grupoId: string) => {
-  setGrupoSelecionado(grupoId);
-  setGrupoSheet(true);
-};
+    setGrupoSelecionado(grupoId);
+    setGrupoSheet(true);
+  };
 
   useEffect(() => {
     buscarClientes();
@@ -129,7 +127,7 @@ const ClientTableView = ({
               {aba === "clientes" ? "Exportar Clientes" : "Exportar Grupos"}
             </Button>
             <Button variant="outline" className="w-40 truncate">
-              <Download className="rotate-180"/>
+              <Download className="rotate-180" />
               {aba === "clientes" ? "Importar Clientes" : "Importar Grupos"}
             </Button>
             <Button
@@ -148,18 +146,18 @@ const ClientTableView = ({
               onOpenChange={setClienteSheet}
               onClienteCadastrado={buscarClientes}
             />
-            <GroupClientSheet 
-  open={grupoSheet} 
-  onOpenChange={(open) => {
-    setGrupoSheet(open);
+            <GroupClientSheet
+              open={grupoSheet}
+              onOpenChange={(open) => {
+                setGrupoSheet(open);
 
-    if (!open) {
-      setGrupoSelecionado(null);
-    }
-  }}
-  grupoId={grupoSelecionado}
-  onGrupoCadastrado={buscarGrupos}
-/>
+                if (!open) {
+                  setGrupoSelecionado(null);
+                }
+              }}
+              grupoId={grupoSelecionado}
+              onGrupoCadastrado={buscarGrupos}
+            />
           </div>
         </div>
 

@@ -1,3 +1,4 @@
+"use client";
 // Componente responsável por abrir o Sheet de cadastro de cliente
 // A princípio vai ficar dentro desta pasta, mas se for utlizado em
 // outro lugar, mudar para a pasta 'component'
@@ -18,18 +19,33 @@ import {
 import { useState, useEffect } from "react";
 import { ProdutoFormErrors, produtoSchema } from "./ProductSchema";
 import { useToken } from "@/hooks/use-token";
-import { apiPost } from "@/lib/api";
+import { apiGet, apiPost } from "@/lib/api";
 import { toast } from "@/components/ui/toast";
 import CategoriaCombobox from "../CategoriaComboBox";
 import { Switch } from "@/components/ui/switch";
-import { ImagePlus } from "lucide-react";
+import { ImagePlus, X } from "lucide-react";
 import { uploadImagem } from "@/lib/cloudinary";
+import Link from "next/link";
+import { Caracteristica } from "../ConfiguracoesPage/Caracteristicas/CaracteristicaSchema";
+import CaracteristicaCombobox from "../CaracteristicasComboBox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ProductSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onProdutoCadastrado: () => void;
 }
+
+type CaracteristicaProduto = {
+  caracteristica: Caracteristica; // a característica em si (nome, opcoes, etc)
+  valor: string; // o valor escolhido/digitado pelo usuário
+};
 
 type ProdutoForm = {
   imagem: File | null;
@@ -57,6 +73,14 @@ const ProductSheet = ({
   const [form, setForm] = useState<ProdutoForm>(initialForm);
   const [errors, setErrors] = useState<ProdutoFormErrors>({});
   const [imagemPreview, setImagemPreview] = useState<string | null>(null);
+  const [caracteristicasProduto, setCaracteristicasProduto] = useState<
+    CaracteristicaProduto[]
+  >([]);
+  const [caracteristicasExistentes, setCaracteristicasExistentes] = useState<
+    Caracteristica[]
+  >([]);
+  const [carregandoCaracteristicas, setCarregandoCaracteristicas] =
+    useState(true);
 
   useEffect(() => {
     if (!form.imagem) {
@@ -73,6 +97,26 @@ const ProductSheet = ({
   }, [form.imagem]);
 
   const token = useToken();
+
+  useEffect(() => {
+    if (!token) return;
+
+    async function verificarCaracteristicas() {
+      try {
+        const dados = await apiGet<Caracteristica[]>(
+          "/caracteristicas-produto",
+          token ?? undefined,
+        );
+        setCaracteristicasExistentes(dados);
+      } catch (error) {
+        console.error("Erro ao verificar características:", error);
+      } finally {
+        setCarregandoCaracteristicas(false);
+      }
+    }
+
+    verificarCaracteristicas();
+  }, [token]);
 
   async function cadastrarProduto() {
     const result = produtoSchema.safeParse({
@@ -112,9 +156,13 @@ const ProductSheet = ({
           imagem: imagemUrl,
           nome: form.nome,
           categoriaId: form.categoriaId,
-          preco: form.preco,
+          preco: result.data.preco,
           sku: form.sku,
           ativo: form.ativo,
+          caracteristicas: caracteristicasProduto.map((item) => ({
+            caracteristicaId: item.caracteristica.id,
+            valor: item.valor,
+          })),
         },
         token ?? undefined,
       );
@@ -126,8 +174,11 @@ const ProductSheet = ({
 
       onOpenChange(false);
       setForm(initialForm);
+      setCaracteristicasProduto([]);
       onProdutoCadastrado();
     } catch (error) {
+      console.error("ERRO AO CADASTRAR PRODUTO:", error);
+
       toast.add({
         title: "Não foi possível cadastrar o produto",
         type: "error",
@@ -135,16 +186,35 @@ const ProductSheet = ({
     }
   }
 
+  function adicionarCaracteristica(caracteristica: Caracteristica) {
+    const jaAdicionada = caracteristicasProduto.some(
+      (item) => item.caracteristica.id === caracteristica.id,
+    );
+
+    if (jaAdicionada) {
+      toast.add({
+        title: "Essa característica já foi adicionada",
+        type: "warning",
+      });
+      return;
+    }
+
+    setCaracteristicasProduto((prev) => [
+      ...prev,
+      { caracteristica, valor: "" }, // começa sem valor escolhido ainda
+    ]);
+  }
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent>
+      <SheetContent className="flex flex-col">
         <SheetHeader>
           <SheetTitle>Adicionar Produto</SheetTitle>
           <SheetDescription>
             Preencha os campos para cadastrar um produto.
           </SheetDescription>
         </SheetHeader>
-        <div className="grid flex-1 auto-rows-min gap-6 px-4">
+        <div className="grid flex-1 auto-rows-min gap-6 px-4 overflow-y-auto">
           <div className="grid gap-3">
             <Field>
               <div className="flex gap-0.5">
@@ -229,11 +299,10 @@ const ProductSheet = ({
                 <span className="text-destructive">*</span>
               </div>
               <CategoriaCombobox
-                value={form.categoriaId}
-                onChange={(value) =>
+                onSelect={(categoria) =>
                   setForm((prev) => ({
                     ...prev,
-                    categoriaId: value,
+                    categoriaId: categoria.id,
                   }))
                 }
               />
@@ -301,6 +370,103 @@ const ProductSheet = ({
               }
             />
           </div>
+          {carregandoCaracteristicas ? null : caracteristicasExistentes.length >
+            0 ? (
+            // EXISTE pelo menos uma característica cadastrada no sistema
+            <div className="grid gap-3">
+              <Field>
+                <FieldLabel>Características de produto</FieldLabel>
+                <div className="flex flex-col gap-4">
+                  <CaracteristicaCombobox
+                    onSelect={adicionarCaracteristica}
+                    onCaracteristicasCarregadas={(dados) => {
+                      setCaracteristicasExistentes(dados);
+                      setCarregandoCaracteristicas(false);
+                    }}
+                  />
+
+                  {caracteristicasProduto.map((item, index) => (
+                    <div
+                      key={item.caracteristica.id}
+                      className="flex flex-col gap-2"
+                    >
+                      <FieldLabel>{item.caracteristica.nome}</FieldLabel>
+
+                      <div className="flex items-center gap-2">
+                        {item.caracteristica.opcoes.length > 0 ? (
+                          <Select
+                            value={item.valor}
+                            onValueChange={(valor) => {
+                              setCaracteristicasProduto((prev) =>
+                                prev.map((c, i) =>
+                                  i === index
+                                    ? { ...c, valor: valor ?? "" }
+                                    : c,
+                                ),
+                              );
+                            }}
+                          >
+                            <SelectTrigger className="flex-1">
+                              {" "}
+                              <SelectValue placeholder="Selecione uma opção" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {item.caracteristica.opcoes.map((opcao) => (
+                                <SelectItem key={opcao} value={opcao}>
+                                  {opcao}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input
+                            placeholder="Digite o valor"
+                            value={item.valor}
+                            onChange={(e) => {
+                              const valor = e.target.value;
+                              setCaracteristicasProduto((prev) =>
+                                prev.map((c, i) =>
+                                  i === index ? { ...c, valor } : c,
+                                ),
+                              );
+                            }}
+                            className="flex-1"
+                          />
+                        )}
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() =>
+                            setCaracteristicasProduto((prev) =>
+                              prev.filter((_, i) => i !== index),
+                            )
+                          }
+                          title="Remover característica"
+                        >
+                          <X className="size-4 text-destructive" />{" "}
+                          <span className="sr-only">Remover</span>
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Field>
+            </div>
+          ) : (
+            // NÃO existe nenhuma característica cadastrada ainda
+            <div className="grid gap-3">
+              <Field>
+                <Link href="/configuracoes">
+                  <FieldLabel className="text-sm text-muted-foreground hover:bg-secondary hover:text-primary">
+                    Você ainda não configurou as características de seus
+                    produtos. Clique aqui para configurá-las.
+                  </FieldLabel>
+                </Link>
+              </Field>
+            </div>
+          )}
         </div>
         <SheetFooter>
           <Button onClick={cadastrarProduto}>Cadastrar produto</Button>

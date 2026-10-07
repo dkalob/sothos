@@ -17,8 +17,7 @@ services:
       retries: 10
 
   api:
-    image: marcellamaia/sothos-api
-    build: ./backend
+    image: dkalob/sothos-api:sprint2
     container_name: sothos-api
     depends_on:
       db:
@@ -37,11 +36,7 @@ services:
       - "3001:3001"
 
   web:
-    image: marcellamaia/sothos-web
-    build: 
-      context: ./
-      args:
-        NEXT_PUBLIC_API_URL: http://api:3001
+    image: dkalob/sothos-web:sprint2
     container_name: sothos-web
     depends_on:
       - api

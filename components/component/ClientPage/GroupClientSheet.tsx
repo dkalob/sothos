@@ -281,6 +281,11 @@ const GrupoSheet = ({
                   adicionarCliente(value);
                 }}
               />
+              <FieldDescription
+                className={errors.clientes ? "text-destructive" : undefined}
+              >
+                {errors.clientes ?? "Esse campo deve ser preenchido"}
+              </FieldDescription>
               {clienteDuplicado && (
                 <p className="text-sm text-destructive">
                   Este cliente já foi adicionado ao grupo.
