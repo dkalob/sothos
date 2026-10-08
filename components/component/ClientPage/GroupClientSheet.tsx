@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { Funnel, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
+import { Toggle } from "@/components/ui/toggle";
 
 import {
   Sheet,
@@ -23,7 +24,8 @@ import ClienteCombobox, { Cliente } from "../ClienteComboBox";
 
 import { apiGet, apiPost, apiPut } from "@/lib/api";
 import { useToken } from "@/hooks/use-token";
-import { clienteSchema, GrupoFormErrors, grupoSchema } from "./ClienteSchema";
+import { GrupoFormErrors, grupoSchema } from "./ClienteSchema";
+import FiltroCliente from "../FiltroCliente";
 
 interface GrupoSheetProps {
   open: boolean;
@@ -62,6 +64,7 @@ const GrupoSheet = ({
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [clienteSelecionado, setClienteSelecionado] = useState("");
   const [clienteDuplicado, setClienteDuplicado] = useState(false);
+  const [filtroAtivo, setFiltroAtivo] = useState(false)
 
   const token = useToken();
 
@@ -271,7 +274,7 @@ const GrupoSheet = ({
           <div className="grid gap-3">
             <Field>
               <div className="flex gap-0.5">
-                <FieldLabel>Adicionar Clientes</FieldLabel>
+                <FieldLabel>Adicionar clientes individualmente</FieldLabel>
                 <span className="text-destructive">*</span>
               </div>
               <ClienteCombobox
@@ -316,6 +319,21 @@ const GrupoSheet = ({
               )}
             </Field>
           </div>
+          <div className="grid gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Toggle 
+                variant="outline" 
+                aria-label="Toggle"
+                pressed={filtroAtivo}
+                onPressedChange={setFiltroAtivo}>
+                <Funnel />
+                Adicionar clientes com filtro
+              </Toggle>
+            </div>
+          </div>
+          {filtroAtivo && (
+            <FiltroCliente />
+          )}
         </div>
         <SheetFooter>
           <Button onClick={salvarGrupo}>

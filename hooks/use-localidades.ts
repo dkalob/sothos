@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-interface Estado {
+export interface Estado {
   id: number;
   sigla: string;
   nome: string;

@@ -1,9 +1,9 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
-import React from "react";
 import { DateRange } from "react-day-picker";
-import { addDays, format } from "date-fns";
-import { Field, FieldLabel } from "@/components/ui/field";
+import { format } from "date-fns";
+import { Field } from "@/components/ui/field";
 import {
   Popover,
   PopoverContent,
@@ -12,15 +12,15 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 
-// COMPONENTE DO FILTRO DE CALENDÁRIO:
-// https://ui.shadcn.com/docs/components/base/date-picker
+type DatePickerWithRangeProps = {
+  value?: DateRange;
+  onChange: (date: DateRange | undefined) => void;
+};
 
-export function DatePickerWithRange() {
-  const [date, setDate] = React.useState<DateRange | undefined>({
-    from: new Date(new Date().getFullYear(), 0, 20),
-    to: addDays(new Date(new Date().getFullYear(), 0, 20), 20),
-  });
-
+export function DatePickerWithRange({
+  value,
+  onChange,
+}: DatePickerWithRangeProps) {
   return (
     <Field className="mx-auto w-60">
       <Popover>
@@ -32,27 +32,29 @@ export function DatePickerWithRange() {
               className="justify-start px-2.5 font-normal"
             >
               <CalendarIcon data-icon="inline-start" />
-              {date?.from ? (
-                date.to ? (
+
+              {value?.from ? (
+                value.to ? (
                   <>
-                    {format(date.from, "LLL dd, y")} -{" "}
-                    {format(date.to, "LLL dd, y")}
+                    {format(value.from, "LLL dd, y")} -{" "}
+                    {format(value.to, "LLL dd, y")}
                   </>
                 ) : (
-                  format(date.from, "LLL dd, y")
+                  format(value.from, "LLL dd, y")
                 )
               ) : (
-                <span>Pick a date</span>
+                <span>Escolha uma data</span>
               )}
             </Button>
           }
         />
+
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
             mode="range"
-            defaultMonth={date?.from}
-            selected={date}
-            onSelect={setDate}
+            defaultMonth={value?.from}
+            selected={value}
+            onSelect={onChange}
             numberOfMonths={2}
           />
         </PopoverContent>

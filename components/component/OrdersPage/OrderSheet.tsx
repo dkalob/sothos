@@ -103,7 +103,7 @@ type StatusPedido =
   | "CANCELADO"
   | "DEVOLVIDO";
 
-const statusPedidos: StatusPedido[] = [
+export const statusPedidos: StatusPedido[] = [
   "PENDENTE",
   "PAGO",
   "ENVIADO",
