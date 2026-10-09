@@ -25,7 +25,8 @@ import ClienteCombobox, { Cliente } from "../ClienteComboBox";
 import { apiGet, apiPost, apiPut } from "@/lib/api";
 import { useToken } from "@/hooks/use-token";
 import { GrupoFormErrors, grupoSchema } from "./ClienteSchema";
-import FiltroCliente from "../FiltroCliente";
+
+import FiltroCliente, { FiltrosSelecionados } from "../FiltroCliente";
 
 interface GrupoSheetProps {
   open: boolean;
@@ -64,7 +65,8 @@ const GrupoSheet = ({
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [clienteSelecionado, setClienteSelecionado] = useState("");
   const [clienteDuplicado, setClienteDuplicado] = useState(false);
-  const [filtroAtivo, setFiltroAtivo] = useState(false)
+  const [filtroAtivo, setFiltroAtivo] = useState(false);
+  const [filtrosSelecionados, setFiltrosSelecionados] = useState<FiltrosSelecionados>({ opcoes: {}, valores: {} });
 
   const token = useToken();
 
@@ -172,6 +174,7 @@ const GrupoSheet = ({
       const payload = {
         nome: form.nome,
         clientesIds: form.clientes.map((cliente) => cliente.id),
+        filtros: filtroAtivo ? filtrosSelecionados : undefined,
       };
 
       if (grupoId) {
@@ -221,6 +224,10 @@ const GrupoSheet = ({
     setClienteDuplicado(false);
 
     onOpenChange(false);
+  }
+
+  function atualizarFiltros(filtros: FiltrosSelecionados) {
+    setFiltrosSelecionados(filtros);
   }
 
   return (
@@ -273,10 +280,7 @@ const GrupoSheet = ({
           </div>
           <div className="grid gap-3">
             <Field>
-              <div className="flex gap-0.5">
                 <FieldLabel>Adicionar clientes individualmente</FieldLabel>
-                <span className="text-destructive">*</span>
-              </div>
               <ClienteCombobox
                 value={clienteSelecionado}
                 onChange={(value) => {
@@ -287,7 +291,7 @@ const GrupoSheet = ({
               <FieldDescription
                 className={errors.clientes ? "text-destructive" : undefined}
               >
-                {errors.clientes ?? "Esse campo deve ser preenchido"}
+                {errors.clientes}
               </FieldDescription>
               {clienteDuplicado && (
                 <p className="text-sm text-destructive">
@@ -321,18 +325,20 @@ const GrupoSheet = ({
           </div>
           <div className="grid gap-3">
             <div className="flex flex-wrap items-center gap-2">
-              <Toggle 
-                variant="outline" 
+              <Toggle
+                variant="outline"
                 aria-label="Toggle"
                 pressed={filtroAtivo}
-                onPressedChange={setFiltroAtivo}>
+                onPressedChange={setFiltroAtivo}
+              >
                 <Funnel />
                 Adicionar clientes com filtro
               </Toggle>
             </div>
           </div>
           {filtroAtivo && (
-            <FiltroCliente />
+            <FiltroCliente 
+              onFiltrosChange={setFiltrosSelecionados} />
           )}
         </div>
         <SheetFooter>

@@ -1,4 +1,4 @@
-import { IsArray, IsString, IsUUID, Length, } from 'class-validator';
+import { IsArray, IsOptional, IsString, IsUUID, Length, } from 'class-validator';
 
 export class GrupoClientesDto {
   @IsString()
@@ -8,4 +8,11 @@ export class GrupoClientesDto {
   @IsArray()
   @IsUUID('4', { each: true })
   clientesIds: string[];
+
+  @IsOptional()
+  filtros?: {
+    opcoes: Record<string, string>;
+    valores: Record<string, Record<string, unknown>>;
+  };
+  
 }

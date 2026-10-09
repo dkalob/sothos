@@ -27,8 +27,12 @@ import CategoriaCombobox, { Categoria } from "./CategoriaComboBox";
 import ProdutoCombobox, { Produto } from "./ProdutoComboBox";
 import { statusPedidos } from "./OrdersPage/OrderSheet";
 import { useLocalidades } from "@/hooks/use-localidades";
+import { Badge } from "../ui/badge";
+import { toast } from "../ui/toast";
 
-
+interface FiltroClienteProps {
+  onFiltrosChange: (filtros: FiltrosSelecionados) => void;
+}
 
 type FiltroField =
   | {
@@ -87,6 +91,17 @@ type FiltroCliente = {
   options: FiltroOption[];
 };
 
+type FiltroAplicado = {
+  filtroId: string;
+  opcaoId: string;
+  valores: Record<string, ValorFiltro>;
+};
+
+export type FiltrosSelecionados = {
+  opcoes: Record<string, string>;
+  valores: Record<string, Record<string, ValorFiltro>>;
+};
+
 type ValorFiltro = string | Categoria | Produto;
 
 export const filtros: FiltroCliente[] = [
@@ -142,12 +157,12 @@ export const filtros: FiltroCliente[] = [
           },
           {
             id: "data-inicial",
-            type: "number",
+            type: "date",
             label: "Data inicial",
           },
           {
             id: "data-final",
-            type: "number",
+            type: "date",
             label: "Data final",
           },
         ],
@@ -163,12 +178,12 @@ export const filtros: FiltroCliente[] = [
           },
           {
             id: "data-inicial",
-            type: "number",
+            type: "date",
             label: "Data inicial",
           },
           {
             id: "data-final",
-            type: "number",
+            type: "date",
             label: "Data final",
           },
         ],
@@ -355,7 +370,7 @@ export const filtros: FiltroCliente[] = [
         fields: [
           {
             id: "estado",
-            type: "number",
+            type: "localizacao",
             label: "Estado",
           },
         ],
@@ -366,7 +381,7 @@ export const filtros: FiltroCliente[] = [
         fields: [
           {
             id: "estado",
-            type: "number",
+            type: "localizacao",
             label: "Estado",
           },
         ],
@@ -376,9 +391,10 @@ export const filtros: FiltroCliente[] = [
 ];
 
 
-const FiltroCliente = () => {
+const FiltroCliente = ({ onFiltrosChange }: FiltroClienteProps) => {
   const [opcoesSelecionadas, setOpcoesSelecionadas] = useState<Record<string, string>>({});
   const [valoresFiltros, setValoresFiltros] = useState<Record<string, Record<string, ValorFiltro>>>({});
+  const [filtrosAplicados, setFiltrosAplicados] = useState<FiltroAplicado[]>([]);
 
   const [selectInstanceKey, setSelectInstanceKey] = useState(0); // corrige um bug visual do rfm
 
@@ -387,11 +403,20 @@ const FiltroCliente = () => {
   useEffect(() => {
     carregarEstados();
   }, []);
-  
+
+  useEffect(() => {
+    onFiltrosChange({
+      opcoes: opcoesSelecionadas,
+      valores: valoresFiltros,
+    });
+  }, [opcoesSelecionadas, valoresFiltros, onFiltrosChange]);
+
+ 
+
 
   return (
     <div className="flex flex-col md:flex-row gap-6 overflow-hidden max-w-full">
-      <div className="max-h-87.5 overflow-y-auto flex-1 min-w-0 -mr-6 pr-7">
+      <div className="flex-1 min-w-0 -mr-6 pr-7">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-full">
           {filtros.map((filtro) => {
             const opcaoSelecionada = filtro.options.find(
@@ -646,6 +671,31 @@ const FiltroCliente = () => {
                   })}
 
                   <DialogFooter>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        const opcaoId = opcoesSelecionadas[filtro.id];
+
+                        if (!opcaoId) {
+                          toast.add({
+                            title: "Selecione uma opção de filtro",
+                            type: "error",
+                          });
+                          return;
+                        }
+
+                        setFiltrosAplicados((prev) => [
+                          ...prev.filter((item) => item.filtroId !== filtro.id),
+                          {
+                            filtroId: filtro.id,
+                            opcaoId,
+                            valores: { ...valoresFiltros[filtro.id] },
+                          },
+                        ]);
+                      }}
+                    >
+                      Incluir filtro
+                    </Button>
                     <DialogClose
                       render={
                         <Button type="button" variant="outline">
@@ -659,6 +709,54 @@ const FiltroCliente = () => {
             );
           })}
         </div>
+        { /* EXIBE OS FILTROS SELECIONADOS */ }
+        {filtrosAplicados.length > 0 && (
+          <div className="mt-4 space-y-2">
+            <p className="text-sm font-medium">Filtros incluídos</p>
+
+            <div className="flex flex-wrap gap-2">
+              {filtrosAplicados.map((filtroAplicado) => {
+                const filtro = filtros.find(
+                  (item) => item.id === filtroAplicado.filtroId,
+                );
+
+                const opcao = filtro?.options.find(
+                  (item) => item.id === filtroAplicado.opcaoId,
+                );
+
+                if (!filtro || !opcao) return null;
+
+                const valores = (opcao.fields ?? [])
+                  .map((field) => {
+                    const valor = filtroAplicado.valores?.[field.id];
+
+                    if (valor === undefined || valor === "") return null;
+
+                    if (typeof valor === "object") {
+                      return "nome" in valor ? valor.nome : String(valor);
+                    }
+
+                    if (field.type === "localizacao") {
+                      const estado = estados.find((estado) => estado.sigla === valor);
+                      return estado ? `${estado.nome} (${estado.sigla})` : String(valor);
+                    }
+
+                    return String(valor);
+
+                  })
+                  .filter(Boolean) as string[];
+
+                const valoresTexto = valores.length ? valores.join(" - ") : "";
+
+                return (
+                  <Badge key={filtroAplicado.filtroId} variant="secondary">
+                    {opcao.label} {valoresTexto}
+                  </Badge>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
