@@ -16,7 +16,7 @@ import { toast } from "@/components/ui/toast";
 export type Cliente = {
   id: string;
   nome: string;
-  cpf: string;
+  cpf: string | null;
 };
 
 interface ClienteComboboxProps {
@@ -54,10 +54,17 @@ const ClienteCombobox = ({ value, onChange }: ClienteComboboxProps) => {
     buscarClientes();
   }, [token]);
 
-  function formatarCpf(cpf: string) {
-    const numeros = cpf.replace(/\D/g, "");
+  function formatarCpf(cpf: string | null | undefined) {
+    const numeros = (cpf ?? "").replace(/\D/g, "");
 
-    return numeros.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+    if (numeros.length !== 11) {
+      return numeros || "CPF não informado";
+    }
+
+    return numeros.replace(
+      /(\d{3})(\d{3})(\d{3})(\d{2})/,
+      "$1.$2.$3-$4",
+    );
   }
 
   return (

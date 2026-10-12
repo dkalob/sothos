@@ -1,10 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ClienteDto } from './dto/client.dto';
+import { RfmService } from '../rfm/rfm.service';
 
 @Injectable()
 export class ClientesService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(ClientesService.name);
+  constructor(private prisma: PrismaService, private readonly rfmService: RfmService) {}
 
   // Função para cadastrar cliente manualmente
   // (components > component > ClientPage > ClientSheet)
@@ -135,7 +137,11 @@ export class ClientesService {
       throw new NotFoundException('Cliente não encontrado');
     }
 
-    return this.prisma.cliente.delete({ where: { id } });
+    const removido = await this.prisma.cliente.delete({ where: { id } });
+
+    await this.atualizarRfm(contaId);
+
+    return removido
   }
 
   // Função para buscar do banco um cliente específico
@@ -260,6 +266,14 @@ export class ClientesService {
         nome: 'asc',
       },
     });
+  }
+
+  async atualizarRfm(contaId: string) {
+    try {
+      await this.rfmService.recalcular(contaId);
+    } catch (error) {
+      this.logger.error(`Falha ao recalcular RFM da conta ${contaId}`, error);
+    }
   }
 
 

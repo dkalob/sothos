@@ -11,6 +11,7 @@ import { ProdutosModule } from './produtos/produtos.module';
 import { PedidosModule } from './pedidos/pedidos.module';
 import { GrupoClientesModule } from './clientes/grupoDeClientes/grupo-clientes.module';
 import { CaracteristicaProdutoModule } from './produtos/caracteristicasProduto/caracteristicas-produto-module';
+import { RfmModule } from './rfm/rfm.module';
 
 
 @Module({
@@ -24,7 +25,8 @@ import { CaracteristicaProdutoModule } from './produtos/caracteristicasProduto/c
     CategoriasModule,
     ProdutosModule,
     PedidosModule,
-    CaracteristicaProdutoModule
+    CaracteristicaProdutoModule,
+    RfmModule
   ],
   controllers: [AppController],
   providers: [AppService],

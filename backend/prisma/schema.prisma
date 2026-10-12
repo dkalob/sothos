@@ -125,6 +125,7 @@ model Conta {
   campanhas Campanha[]
   categoriasProduto      CategoriaProduto[]
   caracteristicasProduto CaracteristicaProduto[]
+  execucoesSegmentacao ExecucaoSegmentacao[]
 
   @@map("conta")
 }
@@ -446,7 +447,8 @@ model ItemPedido {
 
 model ExecucaoSegmentacao {
   id            String                    @id @default(uuid())
-  lojaId        String                    @map("id_loja")
+  contaId       String                    @map("id_conta") 
+  lojaId        String?                    @map("id_loja")
   status        StatusExecucaoSegmentacao @default(EM_ANDAMENTO)
   periodoInicio DateTime                  @map("periodo_inicio")
   periodoFim    DateTime                  @map("periodo_fim")
@@ -458,10 +460,12 @@ model ExecucaoSegmentacao {
   finalizadaEm  DateTime?                 @map("finalizada_em")
   mensagemErro  String?                   @map("mensagem_erro") @db.Text
 
-  loja      LojaConectada @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  conta     Conta         @relation(fields: [contaId], references: [id], onDelete: Cascade)
+  loja      LojaConectada? @relation(fields: [lojaId], references: [id], onDelete: Cascade)
   segmentos Segmento[]
   analises  AnaliseRfm[]
 
+  @@unique([contaId])
   @@index([lojaId, iniciadaEm])
   @@map("execucao_segmentacao")
 }
