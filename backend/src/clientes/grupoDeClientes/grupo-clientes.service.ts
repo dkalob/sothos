@@ -78,7 +78,9 @@ export class GrupoClientesService {
         });
 
         ids = clientes.map((c) => c.id);
-      } else if (filtroId === 'frequencia') {
+      } 
+      
+      else if (filtroId === 'frequencia') {
         if (opcaoId === 'nunca') {
           const clientes = await this.prisma.cliente.findMany({
             where: { contaId, pedidos: { none: {} } },
@@ -127,7 +129,9 @@ export class GrupoClientesService {
             )
             .map((c) => c.id);
         }
-      } else if (filtroId === 'valor') {
+      } 
+      
+      else if (filtroId === 'valor') {
         const limite = this.validarNumero(campos.valor, 'Valor');
 
         const clientes = await this.prisma.cliente.findMany({
@@ -150,7 +154,9 @@ export class GrupoClientesService {
             return opcaoId === 'maior-que' ? total > limite : total <= limite;
           })
           .map((c) => c.id);
-      } else if (filtroId === 'localizacao') {
+      } 
+      
+      else if (filtroId === 'localizacao') {
         const estado = String(campos.estado ?? '');
 
         if (!estado) {
@@ -166,7 +172,9 @@ export class GrupoClientesService {
         });
 
         ids = clientes.map((c) => c.id);
-      } else if (filtroId === 'status-pedido') {
+      } 
+      
+      else if (filtroId === 'status-pedido') {
         const status = String(campos.status ?? '');
 
         if (!status) {
@@ -185,7 +193,9 @@ export class GrupoClientesService {
         });
 
         ids = clientes.map((c) => c.id);
-      } else if (filtroId === 'categoria' || filtroId === 'produto') {
+      } 
+      
+      else if (filtroId === 'categoria' || filtroId === 'produto') {
         const campo = filtroId === 'categoria' ? 'categoria' : 'produto';
         const selecionado = campos[campo] as
           { id?: string } | string | undefined;
@@ -238,19 +248,26 @@ export class GrupoClientesService {
       } 
       
       else if (filtroId === 'rfm') {
-        const segmento = String(campos.segmento ?? '');
+        const segmentoNome = String(campos.segmento ?? '').trim();
 
-        const resultados = await this.prisma.segmento.findMany({
+        if (!segmentoNome) {
+          throw new BadRequestException('Selecione uma tag RFM.');
+        }
+
+        // Busca o segmento da conta pelo nome exato.
+        const segmentos = await this.prisma.segmento.findMany({
           where: {
-            nome: { contains: segmento, mode: 'insensitive' },
+            nome: {
+              equals: segmentoNome,
+              mode: 'insensitive',
+            },
             execucao: {
-              loja: { contaId },
+              contaId,
             },
           },
           select: {
             id: true,
             nome: true,
-            execucaoId: true,
             analises: {
               select: {
                 clienteId: true,
@@ -259,9 +276,36 @@ export class GrupoClientesService {
           },
         });
 
-        console.log('[Diagnóstico RFM]', JSON.stringify(resultados, null, 2));
+        // Clientes que possuem o segmento selecionado.
+        const clientesComSegmento = new Set(
+          segmentos.flatMap((segmento) =>
+            segmento.analises.map((analise) => analise.clienteId),
+          ),
+        );
 
-        ids = [];
+        if (opcaoId === 'pertence') {
+          ids = [...clientesComSegmento];
+        } else if (opcaoId === 'nao-pertence') {
+          const todosClientes = await this.prisma.cliente.findMany({
+            where: { contaId },
+            select: { id: true },
+          });
+
+          ids = todosClientes
+            .filter((cliente) => !clientesComSegmento.has(cliente.id))
+            .map((cliente) => cliente.id);
+        } else {
+          throw new BadRequestException('Opção de filtro RFM inválida.');
+        }
+
+        console.log('[Filtro RFM]', {
+          contaId,
+          segmentoNome,
+          opcaoId,
+          segmentosEncontrados: segmentos.length,
+          clientesEncontrados: clientesComSegmento.size,
+          idsRetornados: ids.length,
+        });
       }
 
       idsPorFiltro.push(ids);
@@ -277,7 +321,7 @@ export class GrupoClientesService {
     });
   }
 
-  // Método para criar um grupo
+  // Método para criar um grupo com clientes manuais
   async create(contaId: string, dto: GrupoClientesDto) {
     return this.prisma.$transaction(async (tx) => {
       // 1. Verifica se todos os clientes pertencem à conta

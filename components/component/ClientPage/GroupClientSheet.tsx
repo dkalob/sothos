@@ -123,6 +123,7 @@ const GrupoSheet = ({
     carregarDados();
   }, [token, open, grupoId]);
 
+  //Função para adicionar cliente manualmente pelo combobox
   function adicionarCliente(clienteId: string) {
     if (!clienteId) return;
 
@@ -149,6 +150,7 @@ const GrupoSheet = ({
     setClienteSelecionado("");
   }
 
+  //Função para remover cliente (adicionado manualmente pelo combobox)
   function removerCliente(clienteId: string) {
     setForm((prev) => ({
       ...prev,

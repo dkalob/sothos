@@ -17,6 +17,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +37,7 @@ import { statusPedidos } from "./OrdersPage/OrderSheet";
 import { useLocalidades } from "@/hooks/use-localidades";
 import { Badge } from "../ui/badge";
 import { toast } from "../ui/toast";
+import { Separator } from "@base-ui/react";
 
 interface FiltroClienteProps {
   onFiltrosChange: (filtros: FiltrosSelecionados) => void;
@@ -435,6 +444,20 @@ const FiltroCliente = ({ onFiltrosChange }: FiltroClienteProps) => {
                     <DialogTitle>{filtro.title}</DialogTitle>
                     <DialogDescription>{filtro.description}</DialogDescription>
                   </DialogHeader>
+
+                  {/* BREADCRUMBS */}
+                  <Breadcrumb>
+                  <BreadcrumbList>
+                    <BreadcrumbItem>
+                      {filtro.breadcrumb[0]}
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator></BreadcrumbSeparator>
+                    <BreadcrumbItem>
+                      {filtro.breadcrumb[1]}
+                    </BreadcrumbItem>
+                    <Separator/>
+                  </BreadcrumbList>
+                </Breadcrumb>
 
                   {/*LISTA DE OPÇÕES */}
                   <RadioGroup
