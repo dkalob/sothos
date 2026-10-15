@@ -65,7 +65,7 @@ const items = [
   {
     label: "IA",
     icon: Brain,
-    url: "#",
+    url: "/ia",
   },
   {
     label: "Campanhas",

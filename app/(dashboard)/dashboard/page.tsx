@@ -19,7 +19,6 @@ const Dashboard = () => {
 
         <div className="flex gap-6">
           <PeriodSelector />
-          <DatePickerWithRange />
           <DownloadReportButton
             title="Baixar Relatório"
             btnVariant="default"

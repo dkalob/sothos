@@ -50,18 +50,18 @@ function pontuar(valores: number[], maiorEhMelhor: boolean): number[] {
 }
 
 // Tabela de regras: notas de R e F -> segmento
-function classificar(r: number, f: number): NomeSegmento {
-  if (r >= 4 && f >= 4) return 'Campeões';
-  if (r === 3 && f >= 4) return 'Leais';
-  if (r <= 2 && f >= 4) return 'Não Podem Perder';
-  if (r <= 2 && f === 3) return 'Em Risco';
-  if (r >= 4 && f >= 2) return 'Potenciais Leais';
-  if (r === 5 && f === 1) return 'Recém-Chegados';
-  if (r === 4 && f === 1) return 'Promissores';
-  if (r === 3 && f >= 2) return 'Precisam de Atenção';
-  if (r === 3 && f === 1) return 'À Beira de Dormir';
-  if (r === 2) return 'Hibernando'; // f 1 ou 2
-  return 'Perdidos'; // r === 1, f 1 ou 2
+function classificar(r: number, fm: number): NomeSegmento {
+  if (r >= 4 && fm >= 4) return 'Campeões';
+  if (r === 3 && fm >= 4) return 'Leais';
+  if (r <= 2 && fm >= 4) return 'Não Podem Perder';
+  if (r <= 2 && fm === 3) return 'Em Risco';
+  if (r >= 4 && fm >= 2) return 'Potenciais Leais';
+  if (r === 5 && fm === 1) return 'Recém-Chegados';
+  if (r === 4 && fm === 1) return 'Promissores';
+  if (r === 3 && fm >= 2) return 'Precisam de Atenção';
+  if (r === 3 && fm === 1) return 'À Beira de Dormir';
+  if (r === 2) return 'Hibernando'; // fm 1 ou 2
+  return 'Perdidos'; // r === 1, fm 1 ou 2
 }
 
 @Injectable()
@@ -115,13 +115,18 @@ export class RfmService {
     const notasF = pontuar(clientes.map((c) => c.frequencia), true);
     const notasM = pontuar(clientes.map((c) => c.valor), true);
 
-    const analises = clientes.map((c, i) => ({
-      ...c,
-      scoreR: notasR[i],
-      scoreF: notasF[i],
-      scoreM: notasM[i],
-      segmento: classificar(notasR[i], notasF[i]),
-    }));
+    const analises = clientes.map((c, i) => {
+      
+      const fm = Math.round((notasF[i] + notasM[i]) / 2); 
+
+      return {
+        ...c,
+        scoreR: notasR[i],
+        scoreF: notasF[i],
+        scoreM: notasM[i],
+        segmento: classificar(notasR[i], fm)
+      };
+    });
 
     const tamanhos: Record<string, number> = {};
     for (const a of analises) {
