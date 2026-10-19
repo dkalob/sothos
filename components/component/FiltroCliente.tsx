@@ -586,11 +586,22 @@ const FiltroCliente = ({ onFiltrosChange }: FiltroClienteProps) => {
                     
                     {/* Produto */}
                     if (field.type === "produto") {
+                      const valorAtual = valoresFiltros[filtro.id]?.[field.id];
+
                       return (
                         <div key={field.id} className="space-y-2">
                           <Label>{field.label}</Label>
 
                           <ProdutoCombobox
+                            value={
+                              typeof valorAtual === "object" && valorAtual !== null
+                                ? valorAtual.id
+                                : ""
+                            }
+                            onChange={(produtoId) => {
+                              // O objeto completo será salvo pelo onSelect.
+                              // Este callback mantém a interface controlada.
+                            }}
                             onSelect={(produto) => {
                               setValoresFiltros((prev) => ({
                                 ...prev,

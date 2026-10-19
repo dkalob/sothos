@@ -22,8 +22,8 @@ export type Produto = {
 };
 
 interface ProdutoComboboxProps {
-  value: string
-  onChange: (value: string) => void
+  value?: string
+  onChange?: (value: string) => void
   onSelect: (produto: Produto) => void;
 }
 
@@ -78,7 +78,7 @@ const ProdutoCombobox = ({ value, onChange, onSelect }: ProdutoComboboxProps) =>
 
         if (!produtoSelecionado) return;
 
-        onChange(produtoSelecionado.id);
+        onChange?.(produtoSelecionado.id);
         onSelect(produtoSelecionado);
 
         setInputValue("");

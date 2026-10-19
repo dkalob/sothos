@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { DataTable } from "../DataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { ProductTableColumns } from "./columns";
@@ -16,6 +17,26 @@ interface ProductTableViewProps {
     atualizarProdutos: () => Promise<void>
   ) => ColumnDef<ProductTableColumns>[];
 }
+
+const TabelaSkeleton = () => (
+  <div className="overflow-hidden rounded-md border bg-white">
+    {Array.from({ length: 4 }).map((_, i) => (
+      <div
+        key={i}
+        className="flex items-center gap-4 border-b p-4 last:border-b-0"
+      >
+        <Skeleton className="size-10 rounded-md" />
+        <div className="flex flex-1 flex-col gap-2">
+          <Skeleton className="h-4 w-48" />
+          <Skeleton className="h-3 w-24" />
+        </div>
+        <Skeleton className="h-4 w-20" />
+        <Skeleton className="h-4 w-16" />
+        <Skeleton className="h-4 w-16" />
+      </div>
+    ))}
+  </div>
+);
 
 const ProductTableView = ({ columnsProduct }: ProductTableViewProps) => {
   const [produtoSheet, setProdutoSheet] = useState(false);
@@ -53,7 +74,7 @@ const ProductTableView = ({ columnsProduct }: ProductTableViewProps) => {
   }, [token]);
 
   if (carregando) {
-    return <div className="mt-8">Carregando...</div>;
+    return <TabelaSkeleton />;
   }
 
   return (
