@@ -166,7 +166,21 @@ export class RecomendacoesService {
     const [clientes, produtos] = await Promise.all([
       this.prisma.cliente.findMany({
         where: { contaId },
-        select: { id: true, nome: true, email: true, aceitaMarketing: true },
+        select: {
+          id: true,
+          nome: true,
+          email: true,
+          aceitaMarketing: true,
+          pedidos: {
+            where: { status: { in: STATUS_VALIDOS } },
+            select: { valorTotal: true },
+          },
+          analises: {
+            orderBy: { calculadoEm: 'desc' },
+            take: 1,
+            select: { segmento: { select: { nome: true } } },
+          },
+        },
       }),
       this.prisma.produto.findMany({
         where: { contaId },
@@ -212,6 +226,9 @@ export class RecomendacoesService {
           nome: c.nome,
           email: c.email,
           aceitaMarketing: c.aceitaMarketing,
+          segmento: c.analises[0]?.segmento?.nome ?? 'Leads',
+          pedidos: c.pedidos.length,
+          valor: c.pedidos.reduce((total, p) => total + Number(p.valorTotal), 0),
           score: arredondar(
             PESO_COLABORATIVO * colabNorm + PESO_CATEGORIA * categoria,
           ),

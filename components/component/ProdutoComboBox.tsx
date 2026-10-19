@@ -22,10 +22,12 @@ export type Produto = {
 };
 
 interface ProdutoComboboxProps {
+  value: string
+  onChange: (value: string) => void
   onSelect: (produto: Produto) => void;
 }
 
-const ProdutoCombobox = ({ onSelect }: ProdutoComboboxProps) => {
+const ProdutoCombobox = ({ value, onChange, onSelect }: ProdutoComboboxProps) => {
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [inputValue, setInputValue] = useState("");
@@ -68,6 +70,7 @@ const ProdutoCombobox = ({ onSelect }: ProdutoComboboxProps) => {
   return (
     <Combobox
       items={produtos}
+      value={produtos.find((produto) => produto.id === value)?.nome ?? ""}
       onValueChange={(value) => {
         const produtoSelecionado = produtos.find(
           (produto) => produto.nome === value,
@@ -75,6 +78,7 @@ const ProdutoCombobox = ({ onSelect }: ProdutoComboboxProps) => {
 
         if (!produtoSelecionado) return;
 
+        onChange(produtoSelecionado.id);
         onSelect(produtoSelecionado);
 
         setInputValue("");

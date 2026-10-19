@@ -55,7 +55,7 @@ const AssociarClientes = () => {
           </div>
         </div>
 
-        {/* Insights (valores fixos por enquanto) */}
+        {/* Insights */}
         {clienteSelecionado && (
           <div className="grid w-1/2 grid-cols-2 grid-rows-2 gap-4">
             <InsightCard
