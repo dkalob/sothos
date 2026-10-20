@@ -10,7 +10,7 @@ import { useToken } from "@/hooks/use-token";
 import { ClienteRecomendado, columnsProdutoRecomendacao } from "./columns";
 import CriarGrupoSheet from "./CriarGrupoSheet";
 import { Button } from "@/components/ui/button";
-import { UsersRound } from "lucide-react";
+import { TriangleAlert, UsersRound } from "lucide-react";
 
 interface AssociarProdutoTableViewProps {
   produtoId: string; // vazio = nada analisado ainda
@@ -178,10 +178,14 @@ const AssociarProdutoTableView = ({
             {carregando && <TabelaSkeleton />}
         
             {!carregando && recomendacoes && recomendacoes.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                Este cliente ainda não tem compras registradas, então não há base para
-                recomendar produtos.
-              </p>
+              <div className="flex items-center gap-1 justify-center h-100">
+                <TriangleAlert size={18} className="text-primary font-semibold"/>
+                <p className="text-sm text-muted-foreground font-semibold">
+                Este produto tem poucas características semelhantes com os demais registrados ou 
+                não possui vendas, então não há base para recomendar clientes.
+                </p>
+              </div>
+              
             )}
         
             {!carregando && recomendacoes && recomendacoes.length > 0 && (

@@ -2,14 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import { StatusPedido } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
-// Só esses status entram no cálculo (regra do schema)
 const STATUS_VALIDOS = [
   StatusPedido.PAGO,
   StatusPedido.ENVIADO,
   StatusPedido.ENTREGUE,
 ];
 
-// A posição na lista vira o "cluster" salvo no banco
 const SEGMENTOS = [
   'Campeões',
   'Leais',
@@ -28,40 +26,53 @@ type NomeSegmento = (typeof SEGMENTOS)[number];
 
 const MS_DIA = 1000 * 60 * 60 * 24;
 
-// Transforma valores em notas de 1 a 5 (quintis).
-// Empates recebem a mesma nota, usando a posição média do grupo.
+// Calcula notas de 1 a 5 usando quintis.
+// Valores empatados recebem a mesma nota.
 function pontuar(valores: number[], maiorEhMelhor: boolean): number[] {
   const n = valores.length;
   const ordenados = [...valores].sort((a, b) => a - b);
   const posicao = new Map<number, number>();
 
   let i = 0;
+
   while (i < n) {
     let j = i;
-    while (j < n && ordenados[j] === ordenados[i]) j++;
-    posicao.set(ordenados[i], (i + (j - 1)) / 2 / n); // posição média, entre 0 e 1
+
+    while (j < n && ordenados[j] === ordenados[i]) {
+      j++;
+    }
+
+    posicao.set(ordenados[i], (i + j - 1) / 2 / n);
+
     i = j;
   }
 
   return valores.map((v) => {
     const nota = Math.min(5, Math.floor(posicao.get(v)! * 5) + 1);
+
     return maiorEhMelhor ? nota : 6 - nota;
   });
 }
 
-// Tabela de regras: notas de R e F -> segmento
-function classificar(r: number, fm: number): NomeSegmento {
-  if (r >= 4 && fm >= 4) return 'Campeões';
-  if (r === 3 && fm >= 4) return 'Leais';
-  if (r <= 2 && fm >= 4) return 'Não Podem Perder';
-  if (r <= 2 && fm === 3) return 'Em Risco';
-  if (r >= 4 && fm >= 2) return 'Potenciais Leais';
-  if (r === 5 && fm === 1) return 'Recém-Chegados';
-  if (r === 4 && fm === 1) return 'Promissores';
-  if (r === 3 && fm >= 2) return 'Precisam de Atenção';
-  if (r === 3 && fm === 1) return 'À Beira de Dormir';
-  if (r === 2) return 'Hibernando'; // fm 1 ou 2
-  return 'Perdidos'; // r === 1, fm 1 ou 2
+// Classifica usando R, F e M de forma independente.
+function classificar(r: number, f: number, m: number): NomeSegmento {
+
+  if (r >= 4 && f >= 4 && m >= 4)  return 'Campeões';
+  if (r >= 3 && f >= 4 && m >= 3)  return 'Leais';
+  if (r >= 4 && f <= 3 && m >= 3)  return 'Potenciais Leais';
+  if (r <= 2 && f >= 4 && m >= 4)  return 'Não Podem Perder';
+  if (r <= 2 && f >= 3 && m >= 3)  return 'Em Risco';
+  if (r === 5 && f <= 2 && m <= 2) return 'Recém-Chegados';
+  if (r >= 4 && f <= 3 && m <= 2)  return 'Promissores';
+  if (r === 3 && f <= 2 && m >= 3) return 'À Beira de Dormir';
+  if (r === 3)                     return 'Precisam de Atenção';
+  if (r === 2 && f <= 2 && m <= 2) return 'Hibernando';
+  if (r === 1 && f <= 2 && m <= 2) return 'Perdidos';
+  if (r >= 4 && m >= 3)            return 'Potenciais Leais';
+  if (r >= 4)                      return 'Promissores';
+  if (r <= 2 && m >= 3)            return 'Em Risco';
+  if (r === 2)                     return 'Hibernando';
+  return                                  'Perdidos';
 }
 
 @Injectable()
@@ -73,7 +84,7 @@ export class RfmService {
   async recalcular(contaId: string) {
     const hoje = new Date();
 
-    // 1. Uma linha por cliente, já agregada pelo banco
+    // 1. Agrega os pedidos válidos por cliente.
     const grupos = await this.prisma.pedido.groupBy({
       by: ['clienteId'],
       where: {
@@ -87,20 +98,22 @@ export class RfmService {
       _sum: { valorTotal: true },
     });
 
-    // Sem nenhum pedido válido: limpa as análises antigas e sai
+    // Sem pedidos válidos, limpa as análises existentes.
     if (grupos.length === 0) {
       const existente = await this.prisma.execucaoSegmentacao.findUnique({
         where: { contaId },
       });
+
       if (existente) {
         await this.prisma.analiseRfm.deleteMany({
           where: { execucaoId: existente.id },
         });
       }
+
       return;
     }
 
-    // 2. R, F e M brutos de cada cliente
+    // 2. Calcula as métricas brutas.
     const clientes = grupos.map((g) => ({
       clienteId: g.clienteId as string,
       recenciaDias: Math.floor(
@@ -110,25 +123,39 @@ export class RfmService {
       valor: Number(g._sum.valorTotal ?? 0),
     }));
 
-    // 3. Notas de 1 a 5 (recência: menos dias = nota maior)
-    const notasR = pontuar(clientes.map((c) => c.recenciaDias), false);
-    const notasF = pontuar(clientes.map((c) => c.frequencia), true);
-    const notasM = pontuar(clientes.map((c) => c.valor), true);
+    // 3. Calcula R, F e M separadamente.
+    const notasR = pontuar(
+      clientes.map((c) => c.recenciaDias),
+      false,
+    );
+
+    const notasF = pontuar(
+      clientes.map((c) => c.frequencia),
+      true,
+    );
+
+    const notasM = pontuar(
+      clientes.map((c) => c.valor),
+      true,
+    );
 
     const analises = clientes.map((c, i) => {
-      
-      const fm = Math.round((notasF[i] + notasM[i]) / 2); 
+      const scoreR = notasR[i];
+      const scoreF = notasF[i];
+      const scoreM = notasM[i];
 
       return {
         ...c,
-        scoreR: notasR[i],
-        scoreF: notasF[i],
-        scoreM: notasM[i],
-        segmento: classificar(notasR[i], fm)
+        scoreR,
+        scoreF,
+        scoreM,
+        segmento: classificar(scoreR, scoreF, scoreM),
       };
     });
 
+    // 4. Conta clientes por segmento.
     const tamanhos: Record<string, number> = {};
+
     for (const a of analises) {
       tamanhos[a.segmento] = (tamanhos[a.segmento] ?? 0) + 1;
     }
@@ -137,7 +164,7 @@ export class RfmService {
       Math.min(...grupos.map((g) => g._min.realizadoEm!.getTime())),
     );
 
-    // 4. Grava tudo de uma vez: ou salva completo, ou não salva nada
+    // 5. Persiste a execução de forma transacional.
     await this.prisma.$transaction(
       async (tx) => {
         const execucao = await tx.execucaoSegmentacao.upsert({
@@ -164,14 +191,20 @@ export class RfmService {
           },
         });
 
-        // Cria (ou atualiza) os 11 segmentos e guarda o id de cada um
+        // Mantém os 11 segmentos e seus índices.
         const idPorNome = new Map<string, string>();
+
         for (const [cluster, nome] of SEGMENTOS.entries()) {
           const segmento = await tx.segmento.upsert({
             where: {
-              execucaoId_cluster: { execucaoId: execucao.id, cluster },
+              execucaoId_cluster: {
+                execucaoId: execucao.id,
+                cluster,
+              },
             },
-            update: { tamanho: tamanhos[nome] ?? 0 },
+            update: {
+              tamanho: tamanhos[nome] ?? 0,
+            },
             create: {
               execucaoId: execucao.id,
               cluster,
@@ -179,11 +212,15 @@ export class RfmService {
               tamanho: tamanhos[nome] ?? 0,
             },
           });
+
           idPorNome.set(nome, segmento.id);
         }
 
-        // Troca as análises antigas pelas novas
-        await tx.analiseRfm.deleteMany({ where: { execucaoId: execucao.id } });
+        // Substitui as análises anteriores.
+        await tx.analiseRfm.deleteMany({
+          where: { execucaoId: execucao.id },
+        });
+
         await tx.analiseRfm.createMany({
           data: analises.map((a) => ({
             execucaoId: execucao.id,
@@ -199,10 +236,11 @@ export class RfmService {
           })),
         });
       },
-      { timeout: 20000 }, // o padrão é 5s, apertado para o banco na nuvem
+      { timeout: 20000 },
     );
 
-    this.logger.log(`RFM recalculado: conta ${contaId}, ${analises.length} clientes`);
+    this.logger.log(
+      `RFM recalculado: conta ${contaId}, ${analises.length} clientes`,
+    );
   }
-  
 }
