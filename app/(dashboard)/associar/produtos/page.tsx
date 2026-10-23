@@ -9,6 +9,15 @@ import ProdutoCombobox, {
 import { Button } from "@/components/ui/button";
 import { WandSparkles } from "lucide-react";
 import { useState } from "react";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import Link from "next/link";
 
 const AssociarProdutos = () => {
   const [produtoSelecionado, setProdutoSelecionado] = useState("");
@@ -17,6 +26,20 @@ const AssociarProdutos = () => {
   
   return (
     <main>
+
+      <Breadcrumb className="mb-4">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink render={<Link href="/ia">IA</Link>} />
+          </BreadcrumbItem>
+          <BreadcrumbSeparator></BreadcrumbSeparator>
+          <BreadcrumbItem>
+            <BreadcrumbPage>Associar Produtos</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
+
       <PageHeader
         title="Associar Produtos"
         subtitle="Essa ferramenta irá recomendar quais clientes podem se interessar pelo produto selecionado"

@@ -56,11 +56,14 @@ const OrderTableView = ({ columnsOrder }: OrderTableViewProps) => {
     try {
       const pedidos = await apiGet<OrderTableColumns[]>("/pedidos", token);
 
-      console.log("PEDIDOS RECEBIDOS DA API:", pedidos);
 
       setOrderData(pedidos);
     } catch (erro) {
-      console.error("Erro ao buscar pedidos:", erro);
+      toast.add({
+        title: "Não foi possível carregar os pedidos",
+        type: "error",
+      });
+
     } finally {
       setCarregando(false);
     }

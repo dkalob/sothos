@@ -14,9 +14,9 @@ import { PrismaService } from '../prisma/prisma.service';
     se for mais de 1 soma todos (não importa se passar de 1,0 pois será convertido)
     A fórmula do cosseno entre dois produtos é:
 
-    Similaridade(P1, P2) = clientes em comum / raiz (compradores de P1 × compradores de P2)
+    Similaridade(P1, P2) = produtos em comum / raiz (compradores de P1 × compradores de P2)
 
-    Se não houver clientes em comum, a similaridade será zero.
+    Se não houver produtos em comum, a similaridade será zero.
     Exemplo: existem os produtos A, B, C, D , E . O cliente escolhido comprou A e D. 
     Será feita o cosseno de A -> B, D -> B e esse valor é somado. 
     Depois A -> C e D -> C, valor é somado e atribuido ao produto que está sendo comparado. 

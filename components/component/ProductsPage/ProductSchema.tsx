@@ -1,7 +1,16 @@
+
 import { z } from "zod";
 
+export const caracteristicaProdutoSchema = z.array(
+  z.object({
+    caracteristicaId: z.string().uuid(),
+    valor: z.string().trim().min(1, "Preencha o valor da característica"),
+  }),
+);
+
 export const produtoSchema = z.object({
-  imagem: z
+  imagem: z.union([
+  z
     .instanceof(File, { message: "Imagem é obrigatória" })
     .refine(
       (file) =>
@@ -12,6 +21,8 @@ export const produtoSchema = z.object({
       (file) => file.size <= 5 * 1024 * 1024,
       "A imagem deve ter no máximo 5 MB",
     ),
+  z.string().url("Imagem inválida"),
+]),
   nome: z.string().trim().min(3, "Nome deve ter pelo menos 3 letras"),
   categoriaId: z.string().uuid("Selecione uma categoria"),
   preco: z

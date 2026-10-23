@@ -8,6 +8,7 @@ import { toast } from "@/components/ui/toast";
 import { apiGet } from "@/lib/api";
 import { useToken } from "@/hooks/use-token";
 import { columnsRecomendacao, type ProdutoRecomendado } from "./columns";
+import { TriangleAlert } from "lucide-react";
 
 interface AssociarClienteTableViewProps {
   clienteId: string; // vazio = nada analisado ainda
@@ -97,10 +98,12 @@ const AssociarClienteTableView = ({
       {carregando && <TabelaSkeleton />}
 
       {!carregando && recomendacoes && recomendacoes.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          Este cliente ainda não tem compras registradas, então não há base para
-          recomendar produtos.
-        </p>
+        <div className="flex items-center gap-1 justify-center h-100">
+                <TriangleAlert size={18} className="text-primary font-semibold"/>
+                <p className="text-sm text-muted-foreground font-semibold">
+                Este cliente não possui vendas, então não há base para recomendar produtos.
+                </p>
+              </div>
       )}
 
       {!carregando && recomendacoes && recomendacoes.length > 0 && (

@@ -3,7 +3,7 @@
 // Essa página formata a tabela
 
 import { ColumnDef } from "@tanstack/react-table";
-import { BookUser, MoreVertical, Trash2, Trash2Icon } from "lucide-react";
+import { BookUser, MoreVertical, Pen, Trash2, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -43,6 +43,7 @@ export type ProductTableColumns = {
 // e header (por enquanto) quando conectar com o BD talvez seja por id
 
 export const columnsProduct = (
+  onEditarProduto: (id: string) => void,
   atualizarProdutos: () => Promise<void>
 ): ColumnDef<ProductTableColumns>[] => [
   {
@@ -172,9 +173,10 @@ export const columnsProduct = (
 
             <DropdownMenuContent align="end" className="w-36">
               <DropdownMenuGroup>
-                <DropdownMenuItem>
-                  <BookUser />
-                  Ver produto
+                <DropdownMenuItem
+                  onClick={() => {onEditarProduto(r.id)}}>
+                  <Pen />
+                  Editar produto
                 </DropdownMenuItem>
 
                 <DropdownMenuItem

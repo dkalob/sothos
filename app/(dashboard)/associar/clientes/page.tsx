@@ -7,6 +7,15 @@ import InsightCard from "@/components/component/ClientPage/ClientDetailsPage/Ins
 import PageHeader from "@/components/component/PageHeader";
 import { Button } from "@/components/ui/button";
 import AssociarClienteTableView from "@/components/component/AssociarPage/Cliente/AssociarClienteTableView";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import Link from "next/link";
 
 const AssociarClientes = () => {
   const [clienteSelecionado, setClienteSelecionado] = useState("");
@@ -14,6 +23,19 @@ const AssociarClientes = () => {
 
   return (
     <main>
+
+      <Breadcrumb className="mb-4">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink render={<Link href="/ia">IA</Link>} />
+          </BreadcrumbItem>
+          <BreadcrumbSeparator></BreadcrumbSeparator>
+          <BreadcrumbItem>
+            <BreadcrumbPage>Associar Clientes</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       <PageHeader
         title="Associar Clientes"
         subtitle="Essa ferramenta irá recomendar potenciais produtos que um cliente da sua loja possa se interessar."

@@ -1,6 +1,7 @@
+
 services:
   db:
-    image: postgres:16
+    image: postgres:18
     container_name: sothos-db
     environment:
       POSTGRES_USER: sothos
@@ -9,19 +10,62 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - sothos_pgdata:/var/lib/postgresql/data
+      - sothos_pgdata_demo:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U sothos -d sothos"]
       interval: 5s
       timeout: 5s
       retries: 10
 
+  restore-db:
+    image: postgres:18
+    container_name: sothos-restore-db
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: sothos_dev
+    volumes:
+      - ./db/sothos-demo.dump:/backup/sothos-demo.dump:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -eu
+
+        if [ "$$(psql -h db -U sothos -d sothos -tAc "SELECT to_regclass('public._sothos_demo_restore_done') IS NOT NULL")" = "t" ]; then
+          echo "Banco de demonstração já restaurado."
+          exit 0
+        fi
+
+        echo "Restaurando banco de demonstração..."
+
+        pg_restore \
+          --host=db \
+          --username=sothos \
+          --dbname=sothos \
+          --no-owner \
+          --no-privileges \
+          --single-transaction \
+          --exit-on-error \
+          /backup/sothos-demo.dump
+
+        psql -h db -U sothos -d sothos \
+          -c "CREATE TABLE public._sothos_demo_restore_done (id integer PRIMARY KEY);"
+
+        psql -h db -U sothos -d sothos \
+          -c "INSERT INTO public._sothos_demo_restore_done (id) VALUES (1);"
+
+        echo "Banco restaurado com sucesso."
+    restart: "no"
+
   api:
-    image: dkalob/sothos-api:sprint2
+    image: dkalob/sothos-api:sprint3
     container_name: sothos-api
     depends_on:
       db:
         condition: service_healthy
+      restore-db:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: postgresql://sothos:sothos_dev@db:5432/sothos?schema=public
       JWT_SECRET: ${JWT_SECRET:-sothos_dev_secret_trocar_em_producao}
@@ -36,7 +80,7 @@ services:
       - "3001:3001"
 
   web:
-    image: dkalob/sothos-web:sprint2
+    image: dkalob/sothos-web:sprint3
     container_name: sothos-web
     depends_on:
       - api
@@ -46,4 +90,4 @@ services:
       - "3000:3000"
 
 volumes:
-  sothos_pgdata:
+  sothos_pgdata_demo:

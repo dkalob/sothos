@@ -17,9 +17,9 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
-import { ProdutoFormErrors, produtoSchema } from "./ProductSchema";
+import { ProdutoFormErrors, produtoSchema, caracteristicaProdutoSchema } from "./ProductSchema";
 import { useToken } from "@/hooks/use-token";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiGet, apiPost, apiPut } from "@/lib/api";
 import { toast } from "@/components/ui/toast";
 import CategoriaCombobox from "../CategoriaComboBox";
 import { Switch } from "@/components/ui/switch";
@@ -40,6 +40,7 @@ interface ProductSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onProdutoCadastrado: () => void;
+  produtoId?: string | null;
 }
 
 type CaracteristicaProduto = {
@@ -56,6 +57,30 @@ type ProdutoForm = {
   ativo: boolean;
 };
 
+type ProdutoDetalhado = {
+  id: string;
+  imagem: string | null;
+  nome: string;
+  categoriaId: string;
+  categoria: {
+    id: string;
+    nome: string;
+  } | null;
+  preco: string;
+  sku: string | null;
+  ativo: boolean;
+  caracteristicas: {
+    caracteristicaId: string;
+    valor: string;
+    caracteristica: {
+      id: string;
+      nome: string;
+      tipo: string;
+      opcoes: string[];
+    };
+  }[];
+};
+
 const initialForm: ProdutoForm = {
   imagem: null,
   nome: "",
@@ -69,22 +94,19 @@ const ProductSheet = ({
   open,
   onOpenChange,
   onProdutoCadastrado,
+  produtoId,
 }: ProductSheetProps) => {
   const [form, setForm] = useState<ProdutoForm>(initialForm);
   const [errors, setErrors] = useState<ProdutoFormErrors>({});
   const [imagemPreview, setImagemPreview] = useState<string | null>(null);
-  const [caracteristicasProduto, setCaracteristicasProduto] = useState<
-    CaracteristicaProduto[]
-  >([]);
-  const [caracteristicasExistentes, setCaracteristicasExistentes] = useState<
-    Caracteristica[]
-  >([]);
-  const [carregandoCaracteristicas, setCarregandoCaracteristicas] =
-    useState(true);
+  const [imagemAtual, setImagemAtual] = useState<string | null>(null);
+  const [caracteristicasProduto, setCaracteristicasProduto] = useState<CaracteristicaProduto[]>([]);
+  const [caracteristicasExistentes, setCaracteristicasExistentes] = useState<Caracteristica[]>([]);
+  const [carregandoCaracteristicas, setCarregandoCaracteristicas] = useState(true);
 
   useEffect(() => {
     if (!form.imagem) {
-      setImagemPreview(null);
+      setImagemPreview(imagemAtual);
       return;
     }
 
@@ -94,7 +116,7 @@ const ProductSheet = ({
     return () => {
       URL.revokeObjectURL(url);
     };
-  }, [form.imagem]);
+  }, [form.imagem, imagemAtual]);
 
   const token = useToken();
 
@@ -118,9 +140,79 @@ const ProductSheet = ({
     verificarCaracteristicas();
   }, [token]);
 
-  async function cadastrarProduto() {
+  //Função para recarregar dados do produto selecionado
+  useEffect(() => {
+  if (!open || !produtoId || !token) return;
+
+  let cancelado = false;
+
+  async function carregarProduto() {
+      try {
+        const produto = await apiGet<ProdutoDetalhado>(
+          `/produtos/${produtoId}`,
+          token || undefined,
+        );
+
+        if (cancelado) return;
+
+        setForm({
+          imagem: null,
+          nome: produto.nome,
+          categoriaId: produto.categoriaId ?? "",
+          preco: produto.preco,
+          sku: produto.sku ?? "",
+          ativo: produto.ativo,
+        });
+
+        setImagemAtual(produto.imagem);
+        setErrors({});
+
+        setCaracteristicasProduto(
+          produto.caracteristicas.map((item) => {
+            const existente = caracteristicasExistentes.find(
+              (c) => c.id === item.caracteristicaId,
+            );
+
+            if (existente) {
+              return {
+                caracteristica: existente,
+                valor: item.valor,
+              };
+            }
+
+            return {
+              caracteristica: {
+                id: item.caracteristica.id,
+                nome: item.caracteristica.nome,
+                tipo: item.caracteristica.tipo as Caracteristica["tipo"],
+                opcoes: item.caracteristica.opcoes,
+              } as Caracteristica,
+              valor: item.valor,
+            };
+          }),
+        );
+      } catch (error) {
+        if (cancelado) return;
+
+        console.error("Erro ao carregar produto:", error);
+
+        toast.add({
+          title: "Não foi possível carregar o produto",
+          type: "error",
+        });
+      }
+    }
+
+    carregarProduto();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [open, produtoId, token, caracteristicasExistentes]);
+
+  async function salvarProduto() {
     const result = produtoSchema.safeParse({
-      imagem: form.imagem,
+      imagem: form.imagem ?? imagemAtual ?? undefined,
       nome: form.nome,
       categoriaId: form.categoriaId,
       preco: form.preco,
@@ -143,48 +235,92 @@ const ProductSheet = ({
       return;
     }
 
+    const resultadoCaracteristicas =
+      caracteristicaProdutoSchema.safeParse(
+        caracteristicasProduto.map((item) => ({
+          caracteristicaId: item.caracteristica.id,
+          valor: item.valor,
+        })),
+      );
+
+    if (!resultadoCaracteristicas.success) {
+      const issue = resultadoCaracteristicas.error.issues[0];
+      const indice = Number(issue.path[0]);
+
+      toast.add({
+        title: "Verifique as características",
+        type: "error",
+      });
+
+      console.error(
+        "Característica inválida:",
+        caracteristicasProduto[indice]?.caracteristica.nome,
+        issue.message,
+      );
+
+      return;
+    }
+
     try {
-      let imagemUrl = "";
+      let imagemUrl = imagemAtual ?? "";
 
       if (form.imagem) {
         imagemUrl = await uploadImagem(form.imagem);
       }
 
-      await apiPost(
-        "/produtos",
-        {
-          imagem: imagemUrl,
-          nome: form.nome,
-          categoriaId: form.categoriaId,
-          preco: result.data.preco,
-          sku: form.sku,
-          ativo: form.ativo,
-          caracteristicas: caracteristicasProduto.map((item) => ({
-            caracteristicaId: item.caracteristica.id,
-            valor: item.valor,
-          })),
-        },
-        token ?? undefined,
-      );
+      const dadosProduto = {
+        imagem: imagemUrl,
+        nome: form.nome.trim(),
+        categoriaId: form.categoriaId,
+        preco: result.data.preco,
+        sku: form.sku.trim(),
+        ativo: form.ativo,
+        caracteristicas: resultadoCaracteristicas.data,
+      };
 
-      toast.add({
-        title: "Produto cadastrado com sucesso!",
-        type: "success",
-      });
+      if (produtoId) {
+        await apiPut(
+          `/produtos/${produtoId}`,
+          dadosProduto,
+          token ?? undefined,
+        );
+
+        toast.add({
+          title: "Produto atualizado com sucesso!",
+          type: "success",
+        });
+      } else {
+        await apiPost(
+          "/produtos",
+          dadosProduto,
+          token ?? undefined,
+        );
+
+        toast.add({
+          title: "Produto cadastrado com sucesso!",
+          type: "success",
+        });
+      }
+
+      await onProdutoCadastrado();
 
       onOpenChange(false);
       setForm(initialForm);
+      setImagemAtual(null);
+      setImagemPreview(null);
       setCaracteristicasProduto([]);
-      onProdutoCadastrado();
+      setErrors({});
     } catch (error) {
-      console.error("ERRO AO CADASTRAR PRODUTO:", error);
+      console.error("Erro ao salvar produto:", error);
 
       toast.add({
-        title: "Não foi possível cadastrar o produto",
+        title: produtoId
+          ? "Não foi possível atualizar o produto"
+          : "Não foi possível cadastrar o produto",
         type: "error",
       });
     }
-  }
+}
 
   function adicionarCaracteristica(caracteristica: Caracteristica) {
     const jaAdicionada = caracteristicasProduto.some(
@@ -209,9 +345,11 @@ const ProductSheet = ({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="flex flex-col">
         <SheetHeader>
-          <SheetTitle>Adicionar Produto</SheetTitle>
+          <SheetTitle>{produtoId ? "Editar Produto" : "Adicionar Produto"}</SheetTitle>
           <SheetDescription>
-            Preencha os campos para cadastrar um produto.
+            {produtoId
+              ? "Altere os dados do produto conforme necessário."
+              : "Preencha os campos para cadastrar um produto."}
           </SheetDescription>
         </SheetHeader>
         <div className="grid flex-1 auto-rows-min gap-6 px-4 overflow-y-auto">
@@ -469,7 +607,9 @@ const ProductSheet = ({
           )}
         </div>
         <SheetFooter>
-          <Button onClick={cadastrarProduto}>Cadastrar produto</Button>
+          <Button onClick={salvarProduto}>
+            {produtoId ? "Salvar alterações" : "Cadastrar produto"}
+          </Button>
           <SheetClose render={<Button variant="outline">Fechar</Button>} />
         </SheetFooter>
       </SheetContent>

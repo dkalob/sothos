@@ -14,6 +14,7 @@ import { toast } from "@/components/ui/toast";
 
 interface ProductTableViewProps {
   columnsProduct: (
+    onEditarProduto: (id: string) => void,
     atualizarProdutos: () => Promise<void>
   ) => ColumnDef<ProductTableColumns>[];
 }
@@ -41,6 +42,7 @@ const TabelaSkeleton = () => (
 const ProductTableView = ({ columnsProduct }: ProductTableViewProps) => {
   const [produtoSheet, setProdutoSheet] = useState(false);
   const [productsData, setProductsData] = useState<ProductTableColumns[]>([]);
+  const [produtoId, setProdutoId] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
 
   const token = useToken();
@@ -72,6 +74,13 @@ const ProductTableView = ({ columnsProduct }: ProductTableViewProps) => {
   useEffect(() => {
     buscarProdutos();
   }, [token]);
+
+  function editarProduto(id: string) {
+    setProdutoId(id);
+    setProdutoSheet(true);
+}
+
+  
 
   if (carregando) {
     return <TabelaSkeleton />;
@@ -106,7 +115,10 @@ const ProductTableView = ({ columnsProduct }: ProductTableViewProps) => {
             <Button
               variant="default"
               className="w-32 truncate"
-              onClick={() => setProdutoSheet(true)}
+              onClick={() => {
+                setProdutoId(null);
+                setProdutoSheet(true);
+              }}
             >
               <Plus />
               Novo Produto
@@ -114,14 +126,24 @@ const ProductTableView = ({ columnsProduct }: ProductTableViewProps) => {
 
             <ProductSheet
               open={produtoSheet}
-              onOpenChange={setProdutoSheet}
+              onOpenChange={(aberto) => {
+                setProdutoSheet(aberto);
+
+                if (!aberto) {
+                  setProdutoId(null);
+                }
+              }}
               onProdutoCadastrado={atualizarProdutos}
+              produtoId={produtoId}
             />
           </div>
         </div>
 
         <DataTable
-          columns={columnsProduct(atualizarProdutos)}
+          columns={columnsProduct(
+            editarProduto,
+            atualizarProdutos
+          )}
           data={productsData}
           hasFilter
           hasPagination
