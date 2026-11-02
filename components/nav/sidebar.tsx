@@ -70,7 +70,7 @@ const items = [
   {
     label: "Campanhas",
     icon: Megaphone,
-    url: "#",
+    url: "/campanhas",
   },
   {
     label: "Pop-ups",

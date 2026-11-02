@@ -102,6 +102,22 @@ enum TipoCaracteristica {
   OPCAO
 }
 
+enum TomCampanha {
+  FORMAL // "Preparamos uma condição especial para você. Confira os detalhes da nossa proposta.”
+  DESCONTRAIDO // “Oi! Temos uma novidade que você vai adorar 😍”
+  PERSUASIVO // “Aproveite essa oportunidade para garantir mais benefícios por um preço especial!”
+  DIVERTIDO // “Seu carrinho está pedindo reforços! 🛒 Que tal aproveitar esse descontinho?”
+  PESSOAL // “Oi, tudo bem? Lembrei de você porque chegou uma opção que combina bastante com o que você procura.”
+}
+
+enum ObjetivoCampanha {
+  LANCAMENTO 
+  PROMOCAO 
+  DIVULGACAO
+  INDICACAO
+  ULTIMAS_UNIDADES
+}
+
 // =====================================================================
 // CONTA E USUÁRIOS
 // A Conta é o "inquilino" (tenant). Todo dado do sistema pertence a uma
@@ -126,6 +142,7 @@ model Conta {
   categoriasProduto      CategoriaProduto[]
   caracteristicasProduto CaracteristicaProduto[]
   execucoesSegmentacao ExecucaoSegmentacao[]
+  mensagensIa MensagemIa[]
 
   @@map("conta")
 }
@@ -146,6 +163,7 @@ model Usuario {
   campanhasCriadas   Campanha[]  @relation("CampanhaCriadaPor")
   campanhasAprovadas Campanha[]  @relation("CampanhaAprovadaPor")
   tokensRecuperacao  TokenRecuperacaoSenha[]
+  mensagensIa MensagemIa[]
 
   @@index([contaId])
   @@map("usuario")
@@ -272,6 +290,7 @@ model GrupoCliente {
   conta    Conta          @relation(fields: [contaId], references: [id], onDelete: Cascade)
   loja     LojaConectada?  @relation(fields: [lojaId], references: [id], onDelete: Cascade)
   clientes ClienteGrupo[]
+  campanhas Campanha[]
 
   @@index([contaId])
   @@unique([lojaId, nome])
@@ -312,6 +331,7 @@ model Produto {
   itens     ItemPedido[]
   campanhas CampanhaProduto[]
   caracteristicas ProdutoCaracteristica[]
+  mensagensIa MensagemIa[]
 
   @@index([contaId])
   @@index([categoriaId])
@@ -522,31 +542,37 @@ model AnaliseRfm {
 // =====================================================================
 
 model Campanha {
-  id            String        @id @default(uuid())
-  contaId       String        @map("id_conta") 
-  lojaId        String        @map("id_loja")
-  segmentoId    String?       @map("id_segmento") // nulo enquanto RASCUNHO (RN006 validado na transição de status)
-  criadoPorId   String?       @map("id_criado_por")
-  aprovadoPorId String?       @map("id_aprovado_por")
-  tipo         TipoCampanha
-  status       StatusCampanha @default(RASCUNHO)
-  titulo       String         @db.VarChar(160)
-  assunto      String?        @db.VarChar(200) // usado em campanha de e-mail
-  conteudo     String?        @db.Text
-  agendadaPara DateTime?      @map("agendada_para")
-  aprovadaEm   DateTime?      @map("aprovada_em") // revisão humana obrigatória antes do disparo
-  enviadaEm    DateTime?      @map("enviada_em")
-  criadoEm     DateTime       @default(now()) @map("criado_em")
-  alteradoEm   DateTime       @updatedAt @map("alterado_em")
+  id            String         @id @default(uuid())
+  contaId       String         @map("id_conta") 
+  lojaId        String?        @map("id_loja")
+  segmentoId    String?        @map("id_segmento") // nulo enquanto RASCUNHO (RN006 validado na transição de status)
+  criadoPorId   String?        @map("id_criado_por")
+  aprovadoPorId String?        @map("id_aprovado_por")
+  tipo          TipoCampanha
+  status        StatusCampanha @default(RASCUNHO)
+  titulo        String         @db.VarChar(160)
+  assunto       String?        @db.VarChar(200) // usado em campanha de e-mail
+  conteudo      String?        @db.Text
+  descricao     String?        @db.Text
+  grupoId       String?        @map("id_grupo")
+  mensagemId    String?        @map("id_mensagem")
+  agendadaPara  DateTime?      @map("agendada_para")
+  aprovadaEm    DateTime?      @map("aprovada_em") // revisão humana obrigatória antes do disparo
+  enviadaEm     DateTime?      @map("enviada_em")
+  criadoEm      DateTime       @default(now()) @map("criado_em")
+  alteradoEm    DateTime       @updatedAt @map("alterado_em")
 
   conta       Conta             @relation(fields: [contaId], references: [id], onDelete: Cascade)
-  loja        LojaConectada     @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  loja        LojaConectada?    @relation(fields: [lojaId], references: [id], onDelete: Cascade)
   segmento    Segmento?         @relation(fields: [segmentoId], references: [id], onDelete: SetNull)
+  grupo       GrupoCliente?     @relation(fields: [grupoId], references: [id], onDelete: SetNull)
+  mensagem    MensagemIa?       @relation(fields: [mensagemId], references: [id], onDelete: SetNull)
   criadoPor   Usuario?          @relation("CampanhaCriadaPor", fields: [criadoPorId], references: [id], onDelete: SetNull)
   aprovadoPor Usuario?          @relation("CampanhaAprovadaPor", fields: [aprovadoPorId], references: [id], onDelete: SetNull)
   clientes    CampanhaCliente[]
   produtos    CampanhaProduto[]
   execucoesIa ExecucaoIa[]
+  
 
   @@index([contaId])
   @@index([lojaId, status])
@@ -575,6 +601,31 @@ model CampanhaProduto {
 
   @@id([campanhaId, produtoId])
   @@map("campanha_produto")
+}
+
+model MensagemIa {
+  id          String       @id @default(uuid())
+  contaId     String       @map("id_conta")
+  produtoId   String?      @map("id_produto")
+  criadoPorId String?      @map("id_criado_por")
+  tipo        TipoCampanha 
+  titulo      String       @db.VarChar(160)
+  tom         TomCampanha
+  objetivo    ObjetivoCampanha
+  observacoes String?      @db.Text          // o que o usuário digitou para o prompt
+  assunto     String?      @db.VarChar(200)  // só e-mail
+  conteudo    String       @db.Text
+  imagemUrl   String?      @map("imagem_url")
+  criadoEm    DateTime     @default(now()) @map("criado_em")
+  alteradoEm  DateTime     @updatedAt @map("alterado_em")
+
+  conta     Conta      @relation(fields: [contaId], references: [id], onDelete: Cascade)
+  produto   Produto?   @relation(fields: [produtoId], references: [id], onDelete: SetNull)
+  criadoPor Usuario?   @relation(fields: [criadoPorId], references: [id], onDelete: SetNull)
+  campanhas Campanha[]
+
+  @@index([contaId, tipo])
+  @@map("mensagem_ia")
 }
 
 // =====================================================================
