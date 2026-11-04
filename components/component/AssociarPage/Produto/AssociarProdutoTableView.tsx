@@ -111,7 +111,7 @@ const AssociarProdutoTableView = ({
     try {
       await apiPost(
         "/clientes/grupos",
-        { nome, clientesIds: selecionados},
+        { nome, descricao: "", clientesIds: selecionados},
         token ?? undefined
       )
       toast.add({
@@ -125,6 +125,8 @@ const AssociarProdutoTableView = ({
         type: "error"
       })
     }
+
+    setGrupoSheet(false)
     
   }
 

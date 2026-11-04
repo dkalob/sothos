@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Funnel, X } from "lucide-react";
+import { Funnel, Info, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,17 +37,20 @@ interface GrupoSheetProps {
 
 type GrupoForm = {
   nome: string;
+  descricao: string;
   clientes: Cliente[];
 };
 
 const initialForm: GrupoForm = {
   nome: "",
+  descricao: "",
   clientes: [],
 };
 
 type GrupoDetalhado = {
   id: string;
   nome: string;
+  descricao: string;
   itens: {
     id: string;
     nome: string;
@@ -66,7 +69,8 @@ const GrupoSheet = ({
   const [clienteSelecionado, setClienteSelecionado] = useState("");
   const [clienteDuplicado, setClienteDuplicado] = useState(false);
   const [filtroAtivo, setFiltroAtivo] = useState(false);
-  const [filtrosSelecionados, setFiltrosSelecionados] = useState<FiltrosSelecionados>({ opcoes: {}, valores: {} });
+  const [filtrosSelecionados, setFiltrosSelecionados] =
+    useState<FiltrosSelecionados>({ opcoes: {}, valores: {} });
 
   const token = useToken();
 
@@ -99,8 +103,9 @@ const GrupoSheet = ({
             .filter((cliente): cliente is Cliente => cliente !== undefined);
 
           setForm({
-            nome: grupo.nome,
-            clientes: clientesDoGrupo,
+            nome: grupo.nome ?? "",
+            descricao: grupo.descricao ?? "",
+            clientes: clientesDoGrupo ?? [],
           });
         } else {
           // Novo grupo
@@ -175,6 +180,7 @@ const GrupoSheet = ({
     try {
       const payload = {
         nome: form.nome,
+        descricao: form.descricao,
         clientesIds: form.clientes.map((cliente) => cliente.id),
         filtros: filtroAtivo ? filtrosSelecionados : undefined,
       };
@@ -262,7 +268,7 @@ const GrupoSheet = ({
                 <span className="text-destructive">*</span>
               </div>
               <Input
-                placeholder="Clientes que mais compram"
+                placeholder="Clientes VIP"
                 value={form.nome}
                 onChange={(e) =>
                   setForm((prev) => ({
@@ -282,7 +288,32 @@ const GrupoSheet = ({
           </div>
           <div className="grid gap-3">
             <Field>
-                <FieldLabel>Adicionar clientes individualmente</FieldLabel>
+              <FieldLabel>Descrição</FieldLabel>
+              <Input
+                placeholder="Clientes que mais realizaram compras na loja"
+                value={form.descricao}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    descricao: e.target.value,
+                  }))
+                }
+              />
+            </Field>
+          </div>
+          <div className="grid gap-3">
+            <div className="rounded-xl border bg-primary/10 p-2">
+              <div className="flex items-center gap-2 text-primary">
+                <Info className="size-5 shrink-0 ml-1" />
+                <span className="space-y-2 pl-1 text-sm text-primary">
+                  Defina nome e descrição de forma clara e informativa. A Inteligência Artificial usará essas informações para criar mensagens.
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="grid gap-3">
+            <Field>
+              <FieldLabel>Adicionar clientes individualmente</FieldLabel>
               <ClienteCombobox
                 value={clienteSelecionado}
                 onChange={(value) => {
@@ -339,8 +370,7 @@ const GrupoSheet = ({
             </div>
           </div>
           {filtroAtivo && (
-            <FiltroCliente 
-              onFiltrosChange={setFiltrosSelecionados} />
+            <FiltroCliente onFiltrosChange={setFiltrosSelecionados} />
           )}
         </div>
         <SheetFooter>

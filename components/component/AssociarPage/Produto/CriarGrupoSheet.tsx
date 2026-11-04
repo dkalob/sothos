@@ -29,11 +29,13 @@ const CriarGrupoSheet = ({
   onConfirmar,
 }: CriarGrupoSheetProps) => {
   const [nome, setNome] = useState("");
+  const [descricao, setDescricao] = useState("");
   const [erro, setErro] = useState<string | undefined>();
 
   // Abre sempre limpo
   useEffect(() => {
     setNome("");
+    setDescricao("");
     setErro(undefined);
   }, [open]);
 
@@ -64,7 +66,7 @@ const CriarGrupoSheet = ({
               <span className="text-destructive">*</span>
             </div>
             <Input
-              placeholder="Ex.: Interessados no Tênis Adidas"
+              placeholder="Ex.: Clientes VIP"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               aria-invalid={!!erro}
@@ -72,6 +74,16 @@ const CriarGrupoSheet = ({
             <FieldDescription className={erro ? "text-destructive" : undefined}>
               {erro ?? "Esse campo deve ser preenchido"}
             </FieldDescription>
+          </Field>
+
+          <Field>
+              <FieldLabel>Descrição</FieldLabel>
+            <Input
+              placeholder="Ex.: Clientes que mais compram na minha loja"
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              aria-invalid={!!erro}
+            />
           </Field>
         </div>
 

@@ -321,7 +321,7 @@ export class GrupoClientesService {
     });
   }
 
-  // Método para criar um grupo com clientes manuais
+  // Método para criar um grupo
   async create(contaId: string, dto: GrupoClientesDto) {
     return this.prisma.$transaction(async (tx) => {
       // 1. Verifica se todos os clientes pertencem à conta
@@ -357,6 +357,7 @@ export class GrupoClientesService {
         data: {
           contaId,
           nome: dto.nome,
+          descricao: dto.descricao,
 
           clientes: {
             create: clientesIds.map((clienteId) => ({
@@ -572,6 +573,7 @@ export class GrupoClientesService {
     return {
       id: grupo.id,
       nome: grupo.nome,
+      descricao: grupo.descricao,
       itens: grupo.clientes.map((item) => ({
         id: item.cliente.id,
         nome: item.cliente.nome,
@@ -624,6 +626,7 @@ export class GrupoClientesService {
         },
         data: {
           nome: dto.nome,
+          descricao: dto.descricao,
 
           clientes: {
             create: dto.clientesIds.map((clienteId) => ({
@@ -646,6 +649,20 @@ export class GrupoClientesService {
       });
 
       return grupoAtualizado;
+    });
+  }
+
+  // Método do Combobox
+  async findAllComboBox(contaId: string) {
+    return this.prisma.grupoCliente.findMany({
+      where: { contaId },
+      select: {
+        id: true,
+        nome: true,
+      },
+      orderBy: {
+        nome: 'asc',
+      },
     });
   }
 }

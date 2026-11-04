@@ -20,6 +20,11 @@ export class GrupoClientesController {
     return this.grupoClientesService.findAll(usuario.contaId);
   }
 
+  @Get('combobox')
+  async findAllComboBox(@UsuarioLogado() usuario: JwtPayload) {
+    return this.grupoClientesService.findAllComboBox(usuario.contaId)
+  }
+
   @Get(":id")
   async findOne(@Param("id") id: string, @UsuarioLogado() usuario: JwtPayload, ) {
     return this.grupoClientesService.findOne(id, usuario.contaId);

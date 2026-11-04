@@ -5,6 +5,10 @@ export class GrupoClientesDto {
   @Length(3, 100, { message: 'Nome deve ter pelo menos 3 letras' })
   nome: string;
 
+  @IsOptional()
+  @IsString()
+  descricao?: string;
+
   @IsArray()
   @IsUUID('4', { each: true })
   clientesIds: string[];

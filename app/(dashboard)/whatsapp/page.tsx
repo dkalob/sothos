@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import MoldeCelular from "@/components/component/MoldeCelular";
 import BotaoReprocessarImagem from "@/components/component/BotaoReprocessarImagem";
 import DicasEngajaento from "@/components/component/DicasEngajamento";
+import GrupoClienteCombobox from "@/components/component/GrupoClienteComboBox";
 
 const Tom = [
   { value: "FORMAL", label: "Formal" },
@@ -48,6 +49,7 @@ const Objetivo = [
 const Whatsapp = () => {
   const [produtoSelecionado, setProdutoSelecionado] = useState("");
   const [grupoSelecionado, setGrupoSelecionado] = useState("");
+  const [nomeGrupoSelecionado, setNomeGrupoSelecionado] = useState("");
   const [tomSelecionado, setTomSelecionado] = useState<string | null>(null);
   const [objetivoSelecionado, setObjetivoSelecionado] = useState<string | null>(
     null,
@@ -100,10 +102,10 @@ const Whatsapp = () => {
 
               <Field className="min-w-0">
                 <FieldLabel>Grupo de clientes</FieldLabel>
-                <ProdutoCombobox
+                <GrupoClienteCombobox
                   value={grupoSelecionado}
-                  onSelect={() => {}}
                   onChange={setGrupoSelecionado}
+                  onNomeChange={setNomeGrupoSelecionado}
                 />
               </Field>
 
@@ -191,7 +193,7 @@ const Whatsapp = () => {
             <div className="flex mt-6 min-h-full gap-4">
               {/* CONVERSA */}
               <div className="w-1/2">
-                <MoldeCelular mensagem={mensagem} imagemUrl={imagemUrl} nome={grupoSelecionado} />
+                <MoldeCelular mensagem={mensagem} imagemUrl={imagemUrl} nome={nomeGrupoSelecionado} />
               </div>
               
               {/* EDIÇÃO */}
@@ -231,10 +233,6 @@ const Whatsapp = () => {
                     onChange={(e) => setMensagem(e.target.value)}
                   />
                 </Field>
-
-                <div className="mt-2 flex justify-end">
-                  <Button variant="outline">Salvar Mensagem</Button>
-                </div>
 
                 {/* ENVIAR DE: combobox entra aqui depois */}
 
