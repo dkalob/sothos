@@ -1,9 +1,11 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CadastroDto } from './dto/cadastro.dto';
 import { LoginDto } from './dto/login.dto';
 import { SolicitarRecuperacaoDto } from './dto/solicitar-recuperacao.dto';
 import { RedefinirSenhaDto } from './dto/redefinir-senha.dto';
+import { UsuarioLogado } from './usuario-logado.decorator';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -32,4 +34,10 @@ export class AuthController {
   redefinirSenha(@Body() dto: RedefinirSenhaDto) {
     return this.authService.redefinirSenha(dto);
   }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  me(@UsuarioLogado() usuario: { usuarioId: string }) {
+    return this.authService.me(usuario.usuarioId);
+}
 }

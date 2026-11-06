@@ -13,6 +13,8 @@ import { GrupoClientesModule } from './clientes/grupoDeClientes/grupo-clientes.m
 import { CaracteristicaProdutoModule } from './produtos/caracteristicasProduto/caracteristicas-produto-module';
 import { RfmModule } from './rfm/rfm.module';
 import { RecomendacoesModule } from './recomendacoes/recomendacoes.module';
+import { IaModule } from './ia/ia.module';
+import { MensagensIaModule } from './mensagens/mensagens.module';
 
 
 @Module({
@@ -28,7 +30,9 @@ import { RecomendacoesModule } from './recomendacoes/recomendacoes.module';
     PedidosModule,
     CaracteristicaProdutoModule,
     RfmModule,
-    RecomendacoesModule
+    RecomendacoesModule,
+    IaModule,
+    MensagensIaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

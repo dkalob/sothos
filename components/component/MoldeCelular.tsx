@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+
 type Props = {
   mensagem: string;
   imagemUrl?: string | null;
@@ -33,8 +34,10 @@ export default function WhatsappMockup({
   contato = "(11) 99876-5432",
   nome,
 }: Props) {
+  
   const [mostrarResposta, setMostrarResposta] = useState(false);
 
+  // animação que simula uma resposta do cliente
   useEffect(() => {
     if (imagemUrl && mensagem) {
       setMostrarResposta(false);
@@ -49,10 +52,11 @@ export default function WhatsappMockup({
     setMostrarResposta(false);
   }, [imagemUrl, mensagem]);
 
+
   return (
     <div className="flex w-full items-center justify-center p-4">
       {/* IPHONE */}
-      <div className="relative h-155 w-75 rounded-[42px] border-[5px] border-[#c9cbd1] bg-[#e5e5e5] p-0.75 shadow-xl">
+      <div className="relative h-175 w-90 rounded-[42px] border-[5px] border-[#c9cbd1] bg-[#e5e5e5] p-0.75 shadow-xl">
         {/* TELA */}
         <div className="relative flex h-full w-full flex-col overflow-hidden rounded-[34px] bg-white">
           {/* STATUS BAR */}
@@ -93,9 +97,6 @@ export default function WhatsappMockup({
                     <BubbleContent>
                       Olá, gostaria de receber promoções
                     </BubbleContent>
-                    <BubbleReactions aria-label="Reactions: thumbs up">
-                      <span>👍</span>
-                    </BubbleReactions>
                   </Bubble>
                 </MessageContent>
               </Message>
@@ -148,6 +149,9 @@ export default function WhatsappMockup({
                     <MessageContent>
                       <Bubble variant="muted">
                         <BubbleContent>Eu quero comprar!!</BubbleContent>
+                        <BubbleReactions aria-label="Reactions: thumbs up">
+                      <span>❤️</span>
+                    </BubbleReactions>
                       </Bubble>
                     </MessageContent>
                   </Message>

@@ -21,7 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
-import { WandSparkles } from "lucide-react";
+import { Loader2, WandSparkles } from "lucide-react";
 import ProdutoCombobox from "@/components/component/ProdutoComboBox";
 import { useState } from "react";
 import GrupoClienteCombobox from "@/components/component/GrupoClienteComboBox";
@@ -29,6 +29,11 @@ import Link from "next/link";
 import BotaoReprocessarImagem from "@/components/component/BotaoReprocessarImagem";
 import { Input } from "@/components/ui/input";
 import { MoldeEmail } from "@/components/component/MoldeEmail";
+import { EmailFormErrors, emailSchema } from "@/components/component/Email/EmailSchema";
+import { useToken } from "@/hooks/use-token";
+import { apiPost, apiPut } from "@/lib/api";
+import { toast } from "@/components/ui/toast";
+import { useUsuario } from "@/hooks/use-usuario";
 
 const Tom = [
   { value: "FORMAL", label: "Formal" },
@@ -46,20 +51,114 @@ const Objetivo = [
   { value: "ULTIMAS_UNIDADES", label: "Últimas unidades" },
 ];
 
+type MensagemGerada = {
+  id: string;
+  assunto: string | null;
+  conteudo: string;
+  imagemUrl: string | null;
+  textoBotao: string | null;
+};
+
 const Email = () => {
   const [produtoSelecionado, setProdutoSelecionado] = useState("");
   const [grupoSelecionado, setGrupoSelecionado] = useState("");
   const [nomeGrupoSelecionado, setNomeGrupoSelecionado] = useState("");
   const [tomSelecionado, setTomSelecionado] = useState<string | null>(null);
-  const [objetivoSelecionado, setObjetivoSelecionado] = useState<string | null>(
-    null,
-  );
+  const [objetivoSelecionado, setObjetivoSelecionado] = useState<string | null>(null);
+  const [salvando, setSalvando] = useState(false);
   const [descricao, setDescricao] = useState("");
   const [assunto, setAssunto] = useState("");
-  const [header, setHeader] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [btnText, setbtnText] = useState("");
   const [imagemUrl, setImagemUrl] = useState<string | null>(null);
+  const [mensagemId, setMensagemId] = useState<string | null>(null);
+  const [gerando, setGerando] = useState(false);
+  const [errors, setErrors] = useState<EmailFormErrors>({});
+
+  const token = useToken();
+  const usuarioLogado = useUsuario();
+  
+    async function gerarMensagem() {
+      
+      const result = emailSchema.safeParse({
+        produto: produtoSelecionado,
+        tom: tomSelecionado,
+        objetivo: objetivoSelecionado,
+      });
+  
+      if (!result.success) {
+        const fieldErrors = result.error.flatten().fieldErrors;
+        setErrors({
+          produto: fieldErrors.produto?.[0],
+          tom: fieldErrors.tom?.[0],
+          objetivo: fieldErrors.objetivo?.[0],
+        });
+        return;
+      }
+  
+      setErrors({});
+  
+      setGerando(true);
+  
+      try {
+        const gerada = await apiPost<MensagemGerada>(
+          "/mensagens/gerar",
+          {
+            produtoId: produtoSelecionado,
+            tipo: "EMAIL",
+            tom: tomSelecionado,
+            objetivo: objetivoSelecionado,
+            observacoes: descricao.trim() || undefined,
+          },
+          token ?? undefined,
+        );
+        
+        setAssunto(gerada.assunto ?? "");
+        setMensagem(gerada.conteudo);
+        setImagemUrl(gerada.imagemUrl);
+        setMensagemId(gerada.id);
+      } catch (erro) {
+        toast.add({
+          title:
+            erro instanceof Error
+              ? erro.message
+              : "Não foi possível gerar a mensagem",
+          type: "error",
+        });
+      } finally {
+        setGerando(false);
+      }
+    }
+  
+  async function salvarMensagem() {
+      if (!mensagemId) return;
+  
+      setSalvando(true);
+  
+      try {
+        await apiPut(`/mensagens/${mensagemId}`,
+          { 
+            assunto,
+            conteudo: mensagem,
+            textoBotao: btnText,
+          },
+          token ?? undefined,
+        );
+        
+        toast.add({ title: "Mensagem salva com sucesso!", type: "success" })
+  
+      } catch (erro) {
+        console.log(erro)
+  
+        toast.add({
+          title: "Não foi possível salvar a mensagem",
+          type: "error",
+        });
+  
+      } finally {
+        setSalvando(false);
+      }
+    }  
 
   return (
     <main>
@@ -92,69 +191,96 @@ const Email = () => {
           </div>
 
           {/* SELEÇÕES */}
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <Field className="min-w-0">
-              <FieldLabel>Produto</FieldLabel>
-              <ProdutoCombobox
-                value={produtoSelecionado}
-                onSelect={() => {}}
-                onChange={setProdutoSelecionado}
-              />
-            </Field>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <Field className="min-w-0">
+                <div className="flex gap-0.5">
+                  <FieldLabel>Produto</FieldLabel>
+                  <span className="text-destructive">*</span>
+                </div>
+                <ProdutoCombobox
+                  value={produtoSelecionado}
+                  onSelect={() => {}}
+                  onChange={setProdutoSelecionado}
+                />
+                <FieldDescription
+                  className={errors.produto ? "text-destructive" : undefined}
+                >
+                  {errors.produto ?? "Este campo deve ser preenchido."}
+                </FieldDescription>
+              </Field>
 
-            <Field className="min-w-0">
-              <FieldLabel>Grupo de clientes</FieldLabel>
-              <GrupoClienteCombobox
-                value={grupoSelecionado}
-                onChange={setGrupoSelecionado}
-                onNomeChange={setNomeGrupoSelecionado}
-              />
-            </Field>
+              <Field className="min-w-0">
+                <FieldLabel>Grupo de clientes</FieldLabel>
+                <div className="mt-1.25">
+                  <GrupoClienteCombobox
+                  value={grupoSelecionado}
+                  onChange={setGrupoSelecionado}
+                  onNomeChange={setNomeGrupoSelecionado}
+                />
+                </div>
+                
+              </Field>
 
-            <Field className="min-w-0">
-              <FieldLabel>Tom da mensagem</FieldLabel>
-              <Select
-                items={Tom}
-                value={tomSelecionado}
-                onValueChange={setTomSelecionado}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecione o tom" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {Tom.map((item) => (
-                      <SelectItem key={item.value} value={item.value}>
-                        {item.label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
+              <Field className="min-w-0">
+                <div className="flex gap-0.5">
+                  <FieldLabel>Tom da mensagem</FieldLabel>
+                  <span className="text-destructive">*</span>
+                </div>
+                <Select
+                  items={Tom}
+                  value={tomSelecionado}
+                  onValueChange={setTomSelecionado}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecione o tom" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {Tom.map((item) => (
+                        <SelectItem key={item.value} value={item.value}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <FieldDescription
+                  className={errors.tom ? "text-destructive" : undefined}
+                >
+                  {errors.tom ?? "Este campo deve ser preenchido."}
+                </FieldDescription>
+              </Field>
 
-            <Field className="min-w-0">
-              <FieldLabel>Objetivo da mensagem</FieldLabel>
-              <Select
-                items={Objetivo}
-                value={objetivoSelecionado}
-                onValueChange={setObjetivoSelecionado}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecione o objetivo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {Objetivo.map((item) => (
-                      <SelectItem key={item.value} value={item.value}>
-                        {item.label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
-          </div>
+              <Field className="min-w-0">
+                <div className="flex gap-0.5">
+                  <FieldLabel>Objetivo da mensagem</FieldLabel>
+                  <span className="text-destructive">*</span>
+                </div>
+                <Select
+                  items={Objetivo}
+                  value={objetivoSelecionado}
+                  onValueChange={setObjetivoSelecionado}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecione o objetivo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {Objetivo.map((item) => (
+                        <SelectItem key={item.value} value={item.value}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <FieldDescription
+                  className={errors.objetivo ? "text-destructive" : undefined}
+                >
+                  {errors.objetivo ?? "Este campo deve ser preenchido."}
+                </FieldDescription>
+              </Field>
+            </div>
 
           {/* DESCRIÇÃO */}
           <div className="mt-6 border-t pt-5">
@@ -174,9 +300,18 @@ const Email = () => {
           </div>
 
           {/* BOTÃO */}
-          <Button variant="default" className="mt-5">
-            Gerar mensagem com IA
-            <WandSparkles className="ml-2 size-4" />
+          <Button
+            variant="default"
+            className="mt-5"
+            onClick={gerarMensagem}
+            disabled={gerando}
+          >
+            {gerando ? "Gerando mensagem..." : "Gerar mensagem com IA"}
+            {gerando ? (
+              <Loader2 className="ml-2 size-4 animate-spin" />
+            ) : (
+              <WandSparkles className="ml-2 size-4" />
+            )}
           </Button>
         </div>
 
@@ -199,11 +334,11 @@ const Email = () => {
             <div className="w-1/2 mt-0.5">
               <MoldeEmail
                 assunto={assunto}
-                preHeader={header}
-                imagem="/images/campanha.jpg"
+                nome={nomeGrupoSelecionado}
+                imagem={imagemUrl}
                 mensagem={mensagem}
                 textoBotao={btnText}
-                usuario="Sothos"
+                usuario={usuarioLogado?.usuario?.nome ?? "Sothos"}
               />
             </div>
 
@@ -217,15 +352,6 @@ const Email = () => {
                     placeholder="Digite o assunto do email"
                     value={assunto}
                     onChange={(e) => setAssunto(e.target.value)}
-                  />
-                </Field>
-
-                <Field className="mt-4">
-                  <FieldLabel>Pré-header</FieldLabel>
-                  <Input
-                    placeholder="Digite o texto de pré-visualização"
-                    value={header}
-                    onChange={(e) => setHeader(e.target.value)}
                   />
                 </Field>
               </div>
@@ -277,9 +403,13 @@ const Email = () => {
               </Field>
 
               {/* AÇÕES */}
-              <div className="flex justify-end gap-4 mt-6">
-                <Button variant="outline">Salvar Rascunho</Button>
-                <Button>Agendar Campanha</Button>
+              <div className="mt-4 flex justify-end">
+                  <Button 
+                    onClick={salvarMensagem}
+                    disabled={!mensagemId || salvando}
+                    >
+                    {salvando ? "Salvando..." : "Salvar mensagem"}
+                  </Button>
               </div>
             </div>
           </div>

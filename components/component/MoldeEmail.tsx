@@ -3,8 +3,8 @@ import { Mail } from "lucide-react";
 
 interface EmailPreviewProps {
   assunto: string;
-  preHeader: string;
-  imagem: string;
+  imagem?: string | null;
+  nome: string;
   mensagem: string;
   textoBotao: string;
   usuario: string;
@@ -12,7 +12,7 @@ interface EmailPreviewProps {
 
 export function MoldeEmail({
   assunto,
-  preHeader,
+  nome,
   imagem,
   mensagem,
   textoBotao,
@@ -30,15 +30,6 @@ export function MoldeEmail({
             </span>
             <span className="text-muted-foreground">{assunto}</span>
           </div>
-
-          <div className="flex gap-2">
-            <span className="shrink-0 font-semibold">
-              Pré-header:
-            </span>
-            <span className="text-muted-foreground">
-              {preHeader}
-            </span>
-          </div>
         </div>
       </div>
 
@@ -46,19 +37,17 @@ export function MoldeEmail({
       <div className="px-5 py-5 sm:px-8">
 
         {/* IMAGEM */}
-        <div className="mb-5 overflow-hidden rounded-md">
-          <img
-            src={imagem}
-            alt="Imagem da campanha"
-            className="h-auto max-h-65 w-full object-cover"
-          />
-        </div>
+        {imagem && (
+          <div className="mb-5 overflow-hidden rounded-md">
+            <img src={imagem} alt="Imagem da campanha" className="h-auto max-h-65 w-full object-cover" />
+          </div>
+        )}
 
         {/* MENSAGEM */}
         <div className="space-y-4 text-sm leading-[1.6] text-[#35324f]">
 
           <p className="font-semibold text-[#29264a]">
-            Olá, [Nome do Cliente]!
+            Olá, {nome}!
           </p>
 
           <div className="whitespace-pre-line">
@@ -68,14 +57,13 @@ export function MoldeEmail({
         </div>
 
         {/* BOTÃO CTA */}
-        <div className="my-7 flex justify-center">
-          <button
-            type="button"
-            className="rounded-md bg-primary px-7 py-2.5 text-sm font-semibold text-white shadow-sm"
-          >
-            {textoBotao}
-          </button>
-        </div>
+        {textoBotao.trim() && (
+          <div className="my-7 flex justify-center">
+            <button type="button" className="rounded-md bg-primary px-7 py-2.5 text-sm font-semibold text-white shadow-sm">
+              {textoBotao}
+            </button>
+          </div>
+        )}
 
         {/* ASSINATURA */}
         <div className="space-y-1 text-sm leading-relaxed text-[#35324f]">

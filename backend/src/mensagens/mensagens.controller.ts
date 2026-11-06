@@ -1,16 +1,34 @@
-import { Controller, Body, Post, UseGuards } from "@nestjs/common";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { MensagensService } from "./mensagens.service";
-import { MensagemDto } from "./dto/mensagens.dto";
-import { UsuarioLogado } from "../auth/usuario-logado.decorator";
+import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+// use os mesmos imports de JwtAuthGuard, UsuarioLogado e JwtPayload dos outros controllers
+import { MensagensIaService } from './mensagens.service';
+import { AtualizarMensagemDto, GerarMensagemDto } from './dto/mensagens.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { UsuarioLogado } from '../auth/usuario-logado.decorator';
+
 
 @Controller('mensagens')
 @UseGuards(JwtAuthGuard)
-export class MensagensController {
-    constructor(private readonly mensagensService: MensagensService) {}
+export class MensagensIaController {
+  constructor(private readonly service: MensagensIaService) {}
 
-    @Post()
-    async create(@Body() dto: MensagemDto, @UsuarioLogado() usuario: { contaId: string}) {
-        return this.mensagensService.create(dto, usuario.contaId)
-    }
+  @Post('gerar')
+  gerar(@Body() dto: GerarMensagemDto, @UsuarioLogado() usuario: {contaId: string}) {
+    return this.service.gerar(dto, usuario.contaId);
+  }
+
+  @Get()
+  listar(@UsuarioLogado() usuario: { contaId: string}, @Query("tipo") tipo?: string) {
+    const tipoValido =
+      tipo === "EMAIL" || tipo === "WHATSAPP" ? tipo: undefined
+    return this.service.listar(usuario.contaId, tipoValido
+    )  
+  }
+
+  @Put(":id")
+  atualizar(@Param('id') id: string, @Body() dto: AtualizarMensagemDto, @UsuarioLogado() usuario: { contaId: string }, ) {
+    return this.service.atualizar(id, dto, usuario.contaId);
+}
+
+
+
 }

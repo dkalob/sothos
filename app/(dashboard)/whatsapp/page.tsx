@@ -21,7 +21,7 @@ import {
 
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
-import { Info, WandSparkles } from "lucide-react";
+import { Loader2, WandSparkles } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,11 @@ import MoldeCelular from "@/components/component/MoldeCelular";
 import BotaoReprocessarImagem from "@/components/component/BotaoReprocessarImagem";
 import DicasEngajaento from "@/components/component/DicasEngajamento";
 import GrupoClienteCombobox from "@/components/component/GrupoClienteComboBox";
+import { apiPost, apiPut } from "@/lib/api";
+import { useToken } from "@/hooks/use-token";
+import { toast } from "@/components/ui/toast";
+import { WhatsappFormErrors, whatsappSchema } from "@/components/component/Whatsapp/WhatsappSchema";
+
 
 const Tom = [
   { value: "FORMAL", label: "Formal" },
@@ -46,17 +51,104 @@ const Objetivo = [
   { value: "ULTIMAS_UNIDADES", label: "Últimas unidades" },
 ];
 
+type MensagemGerada = {
+  id: string;
+  conteudo: string;
+  imagemUrl: string | null;
+};
+
 const Whatsapp = () => {
   const [produtoSelecionado, setProdutoSelecionado] = useState("");
   const [grupoSelecionado, setGrupoSelecionado] = useState("");
   const [nomeGrupoSelecionado, setNomeGrupoSelecionado] = useState("");
   const [tomSelecionado, setTomSelecionado] = useState<string | null>(null);
-  const [objetivoSelecionado, setObjetivoSelecionado] = useState<string | null>(
-    null,
-  );
+  const [objetivoSelecionado, setObjetivoSelecionado] = useState<string | null>(null);
+  const [salvando, setSalvando] = useState(false);
   const [descricao, setDescricao] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [imagemUrl, setImagemUrl] = useState<string | null>(null);
+  const [gerando, setGerando] = useState(false);
+  const [mensagemId, setMensagemId] = useState<string | null>(null);
+  const [errors, setErrors] = useState<WhatsappFormErrors>({});
+
+  const token = useToken();
+  
+
+  async function gerarMensagem() {
+    
+    const result = whatsappSchema.safeParse({
+      produto: produtoSelecionado,
+      tom: tomSelecionado,
+      objetivo: objetivoSelecionado,
+    });
+
+    if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors;
+      setErrors({
+        produto: fieldErrors.produto?.[0],
+        tom: fieldErrors.tom?.[0],
+        objetivo: fieldErrors.objetivo?.[0],
+      });
+      return;
+    }
+
+    setErrors({});
+
+    setGerando(true);
+
+    try {
+      const gerada = await apiPost<MensagemGerada>(
+        "/mensagens/gerar",
+        {
+          produtoId: produtoSelecionado,
+          tipo: "WHATSAPP",
+          tom: tomSelecionado,
+          objetivo: objetivoSelecionado,
+          observacoes: descricao.trim() || undefined,
+        },
+        token ?? undefined,
+      );
+
+      setMensagem(gerada.conteudo);
+      setImagemUrl(gerada.imagemUrl);
+      setMensagemId(gerada.id);
+    } catch (erro) {
+      toast.add({
+        title:
+          erro instanceof Error
+            ? erro.message
+            : "Não foi possível gerar a mensagem",
+        type: "error",
+      });
+    } finally {
+      setGerando(false);
+    }
+  }
+
+  async function salvarMensagem() {
+    if (!mensagemId) return;
+
+    setSalvando(true);
+
+    try {
+      await apiPut(`/mensagens/${mensagemId}`,
+        { conteudo: mensagem },
+        token ?? undefined,
+      );
+      
+      toast.add({ title: "Mensagem salva com sucesso!", type: "success" })
+
+    } catch (erro) {
+
+      toast.add({
+        title: "Não foi possível salvar a mensagem",
+        type: "error",
+      });
+
+    } finally {
+      setSalvando(false);
+    }
+  }
 
   return (
     <main>
@@ -92,25 +184,39 @@ const Whatsapp = () => {
             {/* SELEÇÕES */}
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Field className="min-w-0">
-                <FieldLabel>Produto</FieldLabel>
+                <div className="flex gap-0.5">
+                  <FieldLabel>Produto</FieldLabel>
+                  <span className="text-destructive">*</span>
+                </div>
                 <ProdutoCombobox
                   value={produtoSelecionado}
                   onSelect={() => {}}
                   onChange={setProdutoSelecionado}
                 />
+                <FieldDescription
+                  className={errors.produto ? "text-destructive" : undefined}
+                >
+                  {errors.produto ?? "Este campo deve ser preenchido."}
+                </FieldDescription>
               </Field>
 
               <Field className="min-w-0">
                 <FieldLabel>Grupo de clientes</FieldLabel>
-                <GrupoClienteCombobox
+                <div className="mt-1.25">
+                  <GrupoClienteCombobox
                   value={grupoSelecionado}
                   onChange={setGrupoSelecionado}
                   onNomeChange={setNomeGrupoSelecionado}
                 />
+                </div>
+                
               </Field>
 
               <Field className="min-w-0">
-                <FieldLabel>Tom da mensagem</FieldLabel>
+                <div className="flex gap-0.5">
+                  <FieldLabel>Tom da mensagem</FieldLabel>
+                  <span className="text-destructive">*</span>
+                </div>
                 <Select
                   items={Tom}
                   value={tomSelecionado}
@@ -129,10 +235,18 @@ const Whatsapp = () => {
                     </SelectGroup>
                   </SelectContent>
                 </Select>
+                <FieldDescription
+                  className={errors.tom ? "text-destructive" : undefined}
+                >
+                  {errors.tom ?? "Este campo deve ser preenchido."}
+                </FieldDescription>
               </Field>
 
               <Field className="min-w-0">
-                <FieldLabel>Objetivo da mensagem</FieldLabel>
+                <div className="flex gap-0.5">
+                  <FieldLabel>Objetivo da mensagem</FieldLabel>
+                  <span className="text-destructive">*</span>
+                </div>
                 <Select
                   items={Objetivo}
                   value={objetivoSelecionado}
@@ -151,6 +265,11 @@ const Whatsapp = () => {
                     </SelectGroup>
                   </SelectContent>
                 </Select>
+                <FieldDescription
+                  className={errors.objetivo ? "text-destructive" : undefined}
+                >
+                  {errors.objetivo ?? "Este campo deve ser preenchido."}
+                </FieldDescription>
               </Field>
             </div>
 
@@ -172,15 +291,23 @@ const Whatsapp = () => {
             </div>
 
             {/* BOTÃO */}
-            <Button variant="default" className="mt-5 w-full">
-              Gerar mensagem com IA
-              <WandSparkles className="ml-2 size-4" />
+            <Button
+              variant="default"
+              className="mt-5 w-full"
+              onClick={gerarMensagem}
+              disabled={gerando}
+            >
+              {gerando ? "Gerando mensagem..." : "Gerar mensagem com IA"}
+              {gerando ? (
+                <Loader2 className="ml-2 size-4 animate-spin" />
+              ) : (
+                <WandSparkles className="ml-2 size-4" />
+              )}
             </Button>
           </div>
 
           {/* DICAS */}
-          <DicasEngajaento/>
-          
+          <DicasEngajaento />
         </div>
 
         {/* VISUALIZAÇÃO */}
@@ -193,9 +320,13 @@ const Whatsapp = () => {
             <div className="flex mt-6 min-h-full gap-4">
               {/* CONVERSA */}
               <div className="w-1/2">
-                <MoldeCelular mensagem={mensagem} imagemUrl={imagemUrl} nome={nomeGrupoSelecionado} />
+                <MoldeCelular
+                  mensagem={mensagem}
+                  imagemUrl={imagemUrl}
+                  nome={nomeGrupoSelecionado}
+                />
               </div>
-              
+
               {/* EDIÇÃO */}
               <div className="w-1/2">
                 {/* IMAGEM */}
@@ -236,9 +367,13 @@ const Whatsapp = () => {
 
                 {/* ENVIAR DE: combobox entra aqui depois */}
 
-                <div className="mt-4 flex justify-end gap-4">
-                  <Button variant="outline">Salvar Rascunho</Button>
-                  <Button>Agendar Campanha</Button>
+                <div className="mt-4 flex justify-end">
+                  <Button 
+                    onClick={salvarMensagem}
+                    disabled={!mensagemId || salvando}
+                    >
+                      {salvando ? "Salvando..." : "Salvar mensagem"}
+                    </Button>
                 </div>
               </div>
             </div>

@@ -1,35 +1,38 @@
+import { IsEnum, IsIn, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { ObjetivoCampanha, TipoCampanha, TomCampanha } from '@prisma/client';
-import { IsString, Length, IsOptional, IsEnum } from 'class-validator';
 
-export class MensagemDto {
+export class GerarMensagemDto {
+  @IsUUID()
+  produtoId!: string;
 
-  @IsString()
-  @Length(3, 160, { message: 'Título deve ter pelo menos 3 letras' })
-  titulo: string;
-
-  @IsString()
-  @IsOptional()
-  abservacoes: string;
-
-  @IsString()
-  @IsOptional()
-  assunto: string;
-
-  @IsString()
-  conteudo: string;
-
-  @IsString()
-  @IsOptional()
-  imagemUrl: string;
-
-  @IsEnum(TipoCampanha)
-  tipo: TipoCampanha
+  @IsIn([TipoCampanha.EMAIL, TipoCampanha.WHATSAPP])
+  tipo!: TipoCampanha;
 
   @IsEnum(TomCampanha)
-  tom: TomCampanha
+  tom!: TomCampanha;
 
   @IsEnum(ObjetivoCampanha)
-  objetivo: ObjetivoCampanha
+  objetivo!: ObjetivoCampanha;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  observacoes?: string;
+}
 
+export class AtualizarMensagemDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(4000)
+  conteudo!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  assunto?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  textoBotao?: string;
 }

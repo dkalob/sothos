@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   Logger,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -187,5 +188,16 @@ export class AuthService {
     ]);
 
     return { mensagem: 'Senha alterada com sucesso' };
+  }
+
+  async me(usuarioId: string) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: usuarioId },
+      select: { nome: true, email: true, papel: true },
+    });
+
+    if (!usuario) throw new NotFoundException('Usuário não encontrado');
+
+    return usuario;
   }
 }
