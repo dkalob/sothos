@@ -1,3 +1,4 @@
+import CampanhaTable from "@/components/component/Campanhas/CampanhaTable"
 import PageCards from "@/components/component/PageCards"
 import PageHeader from "@/components/component/PageHeader"
 import { Boxes, Megaphone, PackageSearch, ShoppingCart } from "lucide-react"
@@ -56,6 +57,10 @@ const Campanhas = () => {
                 />
             
             </div>
+
+            {/* TABELA */}
+            <CampanhaTable/>
+            
         </main>
     )
 

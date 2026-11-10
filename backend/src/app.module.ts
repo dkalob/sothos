@@ -15,6 +15,7 @@ import { RfmModule } from './rfm/rfm.module';
 import { RecomendacoesModule } from './recomendacoes/recomendacoes.module';
 import { IaModule } from './ia/ia.module';
 import { MensagensIaModule } from './mensagens/mensagens.module';
+import { CampanhasModule } from './campanhas/campanhas.module';
 
 
 @Module({
@@ -33,6 +34,7 @@ import { MensagensIaModule } from './mensagens/mensagens.module';
     RecomendacoesModule,
     IaModule,
     MensagensIaModule,
+    CampanhasModule,
   ],
   controllers: [AppController],
   providers: [AppService],

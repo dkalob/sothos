@@ -1,22 +1,30 @@
+import { Transform } from 'class-transformer';
+import {
+  IsDateString,
+  IsIn,
+  IsString,
+  IsUUID,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import { TipoCampanha } from '@prisma/client';
-import { IsString, Length, IsOptional, IsEnum } from 'class-validator';
 
-export class CampanhaDto {
-
+export class CriarCampanhaDto {
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
-  @Length(3, 160, { message: 'Título deve ter pelo menos 3 letras' })
-  titulo: string;
+  @MinLength(3)
+  @MaxLength(160)
+  titulo!: string;
 
-  @IsString()
-  @IsOptional()
-  assunto: string;
+  @IsIn([TipoCampanha.EMAIL, TipoCampanha.WHATSAPP])
+  tipo!: TipoCampanha;
 
-  @IsString()
-  @IsOptional()
-  conteudo: string;
+  @IsUUID()
+  mensagemId!: string;
 
-  @IsEnum(TipoCampanha)
-  tipo: TipoCampanha
+  @IsUUID()
+  grupoId!: string;
 
-
+  @IsDateString()
+  agendadaPara!: string;
 }

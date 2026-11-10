@@ -17,6 +17,11 @@ export const emailSchema = z.object({
     .trim()
     .nullable()
     .refine((value) => !!value, "Objetivo é obrigatório"),
+
+  mensagem: z
+    .string()
+    .trim()
+    .min(1, "A mensagem precisa ter mais que 3 caracteres")
 });
 
 export type EmailFormErrors = Partial<

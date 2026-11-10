@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { StatusExecucaoIa, TipoCampanha } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { GeminiService } from '../ia/gemini.service';
@@ -115,6 +115,7 @@ export class MensagensIaService {
       where: { id },
       data: {
         conteudo: dto.conteudo,
+        ...(dto.titulo !== undefined && { titulo: dto.titulo.trim()}),
         ...(dto.assunto !== undefined && { assunto: dto.assunto.trim() || null }),
         ...(dto.textoBotao !== undefined && {
           textoBotao: dto.textoBotao.trim() || null,
@@ -124,26 +125,76 @@ export class MensagensIaService {
   }
 
   async listar(contaId: string, tipo?: TipoCampanha) {
-    const existente = await this.prisma.mensagemIa.findMany({
-      where: { contaId, ...(tipo && { tipo}) }
-    })
-
-    if (!existente) throw new NotFoundException("Mensagem não encontrada")
-
-    return this.prisma.mensagemIa.findMany({
+    const mensagens = await this.prisma.mensagemIa.findMany({
       where: { contaId, ...(tipo && { tipo }) },
+      orderBy: { criadoEm: 'desc' },
       select: {
         id: true,
         titulo: true,
         tipo: true,
+        tom: true,
+        objetivo: true,
+        criadoEm: true,
+        produto: { select: { nome: true } },
+        _count: { select: { campanhas: true } },
+      },
+    });
+
+    return mensagens.map((m) => ({
+      id: m.id,
+      titulo: m.titulo,
+      tipo: m.tipo,
+      tom: m.tom,
+      objetivo: m.objetivo,
+      criadoEm: m.criadoEm,
+      produto: m.produto?.nome ?? null,
+      campanhas: m._count.campanhas,
+    }));
+  }
+
+  async buscarUma(id: string, contaId: string) {
+    const mensagem = await this.prisma.mensagemIa.findFirst({
+      where: { id, contaId },
+      select: {
+        id: true,
+        titulo: true,
+        tipo: true,
+        tom: true,
+        objetivo: true,
+        observacoes: true,
         assunto: true,
         conteudo: true,
+        textoBotao: true,
         imagemUrl: true,
-        criadoEm: true,
+        produtoId: true,
       },
-      orderBy: { criadoEm: 'desc' },
-    });  
+    });
+
+    if (!mensagem) throw new NotFoundException('Mensagem não encontrada');
+
+    return mensagem;
   }
+
+  async remover(id: string, contaId: string) {
+    const mensagem = await this.prisma.mensagemIa.findFirst({
+      where: { id, contaId },
+      select: { id: true },
+    });
+
+    if (!mensagem) throw new NotFoundException('Mensagem não encontrada');
+
+    const emUso = await this.prisma.campanha.count({
+      where: { mensagemId: id, status: { in: ['AGENDADA', 'EM_EXECUCAO'] } },
+    });
+
+    if (emUso > 0) {
+      throw new BadRequestException(
+        'Esta mensagem está em uma campanha agendada e não pode ser excluída',
+      );
+    }
+
+  await this.prisma.mensagemIa.delete({ where: { id } });
+}
 
   private montarPrompt(
     dto: GerarMensagemDto,

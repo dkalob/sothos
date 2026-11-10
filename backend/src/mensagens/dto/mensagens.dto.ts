@@ -31,6 +31,10 @@ export class AtualizarMensagemDto {
   @MaxLength(200)
   assunto?: string;
 
+  @IsString()
+  @MaxLength(200)
+  titulo: string;
+
   @IsOptional()
   @IsString()
   @MaxLength(60)

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 // use os mesmos imports de JwtAuthGuard, UsuarioLogado e JwtPayload dos outros controllers
 import { MensagensIaService } from './mensagens.service';
 import { AtualizarMensagemDto, GerarMensagemDto } from './dto/mensagens.dto';
@@ -24,10 +24,20 @@ export class MensagensIaController {
     )  
   }
 
+  @Get(":id")
+  buscarUma(@Param('id') id: string, @UsuarioLogado() usuario: { contaId: string}) {
+    return this.service.buscarUma(id, usuario.contaId)
+  }
+
   @Put(":id")
   atualizar(@Param('id') id: string, @Body() dto: AtualizarMensagemDto, @UsuarioLogado() usuario: { contaId: string }, ) {
     return this.service.atualizar(id, dto, usuario.contaId);
-}
+  }
+
+  @Delete("id")
+  remover(@Param('id') id: string, @UsuarioLogado() usuario: { contaId: string }, ) {
+    return this.service.remover(id, usuario.contaId)
+  }
 
 
 

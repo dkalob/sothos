@@ -23,16 +23,17 @@ import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, WandSparkles } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import MoldeCelular from "@/components/component/MoldeCelular";
 import BotaoReprocessarImagem from "@/components/component/BotaoReprocessarImagem";
 import DicasEngajaento from "@/components/component/DicasEngajamento";
 import GrupoClienteCombobox from "@/components/component/GrupoClienteComboBox";
-import { apiPost, apiPut } from "@/lib/api";
+import { apiGet, apiPost, apiPut } from "@/lib/api";
 import { useToken } from "@/hooks/use-token";
 import { toast } from "@/components/ui/toast";
 import { WhatsappFormErrors, whatsappSchema } from "@/components/component/Whatsapp/WhatsappSchema";
+import { Input } from "@/components/ui/input";
 
 
 const Tom = [
@@ -53,8 +54,23 @@ const Objetivo = [
 
 type MensagemGerada = {
   id: string;
+  titulo: string;
   conteudo: string;
   imagemUrl: string | null;
+};
+
+type MensagemCompleta = {
+  id: string;
+  titulo: string;
+  tipo: "EMAIL" | "WHATSAPP";
+  tom: string;
+  objetivo: string;
+  observacoes: string | null;
+  assunto: string | null;
+  conteudo: string;
+  textoBotao: string | null;
+  imagemUrl: string | null;
+  produtoId: string | null;
 };
 
 const Whatsapp = () => {
@@ -65,13 +81,53 @@ const Whatsapp = () => {
   const [objetivoSelecionado, setObjetivoSelecionado] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [descricao, setDescricao] = useState("");
+  const [titulo, setTitulo] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [imagemUrl, setImagemUrl] = useState<string | null>(null);
   const [gerando, setGerando] = useState(false);
   const [mensagemId, setMensagemId] = useState<string | null>(null);
   const [errors, setErrors] = useState<WhatsappFormErrors>({});
+  const [mensagemGerada, setMensagemGerada] = useState(false);
 
   const token = useToken();
+
+  // Carrega a mensagem do editar mensagem na tabela
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("mensagem");
+    console.log("efeito de carregar mensagem", { id, temToken: !!token });
+
+    if (!id || !token) return;
+
+    let cancelado = false;
+
+    apiGet<MensagemCompleta>(`/mensagens/${id}`, token)
+      .then((m) => {
+        if (cancelado) return;
+
+        if (m.tipo !== "WHATSAPP") {
+          toast.add({ title: "Esta mensagem é de outro tipo", type: "error" });
+          return;
+        }
+
+        setMensagemId(m.id);
+        setTitulo(m.titulo);                 // o nome do seu state de título
+        setProdutoSelecionado(m.produtoId ?? "");
+        setTomSelecionado(m.tom);
+        setObjetivoSelecionado(m.objetivo);
+        setDescricao(m.observacoes ?? "");
+        setMensagem(m.conteudo);
+        setImagemUrl(m.imagemUrl);
+        setMensagemGerada(true);
+      })
+      .catch((erro) => {
+        console.error(erro);
+        toast.add({ title: "Não foi possível carregar a mensagem", type: "error" });
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [token]);
   
 
   async function gerarMensagem() {
@@ -112,6 +168,7 @@ const Whatsapp = () => {
       setMensagem(gerada.conteudo);
       setImagemUrl(gerada.imagemUrl);
       setMensagemId(gerada.id);
+      setMensagemGerada(true);
     } catch (erro) {
       toast.add({
         title:
@@ -132,7 +189,7 @@ const Whatsapp = () => {
 
     try {
       await apiPut(`/mensagens/${mensagemId}`,
-        { conteudo: mensagem },
+        { titulo: titulo, conteudo: mensagem },
         token ?? undefined,
       );
       
@@ -329,8 +386,25 @@ const Whatsapp = () => {
 
               {/* EDIÇÃO */}
               <div className="w-1/2">
+              {mensagemGerada && (
+                <>
+                {/* Titulo */}
+                <div>
+                  <Field>
+                    <FieldLabel>Título da mensagem </FieldLabel>
+                      <FieldDescription>
+                        Este campo é para controle interno e não aparecerá para o cliente.
+                      </FieldDescription>
+                    <Input
+                      placeholder="Digite o título da mensagem"
+                      value={titulo}
+                      onChange={(e) => setTitulo(e.target.value)}
+                    />
+                  </Field>
+                </div>
+              
                 {/* IMAGEM */}
-                <Field className="min-w-0">
+                <Field className="min-w-0 mt-4">
                   <FieldLabel>Editar Imagem</FieldLabel>
                 </Field>
 
@@ -375,6 +449,8 @@ const Whatsapp = () => {
                       {salvando ? "Salvando..." : "Salvar mensagem"}
                     </Button>
                 </div>
+              </>
+              )}
               </div>
             </div>
           </div>

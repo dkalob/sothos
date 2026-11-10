@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
+import Image from "next/image";
 import { loginSchema, LoginFormErrors } from "../schemas/LoginSchema";
 import { useRouter } from "next/navigation";
 import { apiPost } from "@/lib/api";
@@ -80,7 +81,13 @@ const Login = () => {
     <main className="flex h-screen w-full items-center justify-center bg-red-50">
       <Card className="w-full max-w-sm justify-center">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold">Sothos</CardTitle>
+          <CardTitle>
+            <div className="flex justify-center items-center">
+            <Image src="/logo.svg" alt="logo" width={36} height={36} />
+            <span className="font-bold text-primary text-3xl">othos</span>
+            </div>
+          </CardTitle>
+
           <CardDescription>Bem-vindo de volta!</CardDescription>
         </CardHeader>
 

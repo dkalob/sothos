@@ -23,7 +23,7 @@ import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, WandSparkles } from "lucide-react";
 import ProdutoCombobox from "@/components/component/ProdutoComboBox";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import GrupoClienteCombobox from "@/components/component/GrupoClienteComboBox";
 import Link from "next/link";
 import BotaoReprocessarImagem from "@/components/component/BotaoReprocessarImagem";
@@ -31,7 +31,7 @@ import { Input } from "@/components/ui/input";
 import { MoldeEmail } from "@/components/component/MoldeEmail";
 import { EmailFormErrors, emailSchema } from "@/components/component/Email/EmailSchema";
 import { useToken } from "@/hooks/use-token";
-import { apiPost, apiPut } from "@/lib/api";
+import { apiGet, apiPost, apiPut } from "@/lib/api";
 import { toast } from "@/components/ui/toast";
 import { useUsuario } from "@/hooks/use-usuario";
 
@@ -53,10 +53,25 @@ const Objetivo = [
 
 type MensagemGerada = {
   id: string;
+  titulo: string;
   assunto: string | null;
   conteudo: string;
   imagemUrl: string | null;
   textoBotao: string | null;
+};
+
+type MensagemCompleta = {
+  id: string;
+  titulo: string;
+  tipo: "EMAIL" | "WHATSAPP";
+  tom: string;
+  objetivo: string;
+  observacoes: string | null;
+  assunto: string | null;
+  conteudo: string;
+  textoBotao: string | null;
+  imagemUrl: string | null;
+  produtoId: string | null;
 };
 
 const Email = () => {
@@ -69,16 +84,57 @@ const Email = () => {
   const [descricao, setDescricao] = useState("");
   const [assunto, setAssunto] = useState("");
   const [mensagem, setMensagem] = useState("");
+  const [titulo, setTitulo] = useState("");
   const [btnText, setbtnText] = useState("");
   const [imagemUrl, setImagemUrl] = useState<string | null>(null);
   const [mensagemId, setMensagemId] = useState<string | null>(null);
   const [gerando, setGerando] = useState(false);
   const [errors, setErrors] = useState<EmailFormErrors>({});
+  const [mensagemGerada, setMensagemGerada] = useState(false);
 
   const token = useToken();
   const usuarioLogado = useUsuario();
+
+  // Carrega a mensagem do editar mensagem na tabela
+    useEffect(() => {
+      const id = new URLSearchParams(window.location.search).get("mensagem");
+      console.log("efeito de carregar mensagem", { id, temToken: !!token });
   
-    async function gerarMensagem() {
+      if (!id || !token) return;
+  
+      let cancelado = false;
+  
+      apiGet<MensagemCompleta>(`/mensagens/${id}`, token)
+        .then((m) => {
+          if (cancelado) return;
+  
+          if (m.tipo !== "EMAIL") {
+            toast.add({ title: "Esta mensagem é de outro tipo", type: "error" });
+            return;
+          }
+  
+          setMensagemId(m.id);
+          setTitulo(m.titulo);                 // o nome do seu state de título
+          setProdutoSelecionado(m.produtoId ?? "");
+          setTomSelecionado(m.tom);
+          setObjetivoSelecionado(m.objetivo);
+          setDescricao(m.observacoes ?? "");
+          setMensagem(m.conteudo);
+          setImagemUrl(m.imagemUrl);
+          setMensagemGerada(true);
+        })
+        .catch((erro) => {
+          console.error(erro);
+          toast.add({ title: "Não foi possível carregar a mensagem", type: "error" });
+        });
+  
+      return () => {
+        cancelado = true;
+      };
+    }, [token]);
+
+  
+  async function gerarMensagem() {
       
       const result = emailSchema.safeParse({
         produto: produtoSelecionado,
@@ -117,6 +173,7 @@ const Email = () => {
         setMensagem(gerada.conteudo);
         setImagemUrl(gerada.imagemUrl);
         setMensagemId(gerada.id);
+        setMensagemGerada(true);
       } catch (erro) {
         toast.add({
           title:
@@ -139,6 +196,7 @@ const Email = () => {
         await apiPut(`/mensagens/${mensagemId}`,
           { 
             assunto,
+            titulo: titulo,
             conteudo: mensagem,
             textoBotao: btnText,
           },
@@ -322,13 +380,15 @@ const Email = () => {
       </section>
 
       {/* VISUALIZAÇÃO */}
-      <section className="mt-6 flex gap-4 lg:flex-row">
+      <section className="mt-6 flex gap-4 lg:flex-row" id="mensagem">
         <div className="w-full rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold">Visualização</h2>
           <p className="text-sm text-muted-foreground">
             Confira como sua mensagem será apresentada.
           </p>
-
+            
+          { mensagemGerada && (
+            <>
           <div className="flex gap-6 mt-6">
             {/* EMAIL */}
             <div className="w-1/2 mt-0.5">
@@ -344,8 +404,24 @@ const Email = () => {
 
             {/* EDIÇÃO */}
             <div className="w-1/2">
+
+              {/* Titulo */}
+                <div>
+                  <Field>
+                    <FieldLabel>Título da mensagem </FieldLabel>
+                      <FieldDescription>
+                        Este campo é para controle interno e não aparecerá para o cliente.
+                      </FieldDescription>
+                    <Input
+                      placeholder="Digite o título da mensagem"
+                      value={titulo}
+                      onChange={(e) => setTitulo(e.target.value)}
+                    />
+                  </Field>
+                </div>
+
               {/* ASSUNTO */}
-              <div>
+              <div className="mt-4">
                 <Field>
                   <FieldLabel>Assunto</FieldLabel>
                   <Input
@@ -413,6 +489,8 @@ const Email = () => {
               </div>
             </div>
           </div>
+          </>
+          )}  
         </div>
       </section>
     </main>
