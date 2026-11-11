@@ -34,6 +34,8 @@ import { DataTablePagination } from "./TablePagination";
 import { Input } from "@/components/ui/input";
 import React from "react";
 import RFMBadge, { RFMSegmento } from "./RFMBadge";
+import { Button } from "../ui/button";
+import { RefreshCw } from "lucide-react";
 
 export const rfmSegmentos: RFMSegmento[] = [
   "Campeões",
@@ -58,6 +60,8 @@ interface DataTableProps<TData, TValue> {
   filterColumn?: string; // props que você passa o nome da coluna que será filtrada
   filterPlaceholder?: string; // o que aparece dentro do input
   hasPagination?: boolean; // controla a paginação das tabelas
+  onRecalcularRfm?: () => void;
+  recalculandoRfm?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -68,6 +72,8 @@ export function DataTable<TData, TValue>({
   hasPagination = true,
   filterColumn,
   filterPlaceholder,
+  onRecalcularRfm,
+  recalculandoRfm = false
 }: DataTableProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -132,6 +138,16 @@ export function DataTable<TData, TValue>({
                 </SelectGroup>
               </SelectContent>
             </Select>
+          )}
+          {onRecalcularRfm && (
+            <Button
+              variant="outline"
+              onClick={onRecalcularRfm}
+              disabled={recalculandoRfm}
+            >
+              <RefreshCw className={`size-4 ${recalculandoRfm ? "animate-spin" : ""}`} />
+              {recalculandoRfm ? "Recalculando..." : "Recalcular RFM"}
+            </Button>
           )}
         </div>
       )}

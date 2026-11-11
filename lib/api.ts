@@ -17,7 +17,8 @@ export async function apiGet<T>(caminho: string, token?: string): Promise<T> {
     headers: montarHeaders(token)
   });
 
-  const dados = await resposta.json();
+  const texto = await resposta.text();
+  const dados = texto ? JSON.parse(texto) : null;
 
   if (!resposta.ok) {
     const erro = dados as ApiError;

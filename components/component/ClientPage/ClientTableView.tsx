@@ -7,10 +7,11 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientTableColumns, GroupTableColumns } from "./columns";
 import { Download, Plus } from "lucide-react";
-import { apiGet } from "@/lib/api";
+import { apiGet, apiPost } from "@/lib/api";
 import { useToken } from "@/hooks/use-token";
 import ClientSheet from "./ClientSheet";
 import GroupClientSheet from "./GroupClientSheet";
+import { toast } from "@/components/ui/toast";
 
 interface ClientTableViewProps {
   columnsClient: (
@@ -53,6 +54,7 @@ const ClientTableView = ({
   const [clienteSheet, setClienteSheet] = useState(false);
   const [grupoSheet, setGrupoSheet] = useState(false);
   const [grupoSelecionado, setGrupoSelecionado] = useState<string | null>(null);
+  const [recalculando, setRecalculando] = useState(false);
 
   const token = useToken();
 
@@ -94,6 +96,26 @@ const ClientTableView = ({
     buscarClientes();
     buscarGrupos();
   }, [token]);
+
+  async function recalcularRfm() {
+    setRecalculando(true);
+
+    try {
+      await apiPost("/rfm/recalcular", {}, token ?? undefined);
+      toast.add({ title: "Segmentação RFM recalculada!", type: "success" });
+      await buscarClientes();   // a função que você já usa para recarregar a lista
+    } catch (erro) {
+      toast.add({
+        title:
+          erro instanceof Error
+            ? erro.message
+            : "Não foi possível recalcular o RFM",
+        type: "error",
+      });
+    } finally {
+      setRecalculando(false);
+    }
+  }
 
   if (carregando) {
     return <TabelaSkeleton />;
@@ -190,6 +212,8 @@ const ClientTableView = ({
             hasFilter
             filterColumn="cliente"
             filterPlaceholder="Pesquisar cliente por nome"
+            onRecalcularRfm={recalcularRfm}
+            recalculandoRfm={recalculando}
           />
         ) : (
           <DataTable

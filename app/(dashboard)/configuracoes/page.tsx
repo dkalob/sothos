@@ -1,5 +1,6 @@
 import CaracteristicaTable from "@/components/component/ConfiguracoesPage/Caracteristicas/CaracteristicaTable";
 import CategoriaTable from "@/components/component/ConfiguracoesPage/Categoria/CategoriaTable";
+import TelefoneTable from "@/components/component/ConfiguracoesPage/Telefones/TelefoneTable";
 import PageHeader from "@/components/component/PageHeader";
 
 const Configuracoes = () => {
@@ -9,6 +10,10 @@ const Configuracoes = () => {
         title="Configurações"
         subtitle="Configure menus e opções da plataforma"
       />
+
+      <div className="flex flex-col gap-6 p-6">
+        <TelefoneTable />
+      </div>
 
       <div className="flex flex-col gap-6 p-6">
         <CategoriaTable />
