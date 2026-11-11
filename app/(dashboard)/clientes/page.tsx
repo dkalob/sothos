@@ -1,66 +1,144 @@
+"use client";
+
 import ClientTable from "@/components/component/ClientPage/ClientTable";
 import PageCards from "@/components/component/PageCards";
 import PageHeader from "@/components/component/PageHeader";
+import { toast } from "@/components/ui/toast";
+import { useToken } from "@/hooks/use-token";
+import { apiGet } from "@/lib/api";
 import { Megaphone, Users, UsersRound, UserStar } from "lucide-react";
+import { useEffect, useState } from "react";
+
+type Trend = {
+  direction: "up" | "down";
+  value: string;
+};
+
+type ClientesCard = {
+  totalClientes: {
+    value: number;
+    novosMes: number;
+    trend: Trend;
+  };
+  retencao: {
+    value: number;
+    clientesRecorrentes: number;
+    trend: Trend;
+  };
+  grupos: {
+    value: number;
+    percentualClientesEmGrupos: number;
+    trend: Trend;
+  };
+  gastos: {
+    value: number;
+    pedidosMes: number;
+    trend: Trend;
+  };
+};
 
 const Clientes = () => {
+  const token = useToken();
+
+  const [dashboard, setDashboard] = useState<ClientesCard | null>(null);
+  const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    if (!token) return;
+
+    async function buscarDashboard() {
+      try {
+        const dados = await apiGet<ClientesCard>(
+          "/clientes/cards",
+          token ?? undefined,
+        );
+
+        setDashboard(dados);
+      } catch (error) {
+        toast.add({
+          title: "Não foi possível carregar os indicadores",
+          type: "error",
+        });
+      } finally {
+        setCarregando(false);
+      }
+    }
+
+    buscarDashboard();
+  }, [token]);
+
+  const formatarMoeda = (valor: number) =>
+    valor.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+
   return (
     <div>
-      
       <PageHeader
         title="Gerenciamento de Clientes"
         subtitle="Gerencie seu portifólio de clientes e acompanhe o crescimento."
         //importButton={{ value: "Clientes" }}
       />
 
-    {/* CARDS */}
+      {/* CARDS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 justify-items-start mt-8 gap-4">
         <PageCards
           icon={Users}
           title="Clientes totais"
-          value="20.435"
-          trend={{ direction: "up", value: "+12%" }}
+          value={carregando ? "..." : (dashboard?.totalClientes.value ?? 0)}
+          trend={
+            dashboard?.totalClientes.trend ?? { direction: "up", value: "0%" }
+          }
           footer={[
-            { label: "Novos", value: 2542 },
-            { label: "Recorrentes", value: 847 },
+            { label: "Novos", value: dashboard?.totalClientes.novosMes ?? 0 },
           ]}
         />
-      
+
         <PageCards
           icon={UserStar}
           title="Taxa de retenção"
-          value="88%"
-          trend={{ direction: "up", value: "+12%" }}
+          value={carregando ? "..." : `${dashboard?.retencao.value ?? 0}%`}
+          trend={dashboard?.retencao.trend ?? { direction: "up", value: "0%" }}
           footer={[
-            { label: "Clientes que voltaram a comprar", value: 10 },
+            {
+              label: "Clientes que voltaram a comprar",
+              value: dashboard?.retencao.clientesRecorrentes ?? 0,
+            },
           ]}
         />
 
         <PageCards
           icon={UsersRound}
           title="Quantidade de grupos"
-          value="8"
-          trend={{ direction: "up", value: "+12%" }}
+          value={carregando ? "..." : (dashboard?.grupos.value ?? 0)}
+          trend={dashboard?.grupos.trend ?? { direction: "up", value: "0%" }}
           footer={[
-            { label: "Porcentagem de clientes em grupos", value: 60 },
+            {
+              label: "Porcentagem de clientes em grupos",
+              value: `${dashboard?.grupos.percentualClientesEmGrupos ?? 0}%`,
+            },
           ]}
         />
 
         <PageCards
           icon={Megaphone}
-          title="Campanhas Ativas"
-          value="20"
-          trend={{ direction: "up", value: "+12%" }}
+          title="Valor gasto no mês"
+          value={
+            carregando ? "..." : formatarMoeda(dashboard?.gastos.value ?? 0)
+          }
+          trend={dashboard?.gastos.trend ?? { direction: "up", value: "0%" }}
           footer={[
-            { label: "Quantidade de clientes impactados", value: 4530 },
+            {
+              label: "Quantidade de pedidos realizados",
+              value: dashboard?.gastos.pedidosMes ?? 0,
+            },
           ]}
         />
-      
       </div>
 
       {/* TABELA */}
-      <ClientTable/>
-
+      <ClientTable />
     </div>
   );
 };

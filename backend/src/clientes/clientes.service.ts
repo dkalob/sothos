@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ClienteDto } from './dto/client.dto';
 import { RfmService } from '../rfm/rfm.service';
+import { StatusPedido } from '@prisma/client';
 
 @Injectable()
 export class ClientesService {
@@ -275,6 +276,309 @@ export class ClientesService {
       this.logger.error(`Falha ao recalcular RFM da conta ${contaId}`, error);
     }
   }
+
+  
+  // Preenche o PageCards de clientes
+  async getCard(contaId: string) {
+    const agora = new Date();
+
+    // Início e fim dos meses
+    const inicioMesAtual = new Date(
+      agora.getFullYear(),
+      agora.getMonth(),
+      1,
+    );
+
+    const inicioProximoMes = new Date(
+      agora.getFullYear(),
+      agora.getMonth() + 1,
+      1,
+    );
+
+    const inicioMesAnterior = new Date(
+      agora.getFullYear(),
+      agora.getMonth() - 1,
+      1,
+    );
+
+    const inicioDoisMesesAtras = new Date(
+      agora.getFullYear(),
+      agora.getMonth() - 2,
+      1,
+    );
+
+    const inicioTresMesesAtras = new Date(
+      agora.getFullYear(),
+      agora.getMonth() - 3,
+      1,
+    );
+
+    const statusValidos = [
+      StatusPedido.PAGO,
+      StatusPedido.ENVIADO,
+      StatusPedido.ENTREGUE,
+    ];
+
+    // Calcula tendência percentual
+    const calcularTrend = (atual: number, anterior: number) => {
+      if (anterior === 0) {
+        return {
+          direction: 'up' as const,
+          value: atual === 0 ? '0%' : 'Novo',
+        };
+      }
+
+      const variacao = ((atual - anterior) / anterior) * 100;
+
+      return {
+        direction: variacao >= 0 ? 'up' as const : 'down' as const,
+        value: `${variacao > 0 ? '+' : ''}${variacao.toFixed(1)}%`,
+      };
+    };
+
+    // Busca compradores distintos de determinado período
+    const buscarCompradores = async (inicio: Date, fim: Date) => {
+      const resultado = await this.prisma.pedido.groupBy({
+        by: ['clienteId'],
+        where: {
+          contaId,
+          clienteId: { not: null },
+          status: { in: statusValidos },
+          realizadoEm: {
+            gte: inicio,
+            lt: fim,
+          },
+        },
+      });
+
+      return new Set(
+        resultado
+          .map((pedido) => pedido.clienteId)
+          .filter((id): id is string => id !== null),
+      );
+    };
+
+    // Consultas em paralelo
+    const [
+      totalClientes,
+      pedidosMes,
+      pedidosMesAnterior,
+      gruposTotais,
+      gruposMes,
+      gruposMesAnterior,
+      clientesEmGrupos,
+      primeiraCompraClientes,
+      compradoresMesAtual,
+      compradoresMesAnterior,
+      compradoresDoisMesesAtras,
+      compradoresTresMesesAtras,
+    ] = await Promise.all([
+      // Total de clientes
+      this.prisma.cliente.count({
+        where: { contaId },
+      }),
+
+      // Faturamento e pedidos do mês atual
+      this.prisma.pedido.aggregate({
+        where: {
+          contaId,
+          status: { in: statusValidos },
+          realizadoEm: {
+            gte: inicioMesAtual,
+            lt: inicioProximoMes,
+          },
+        },
+        _sum: { valorTotal: true },
+        _count: { _all: true },
+      }),
+
+      // Faturamento do mês anterior
+      this.prisma.pedido.aggregate({
+        where: {
+          contaId,
+          status: { in: statusValidos },
+          realizadoEm: {
+            gte: inicioMesAnterior,
+            lt: inicioMesAtual,
+          },
+        },
+        _sum: { valorTotal: true },
+      }),
+
+      // Quantidade total de grupos
+      this.prisma.grupoCliente.count({
+        where: { contaId },
+      }),
+
+      // Grupos criados no mês atual
+      this.prisma.grupoCliente.count({
+        where: {
+          contaId,
+          criadoEm: {
+            gte: inicioMesAtual,
+            lt: inicioProximoMes,
+          },
+        },
+      }),
+
+      // Grupos criados no mês anterior
+      this.prisma.grupoCliente.count({
+        where: {
+          contaId,
+          criadoEm: {
+            gte: inicioMesAnterior,
+            lt: inicioMesAtual,
+          },
+        },
+      }),
+
+      // Clientes distintos que pertencem a pelo menos um grupo
+      this.prisma.clienteGrupo.findMany({
+        where: {
+          cliente: { contaId },
+        },
+        select: {
+          clienteId: true,
+        },
+        distinct: ['clienteId'],
+      }),
+
+      // Primeira compra válida de cada cliente
+      this.prisma.pedido.groupBy({
+        by: ['clienteId'],
+        where: {
+          contaId,
+          clienteId: { not: null },
+          status: { in: statusValidos },
+        },
+        _min: {
+          realizadoEm: true,
+        },
+      }),
+
+      // Compradores de cada mês
+      buscarCompradores(inicioMesAtual, inicioProximoMes),
+      buscarCompradores(inicioMesAnterior, inicioMesAtual),
+      buscarCompradores(inicioDoisMesesAtras, inicioMesAnterior),
+      buscarCompradores(inicioTresMesesAtras, inicioDoisMesesAtras),
+    ]);
+
+    // 1. Novos clientes:
+    // Primeira compra válida aconteceu no mês atual.
+    const novosClientes = primeiraCompraClientes.filter((cliente) => {
+      const primeiraCompra = cliente._min.realizadoEm;
+
+      return (
+        primeiraCompra !== null &&
+        primeiraCompra >= inicioMesAtual &&
+        primeiraCompra < inicioProximoMes
+      );
+    }).length;
+
+    // Primeiras compras do mês anterior
+    const novosClientesMesAnterior = primeiraCompraClientes.filter(
+      (cliente) => {
+        const primeiraCompra = cliente._min.realizadoEm;
+
+        return (
+          primeiraCompra !== null &&
+          primeiraCompra >= inicioMesAnterior &&
+          primeiraCompra < inicioMesAtual
+        );
+      },
+    ).length;
+
+    // 2. Retenção:
+    // Compraram no mês atual e em pelo menos um dos dois meses anteriores.
+    const compradoresAnteriores = new Set([
+      ...compradoresMesAnterior,
+      ...compradoresDoisMesesAtras,
+    ]);
+
+    const clientesRecorrentes = [...compradoresMesAtual].filter((id) =>
+      compradoresAnteriores.has(id),
+    ).length;
+
+    const taxaRetencao =
+      compradoresMesAtual.size > 0
+        ? (clientesRecorrentes / compradoresMesAtual.size) * 100
+        : 0;
+
+    // Retenção do mês anterior para comparação
+    const compradoresAnterioresMesAnterior = new Set([
+      ...compradoresDoisMesesAtras,
+      ...compradoresTresMesesAtras,
+    ]);
+
+    const clientesRecorrentesMesAnterior = [
+      ...compradoresMesAnterior,
+    ].filter((id) =>
+      compradoresAnterioresMesAnterior.has(id),
+    ).length;
+
+    const taxaRetencaoMesAnterior =
+      compradoresMesAnterior.size > 0
+        ? (clientesRecorrentesMesAnterior /
+            compradoresMesAnterior.size) *
+          100
+        : 0;
+
+    // 3. Grupos
+    const percentualClientesEmGrupos =
+      totalClientes > 0
+        ? (clientesEmGrupos.length / totalClientes) * 100
+        : 0;
+
+    // 4. Gastos
+    const valorGastoMes = Number(
+      pedidosMes._sum.valorTotal ?? 0,
+    );
+
+    const valorGastoMesAnterior = Number(
+      pedidosMesAnterior._sum.valorTotal ?? 0,
+    );
+
+    return {
+      totalClientes: {
+        value: totalClientes,
+        novosMes: novosClientes,
+        trend: calcularTrend(
+          novosClientes,
+          novosClientesMesAnterior,
+        ),
+      },
+
+      retencao: {
+        value: Number(taxaRetencao.toFixed(1)),
+        clientesRecorrentes,
+        trend: calcularTrend(
+          taxaRetencao,
+          taxaRetencaoMesAnterior,
+        ),
+      },
+
+      grupos: {
+        value: gruposTotais,
+        percentualClientesEmGrupos: Number(
+          percentualClientesEmGrupos.toFixed(1),
+        ),
+        trend: calcularTrend(
+          gruposMes,
+          gruposMesAnterior,
+        ),
+      },
+
+      gastos: {
+        value: valorGastoMes,
+        pedidosMes: pedidosMes._count._all,
+        trend: calcularTrend(
+          valorGastoMes,
+          valorGastoMesAnterior,
+        ),
+      },
+    };
+  }
+
 
 
 

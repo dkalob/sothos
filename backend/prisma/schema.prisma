@@ -118,6 +118,12 @@ enum ObjetivoCampanha {
   ULTIMAS_UNIDADES
 }
 
+enum StatusEnvio {
+  PENDENTE
+  ENVIADO
+  FALHA
+}
+
 // =====================================================================
 // CONTA E USUÁRIOS
 // A Conta é o "inquilino" (tenant). Todo dado do sistema pertence a uma
@@ -157,6 +163,7 @@ model TelefoneCampanha {
   alteradoEm DateTime       @updatedAt @map("alterado_em")
 
   conta                     Conta @relation(fields: [contaId], references: [id],onDelete: Cascade)
+  campanhas                Campanha[]
 
   @@unique([contaId, numero])
   @@index([contaId])
@@ -570,6 +577,7 @@ model Campanha {
   assunto       String?        @db.VarChar(200) // usado em campanha de e-mail
   conteudo      String?        @db.Text
   descricao     String?        @db.Text
+  telefoneId    String?        @map("id_telefone")
   grupoId       String?        @map("id_grupo")
   mensagemId    String?        @map("id_mensagem")
   agendadaPara  DateTime?      @map("agendada_para")
@@ -582,6 +590,7 @@ model Campanha {
   loja        LojaConectada?    @relation(fields: [lojaId], references: [id], onDelete: Cascade)
   segmento    Segmento?         @relation(fields: [segmentoId], references: [id], onDelete: SetNull)
   grupo       GrupoCliente?     @relation(fields: [grupoId], references: [id], onDelete: SetNull)
+  telefone    TelefoneCampanha? @relation(fields: [telefoneId], references: [id], onDelete: SetNull)
   mensagem    MensagemIa?       @relation(fields: [mensagemId], references: [id], onDelete: SetNull)
   criadoPor   Usuario?          @relation("CampanhaCriadaPor", fields: [criadoPorId], references: [id], onDelete: SetNull)
   aprovadoPor Usuario?          @relation("CampanhaAprovadaPor", fields: [aprovadoPorId], references: [id], onDelete: SetNull)
@@ -599,12 +608,16 @@ model CampanhaCliente {
   campanhaId String   @map("id_campanha")
   clienteId  String   @map("id_cliente")
   criadoEm   DateTime @default(now()) @map("criado_em")
+  status    StatusEnvio @default(PENDENTE)
+  enviadoEm DateTime?   @map("enviado_em")
+  erro      String?     @db.VarChar(500)
 
   campanha Campanha @relation(fields: [campanhaId], references: [id], onDelete: Cascade)
   cliente  Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
 
   @@id([campanhaId, clienteId])
   @@map("campanha_cliente")
+  @@index([campanhaId, status])
 }
 
 model CampanhaProduto {

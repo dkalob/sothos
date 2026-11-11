@@ -29,6 +29,11 @@ export class ProdutosController {
     return this.produtosService.findAllCombobox(usuario.contaId);
   }
 
+  @Get('cards')
+  async GetCard(@UsuarioLogado() usuario: { contaId: string }) {
+    return this.produtosService.getCard(usuario.contaId)
+  }
+
   @Get(':id')
   async findOne(@Param("id") id: string, @UsuarioLogado() usuario: { contaId: string }, ) {
     return this.produtosService.findOne(id, usuario.contaId);

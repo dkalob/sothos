@@ -26,6 +26,11 @@ export class ClientesController {
     return this.clientesService.findAllComboBox(usuario.contaId)
   }
 
+  @Get('cards')
+  async GetCard(@UsuarioLogado() usuario: JwtPayload) {
+    return this.clientesService.getCard(usuario.contaId)
+  }
+
   @Get(":id")
   async findOne(@Param("id") id: string, @UsuarioLogado() usuario: JwtPayload) {
     return this.clientesService.findOne(id, usuario.contaId);
