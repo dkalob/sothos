@@ -162,3 +162,39 @@ export function converterStatus(
 
   return { status: StatusPedido.PENDENTE, reconhecido: false };
 }
+
+// ---------- SIM / NÃO ----------
+// "SI", "Sim", "S", "true", "1" -> true; "NO", "Não", "N", "false", "0" -> false
+export function converterBooleano(texto: string): boolean | null {
+  const t = normalizarTexto(texto);
+  if (['si', 'sim', 's', 'yes', 'y', 'true', '1', 'visivel', 'visible'].includes(t)) return true;
+  if (['no', 'nao', 'n', 'false', '0', 'oculto', 'hidden'].includes(t)) return false;
+  return null;
+}
+
+// ---------- CATEGORIA ----------
+// A Nuvemshop manda várias categorias, cada uma com níveis:
+// "COLEÇÕES > PEACH SUNSET, ROUPAS > CONJUNTOS" -> "Conjuntos"
+// Regra: último nível da última categoria da lista.
+export function categoriaFinal(texto: string): string | null {
+  const categorias = texto
+    .split(',')
+    .map((c) => c.trim())
+    .filter(Boolean);
+  const ultima = categorias[categorias.length - 1];
+  if (!ultima) return null;
+
+  const niveis = ultima
+    .split('>')
+    .map((n) => n.trim())
+    .filter(Boolean);
+  const nome = niveis[niveis.length - 1];
+  if (!nome) return null;
+
+  // "CONJUNTOS" -> "Conjuntos" (só quando vem tudo em maiúsculas)
+  const formatado =
+    nome === nome.toUpperCase()
+      ? nome.charAt(0) + nome.slice(1).toLowerCase()
+      : nome;
+  return formatado.slice(0, 120);
+}

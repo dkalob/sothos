@@ -1,9 +1,21 @@
-// Campos que o Sothos entende numa importação.
+// Campos que o Sothos entende em cada tipo de importação.
 // "aliases" são nomes de coluna reconhecidos automaticamente na prévia
 // (comparação sem acento, sem maiúscula e sem espaços extras).
-// Os aliases incluem os nomes da exportação de pedidos da Nuvemshop.
+// Incluem os nomes das exportações da Nuvemshop em português e espanhol.
 
-export type CampoImportacao =
+export type DefinicaoCampo<C extends string = string> = {
+  campo: C;
+  rotulo: string;
+  obrigatorio: boolean;
+  aliases: string[];
+};
+
+export type Mapeamento<C extends string = string> = Partial<Record<C, string>>;
+
+// ---------------------------------------------------------------------
+// PEDIDOS (exportação de vendas: uma linha por item do pedido)
+// ---------------------------------------------------------------------
+export type CampoPedido =
   | 'numeroPedido'
   | 'email'
   | 'nome'
@@ -23,14 +35,10 @@ export type CampoImportacao =
   | 'quantidade'
   | 'sku';
 
-export type DefinicaoCampo = {
-  campo: CampoImportacao;
-  rotulo: string;
-  obrigatorio: boolean;
-  aliases: string[];
-};
+// Mantido com o nome antigo para não quebrar quem já importa
+export type CampoImportacao = CampoPedido;
 
-export const CAMPOS: DefinicaoCampo[] = [
+export const CAMPOS: DefinicaoCampo<CampoPedido>[] = [
   { campo: 'numeroPedido', rotulo: 'Número do pedido', obrigatorio: true, aliases: ['numero do pedido', 'pedido', 'numero'] },
   { campo: 'email', rotulo: 'E-mail do cliente', obrigatorio: true, aliases: ['e-mail', 'email'] },
   { campo: 'nome', rotulo: 'Nome do cliente', obrigatorio: true, aliases: ['nome do comprador', 'nome do cliente', 'cliente'] },
@@ -51,7 +59,27 @@ export const CAMPOS: DefinicaoCampo[] = [
   { campo: 'sku', rotulo: 'SKU', obrigatorio: false, aliases: ['sku'] },
 ];
 
-export type Mapeamento = Partial<Record<CampoImportacao, string>>;
+// ---------------------------------------------------------------------
+// PRODUTOS (exportação de catálogo: uma linha por variação)
+// ---------------------------------------------------------------------
+export type CampoProduto =
+  | 'identificador'
+  | 'nome'
+  | 'categoria'
+  | 'preco'
+  | 'precoPromocional'
+  | 'sku'
+  | 'ativo';
+
+export const CAMPOS_PRODUTO: DefinicaoCampo<CampoProduto>[] = [
+  { campo: 'identificador', rotulo: 'Identificador do produto (agrupa as variações)', obrigatorio: false, aliases: ['identificador url', 'identificador de url', 'identificador', 'id do produto'] },
+  { campo: 'nome', rotulo: 'Nome do produto', obrigatorio: true, aliases: ['nome (portugues)', 'nombre (portugues)', 'nome do produto', 'nome', 'produto'] },
+  { campo: 'categoria', rotulo: 'Categoria', obrigatorio: false, aliases: ['categorias', 'categoria'] },
+  { campo: 'preco', rotulo: 'Preço', obrigatorio: true, aliases: ['preco', 'precio'] },
+  { campo: 'precoPromocional', rotulo: 'Preço promocional', obrigatorio: false, aliases: ['preco promocional', 'precio promocional'] },
+  { campo: 'sku', rotulo: 'SKU', obrigatorio: false, aliases: ['sku'] },
+  { campo: 'ativo', rotulo: 'Ativo / mostrar na loja', obrigatorio: false, aliases: ['exibir na loja', 'mostrar na loja', 'mostrar en tienda', 'ativo'] },
+];
 
 // "Número do Pedido" -> "numero do pedido"
 export function normalizarTexto(texto: string): string {
@@ -64,12 +92,15 @@ export function normalizarTexto(texto: string): string {
 }
 
 // Sugere, para cada campo, a coluna da planilha com nome igual a um alias.
-export function sugerirMapeamento(colunas: string[]): Mapeamento {
+export function sugerirMapeamento<C extends string>(
+  colunas: string[],
+  definicoes: DefinicaoCampo<C>[] = CAMPOS as unknown as DefinicaoCampo<C>[],
+): Mapeamento<C> {
   const porNome = new Map(colunas.map((c) => [normalizarTexto(c), c]));
-  const sugestao: Mapeamento = {};
+  const sugestao: Mapeamento<C> = {};
   const usadas = new Set<string>();
 
-  for (const def of CAMPOS) {
+  for (const def of definicoes) {
     for (const alias of def.aliases) {
       const coluna = porNome.get(alias);
       if (coluna && !usadas.has(coluna)) {

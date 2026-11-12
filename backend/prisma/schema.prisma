@@ -276,7 +276,7 @@ model Cliente {
   idExterno       String?   @map("id_externo") @db.VarChar(80)
   nome            String    @db.VarChar(160)
   email           String    @db.VarChar(180)
-  telefone        String?    @db.VarChar(30)
+  telefone        String?   @db.VarChar(30)
   cpf             String?   @db.VarChar(30)
   cidade          String?   @db.VarChar(120)
   estado          String?   @db.Char(2)

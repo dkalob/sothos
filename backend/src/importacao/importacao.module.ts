@@ -5,10 +5,11 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { RfmModule } from '../rfm/rfm.module';
 import { ImportacaoController } from './importacao.controller';
 import { ImportacaoService } from './importacao.service';
+import { ImportacaoProdutosService } from './importacao-produtos.service';
 
 @Module({
   imports: [PrismaModule, AuthModule, PassportModule, RfmModule],
   controllers: [ImportacaoController],
-  providers: [ImportacaoService],
+  providers: [ImportacaoService, ImportacaoProdutosService],
 })
 export class ImportacaoModule {}

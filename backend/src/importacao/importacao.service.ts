@@ -1,22 +1,21 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
-  Plataforma,
   Prisma,
   StatusPedido,
   StatusSincronizacao,
   TipoSincronizacao,
 } from '@prisma/client';
 import { createHash } from 'crypto';
-import { parse } from 'csv-parse/sync';
 import { PrismaService } from '../prisma/prisma.service';
 import { RfmService } from '../rfm/rfm.service';
+import { CAMPOS, CampoPedido, normalizarTexto } from './campos';
 import {
-  CAMPOS,
-  CampoImportacao,
-  Mapeamento,
-  normalizarTexto,
-  sugerirMapeamento,
-} from './campos';
+  lerCsv,
+  montarPrevia,
+  obterLojaCsv,
+  Previa,
+  validarMapeamento,
+} from './leitor-csv';
 import {
   converterData,
   converterEmail,
@@ -28,29 +27,8 @@ import {
   nomeBaseProduto,
 } from './conversores';
 
-// Quantas linhas de dados mostrar na prévia
-const LINHAS_PREVIA = 5;
 // Limite de erros/avisos devolvidos na resposta (o total sempre é informado)
 const MAX_OCORRENCIAS = 200;
-
-type Separador = ';' | ',' | '\t';
-
-type LinhaCsv = { numero: number; valores: string[] };
-
-type CsvLido = {
-  colunas: string[];
-  linhas: LinhaCsv[];
-  separador: Separador;
-};
-
-export type PreviaImportacao = {
-  colunas: string[];
-  linhas: Record<string, string>[];
-  totalLinhas: number;
-  separador: Separador;
-  campos: { campo: CampoImportacao; rotulo: string; obrigatorio: boolean }[];
-  sugestaoMapeamento: Mapeamento;
-};
 
 // Uma linha da planilha já validada e convertida
 type LinhaConvertida = {
@@ -103,23 +81,8 @@ export class ImportacaoService {
   // ETAPA 1 — PRÉVIA: lê o CSV e devolve cabeçalho, primeiras linhas e
   // sugestão de mapeamento. NÃO grava nada no banco.
   // =====================================================================
-  gerarPrevia(arquivo: Buffer): PreviaImportacao {
-    const { colunas, linhas, separador } = this.lerCsv(arquivo);
-
-    return {
-      colunas,
-      linhas: linhas.slice(0, LINHAS_PREVIA).map(({ valores }) =>
-        Object.fromEntries(colunas.map((c, i) => [c, valores[i] ?? ''])),
-      ),
-      totalLinhas: linhas.length,
-      separador,
-      campos: CAMPOS.map(({ campo, rotulo, obrigatorio }) => ({
-        campo,
-        rotulo,
-        obrigatorio,
-      })),
-      sugestaoMapeamento: sugerirMapeamento(colunas),
-    };
+  gerarPrevia(arquivo: Buffer): Previa<CampoPedido> {
+    return montarPrevia(lerCsv(arquivo), CAMPOS);
   }
 
   // =====================================================================
@@ -132,8 +95,8 @@ export class ImportacaoService {
     mapeamentoJson: string,
     aceitaMarketing: boolean,
   ): Promise<ResultadoImportacao> {
-    const { colunas, linhas } = this.lerCsv(arquivo);
-    const mapeamento = this.validarMapeamento(mapeamentoJson, colunas);
+    const { colunas, linhas } = lerCsv(arquivo);
+    const mapeamento = validarMapeamento(mapeamentoJson, colunas, CAMPOS);
 
     const erros: Ocorrencia[] = [];
     const avisos: Ocorrencia[] = [];
@@ -155,7 +118,7 @@ export class ImportacaoService {
     const convertidas: LinhaConvertida[] = [];
 
     for (const linha of linhas) {
-      const ler = (campo: CampoImportacao) => {
+      const ler = (campo: CampoPedido) => {
         const coluna = mapeamento[campo];
         if (!coluna) return '';
         return (linha.valores[indice.get(coluna)!] ?? '').trim();
@@ -227,7 +190,7 @@ export class ImportacaoService {
     }
 
     // 3. Loja "CSV" da conta (criada na primeira importação)
-    const loja = await this.obterLojaCsv(contaId);
+    const loja = await obterLojaCsv(this.prisma, contaId);
     const sincronizacao = await this.prisma.sincronizacao.create({
       data: { lojaId: loja.id, tipo: TipoSincronizacao.MANUAL },
     });
@@ -324,128 +287,11 @@ export class ImportacaoService {
   }
 
   // ---------------------------------------------------------------------
-  // Leitura do CSV
-  // ---------------------------------------------------------------------
-  private lerCsv(arquivo: Buffer): CsvLido {
-    const texto = this.decodificar(arquivo);
-    const separador = this.detectarSeparador(texto);
-
-    let registros: { record: string[]; info: { lines: number } }[];
-    try {
-      registros = parse(texto, {
-        delimiter: separador,
-        bom: true, // remove o caractere invisível que o Excel coloca no início
-        skip_empty_lines: true,
-        trim: true,
-        relax_column_count: true, // linha com colunas a mais/menos não derruba tudo
-        info: true, // devolve o número da linha de cada registro
-      }) as unknown as typeof registros; // com info: true o formato muda
-
-    } catch {
-      throw new BadRequestException(
-        'Não foi possível ler o arquivo. Verifique se é um CSV válido.',
-      );
-    }
-
-    if (registros.length === 0) {
-      throw new BadRequestException('O arquivo está vazio.');
-    }
-
-    const colunas = registros[0].record;
-    this.validarCabecalho(colunas);
-
-    const linhas = registros.slice(1).map(({ record, info }) => ({
-      numero: info.lines,
-      valores: record,
-    }));
-    if (linhas.length === 0) {
-      throw new BadRequestException(
-        'O arquivo só tem o cabeçalho, sem nenhuma linha de dados.',
-      );
-    }
-
-    return { colunas, linhas, separador };
-  }
-
-  // Excel em português costuma salvar em Windows-1252, não UTF-8.
-  // Se o UTF-8 gerar caracteres inválidos (�), tenta o outro formato.
-  private decodificar(arquivo: Buffer): string {
-    const utf8 = arquivo.toString('utf-8');
-    if (!utf8.includes('�')) return utf8;
-    return new TextDecoder('windows-1252').decode(arquivo);
-  }
-
-  // Excel BR salva com ";", outros sistemas usam "," e,
-  // quando copiado de uma planilha, vem separado por TAB.
-  private detectarSeparador(texto: string): Separador {
-    const primeiraLinha = texto.split(/\r?\n/, 1)[0] ?? '';
-    const candidatos: Separador[] = [';', ',', '\t'];
-    return candidatos.reduce((melhor, atual) =>
-      primeiraLinha.split(atual).length > primeiraLinha.split(melhor).length
-        ? atual
-        : melhor,
-    );
-  }
-
-  private validarCabecalho(colunas: string[]) {
-    if (colunas.some((c) => c === '')) {
-      throw new BadRequestException(
-        'Existe uma coluna sem nome no cabeçalho do arquivo.',
-      );
-    }
-    const repetidas = colunas.filter((c, i) => colunas.indexOf(c) !== i);
-    if (repetidas.length > 0) {
-      throw new BadRequestException(
-        `Colunas com nome repetido: ${[...new Set(repetidas)].join(', ')}.`,
-      );
-    }
-  }
-
-  // ---------------------------------------------------------------------
-  // Mapeamento enviado pelo front: { "email": "E-mail", ... }
-  // ---------------------------------------------------------------------
-  private validarMapeamento(json: string, colunas: string[]): Mapeamento {
-    let bruto: unknown;
-    try {
-      bruto = JSON.parse(json);
-    } catch {
-      throw new BadRequestException('Mapeamento inválido.');
-    }
-    if (typeof bruto !== 'object' || bruto === null || Array.isArray(bruto)) {
-      throw new BadRequestException('Mapeamento inválido.');
-    }
-
-    const camposValidos = new Set<string>(CAMPOS.map((c) => c.campo));
-    const mapeamento: Mapeamento = {};
-
-    for (const [campo, coluna] of Object.entries(bruto)) {
-      if (!camposValidos.has(campo)) {
-        throw new BadRequestException(`Campo desconhecido no mapeamento: ${campo}.`);
-      }
-      if (coluna === null || coluna === undefined || coluna === '') continue;
-      if (typeof coluna !== 'string' || !colunas.includes(coluna)) {
-        throw new BadRequestException(
-          `A coluna escolhida para "${campo}" não existe no arquivo.`,
-        );
-      }
-      mapeamento[campo as CampoImportacao] = coluna;
-    }
-
-    const faltando = CAMPOS.filter((c) => c.obrigatorio && !mapeamento[c.campo]);
-    if (faltando.length > 0) {
-      throw new BadRequestException(
-        `Escolha uma coluna para: ${faltando.map((c) => c.rotulo).join(', ')}.`,
-      );
-    }
-    return mapeamento;
-  }
-
-  // ---------------------------------------------------------------------
   // Validação e conversão de uma linha
   // ---------------------------------------------------------------------
   private converterLinha(
     numero: number,
-    ler: (campo: CampoImportacao) => string,
+    ler: (campo: CampoPedido) => string,
     semStatus: boolean,
   ): { linha: LinhaConvertida; avisos: string[] } | { erro: string } {
     const problemas: string[] = [];
@@ -488,7 +334,7 @@ export class ImportacaoService {
     else if (quantidade === null) problemas.push(`quantidade inválida (${qtdTexto})`);
 
     // Campos opcionais: se vierem preenchidos, precisam ser válidos
-    const opcionalValor = (campo: CampoImportacao, rotulo: string) => {
+    const opcionalValor = (campo: CampoPedido, rotulo: string) => {
       const texto = ler(campo);
       if (!texto) return null;
       const valor = converterValor(texto);
@@ -556,17 +402,6 @@ export class ImportacaoService {
   // ---------------------------------------------------------------------
   // Gravação
   // ---------------------------------------------------------------------
-  private async obterLojaCsv(contaId: string) {
-    const existente = await this.prisma.lojaConectada.findFirst({
-      where: { contaId, plataforma: Plataforma.CSV },
-    });
-    if (existente) return existente;
-
-    return this.prisma.lojaConectada.create({
-      data: { contaId, plataforma: Plataforma.CSV, nome: 'Importação por planilha' },
-    });
-  }
-
   // Cliente é identificado pelo e-mail dentro da conta.
   // Se já existir (inclusive cadastrado à mão), é atualizado.
   private async salvarClientes(
