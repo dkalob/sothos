@@ -81,6 +81,28 @@ export const CAMPOS_PRODUTO: DefinicaoCampo<CampoProduto>[] = [
   { campo: 'ativo', rotulo: 'Ativo / mostrar na loja', obrigatorio: false, aliases: ['exibir na loja', 'mostrar na loja', 'mostrar en tienda', 'ativo'] },
 ];
 
+// ---------------------------------------------------------------------
+// CLIENTES (exportação de clientes: uma linha por cliente)
+// ---------------------------------------------------------------------
+export type CampoCliente =
+  | 'email'
+  | 'nome'
+  | 'telefone'
+  | 'cidade'
+  | 'estado'
+  | 'aceitaMarketing'
+  | 'dataCadastro';
+
+export const CAMPOS_CLIENTE: DefinicaoCampo<CampoCliente>[] = [
+  { campo: 'email', rotulo: 'E-mail', obrigatorio: true, aliases: ['e-mail', 'email'] },
+  { campo: 'nome', rotulo: 'Nome', obrigatorio: true, aliases: ['nome', 'nome do cliente', 'nome completo', 'cliente'] },
+  { campo: 'telefone', rotulo: 'Telefone', obrigatorio: false, aliases: ['telefone de contato', 'telefone', 'celular'] },
+  { campo: 'cidade', rotulo: 'Cidade', obrigatorio: false, aliases: ['cidade'] },
+  { campo: 'estado', rotulo: 'Estado', obrigatorio: false, aliases: ['estado', 'uf'] },
+  { campo: 'aceitaMarketing', rotulo: 'Aceita receber comunicações', obrigatorio: false, aliases: ['aceita marketing', 'aceita newsletter', 'newsletter', 'aceita receber novidades'] },
+  { campo: 'dataCadastro', rotulo: 'Data de cadastro', obrigatorio: false, aliases: ['data de cadastro', 'data de criacao', 'cadastrado em'] },
+];
+
 // "Número do Pedido" -> "numero do pedido"
 export function normalizarTexto(texto: string): string {
   return texto

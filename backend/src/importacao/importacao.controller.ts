@@ -14,6 +14,7 @@ import { UsuarioLogado } from '../auth/usuario-logado.decorator';
 import type { JwtPayload } from '../auth/jwt.strategy';
 import { ImportacaoService } from './importacao.service';
 import { ImportacaoProdutosService } from './importacao-produtos.service';
+import { ImportacaoClientesService } from './importacao-clientes.service';
 import { ExecutarImportacaoDto } from './dto/executar-importacao.dto';
 
 const TAMANHO_MAXIMO = 5 * 1024 * 1024; // 5 MB
@@ -38,6 +39,7 @@ export class ImportacaoController {
   constructor(
     private readonly importacaoService: ImportacaoService,
     private readonly importacaoProdutosService: ImportacaoProdutosService,
+    private readonly importacaoClientesService: ImportacaoClientesService,
   ) {}
 
   // ===================== PEDIDOS =====================
@@ -99,6 +101,36 @@ export class ImportacaoController {
       usuario.contaId,
       arquivo.buffer,
       dto.mapeamento,
+    );
+  }
+
+  // ===================== CLIENTES =====================
+
+  @Post('clientes/previa')
+  @UseInterceptors(uploadCsv())
+  previaClientes(@UploadedFile() arquivo?: Express.Multer.File) {
+    if (!arquivo) {
+      throw new BadRequestException('Nenhum arquivo enviado.');
+    }
+    return this.importacaoClientesService.gerarPrevia(arquivo.buffer);
+  }
+
+  // form-data: arquivo (File), mapeamento (texto JSON), aceitaMarketing ("true"/"false")
+  @Post('clientes/executar')
+  @UseInterceptors(uploadCsv())
+  executarClientes(
+    @UploadedFile() arquivo: Express.Multer.File | undefined,
+    @Body() dto: ExecutarImportacaoDto,
+    @UsuarioLogado() usuario: JwtPayload,
+  ) {
+    if (!arquivo) {
+      throw new BadRequestException('Nenhum arquivo enviado.');
+    }
+    return this.importacaoClientesService.executar(
+      usuario.contaId,
+      arquivo.buffer,
+      dto.mapeamento,
+      dto.aceitaMarketing === 'true',
     );
   }
 }

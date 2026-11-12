@@ -6,10 +6,11 @@ import { RfmModule } from '../rfm/rfm.module';
 import { ImportacaoController } from './importacao.controller';
 import { ImportacaoService } from './importacao.service';
 import { ImportacaoProdutosService } from './importacao-produtos.service';
+import { ImportacaoClientesService } from './importacao-clientes.service';
 
 @Module({
   imports: [PrismaModule, AuthModule, PassportModule, RfmModule],
   controllers: [ImportacaoController],
-  providers: [ImportacaoService, ImportacaoProdutosService],
+  providers: [ImportacaoService, ImportacaoProdutosService, ImportacaoClientesService],
 })
 export class ImportacaoModule {}
