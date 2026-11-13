@@ -3,7 +3,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { StatusCampanha } from '@prisma/client';
+import {
+  StatusCampanha,
+  StatusEnvio,
+  TipoCampanha,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CriarCampanhaDto } from './dto/campanhas.dto';
 
@@ -204,4 +208,271 @@ export class CampanhasService {
 
     await this.prisma.campanha.delete({ where: { id } });
   }
+
+  
+  async getCard(contaId: string) {
+  const agora = new Date();
+
+  const inicioMesAtual = new Date(
+    agora.getFullYear(),
+    agora.getMonth(),
+    1,
+  );
+
+  const inicioProximoMes = new Date(
+    agora.getFullYear(),
+    agora.getMonth() + 1,
+    1,
+  );
+
+  const inicioMesAnterior = new Date(
+    agora.getFullYear(),
+    agora.getMonth() - 1,
+    1,
+  );
+
+  const calcularTrend = (atual: number, anterior: number) => {
+    if (anterior === 0) {
+      return {
+        direction: 'up' as const,
+        value: atual === 0 ? '0%' : 'Novo',
+      };
+    }
+
+    const variacao = ((atual - anterior) / anterior) * 100;
+
+    return {
+      direction: variacao >= 0 ? 'up' as const : 'down' as const,
+      value: `${variacao > 0 ? '+' : ''}${variacao.toFixed(1)}%`,
+    };
+  };
+
+  // 1. CAMPANHAS CADASTRADAS
+
+  const [totalCampanhas, campanhasNovas, campanhasAnteriores] =
+    await Promise.all([
+      this.prisma.campanha.count({
+        where: { contaId },
+      }),
+
+      this.prisma.campanha.count({
+        where: {
+          contaId,
+          criadoEm: {
+            gte: inicioMesAtual,
+            lt: inicioProximoMes,
+          },
+        },
+      }),
+
+      this.prisma.campanha.count({
+        where: {
+          contaId,
+          criadoEm: {
+            gte: inicioMesAnterior,
+            lt: inicioMesAtual,
+          },
+        },
+      }),
+    ]);
+
+  // 2. MENSAGENS ENVIADAS
+
+  const [whatsappAtual, whatsappAnterior, emailAtual, emailAnterior] =
+    await Promise.all([
+      this.prisma.campanhaCliente.count({
+        where: {
+          status: StatusEnvio.ENVIADO,
+          enviadoEm: {
+            gte: inicioMesAtual,
+            lt: inicioProximoMes,
+          },
+          campanha: {
+            contaId,
+            tipo: TipoCampanha.WHATSAPP,
+          },
+        },
+      }),
+
+      this.prisma.campanhaCliente.count({
+        where: {
+          status: StatusEnvio.ENVIADO,
+          enviadoEm: {
+            gte: inicioMesAnterior,
+            lt: inicioMesAtual,
+          },
+          campanha: {
+            contaId,
+            tipo: TipoCampanha.WHATSAPP,
+          },
+        },
+      }),
+
+      this.prisma.campanhaCliente.count({
+        where: {
+          status: StatusEnvio.ENVIADO,
+          enviadoEm: {
+            gte: inicioMesAtual,
+            lt: inicioProximoMes,
+          },
+          campanha: {
+            contaId,
+            tipo: TipoCampanha.EMAIL,
+          },
+        },
+      }),
+
+      this.prisma.campanhaCliente.count({
+        where: {
+          status: StatusEnvio.ENVIADO,
+          enviadoEm: {
+            gte: inicioMesAnterior,
+            lt: inicioMesAtual,
+          },
+          campanha: {
+            contaId,
+            tipo: TipoCampanha.EMAIL,
+          },
+        },
+      }),
+    ]);
+
+  const mensagensAtual = whatsappAtual + emailAtual;
+  const mensagensAnterior = whatsappAnterior + emailAnterior;
+
+  // 3. CLIENTES ATINGIDOS
+
+  const totalClientes = await this.prisma.cliente.count({
+    where: { contaId },
+  });
+
+  const [clientesAtual, clientesAnterior] = await Promise.all([
+    this.prisma.campanhaCliente.findMany({
+      where: {
+        status: StatusEnvio.ENVIADO,
+        enviadoEm: {
+          gte: inicioMesAtual,
+          lt: inicioProximoMes,
+        },
+        campanha: { contaId },
+      },
+      select: {
+        clienteId: true,
+      },
+      distinct: ['clienteId'],
+    }),
+
+    
+
+    this.prisma.campanhaCliente.findMany({
+      where: {
+        status: StatusEnvio.ENVIADO,
+        enviadoEm: {
+          gte: inicioMesAnterior,
+          lt: inicioMesAtual,
+        },
+        campanha: { contaId },
+      },
+      select: {
+        clienteId: true,
+      },
+      distinct: ['clienteId'],
+    }),
+  ]);
+
+  // 4. PRODUTOS EM CAMPANHAS
+
+  const [produtosAtual, produtosAnterior, produtosAguardando] =
+    await Promise.all([
+      this.prisma.campanhaProduto.findMany({
+        where: {
+          criadoEm: {
+            gte: inicioMesAtual,
+            lt: inicioProximoMes,
+          },
+          campanha: { contaId },
+        },
+        select: {
+          produtoId: true,
+        },
+        distinct: ['produtoId'],
+      }),
+
+      this.prisma.campanhaProduto.findMany({
+        where: {
+          criadoEm: {
+            gte: inicioMesAnterior,
+            lt: inicioMesAtual,
+          },
+          campanha: { contaId },
+        },
+        select: {
+          produtoId: true,
+        },
+        distinct: ['produtoId'],
+      }),
+
+      this.prisma.produto.count({
+        where: {
+          contaId,
+          campanhas: {
+            none: {
+              campanha: { contaId },
+            },
+          },
+        },
+      }),
+    ]);
+
+  // Produtos distintos já vinculados a campanhas
+  const totalProdutosEmCampanhas = await this.prisma.campanhaProduto.findMany({
+    where: {
+      campanha: { contaId },
+    },
+    select: {
+      produtoId: true,
+    },
+    distinct: ['produtoId'],
+  });
+
+  return {
+    campanhas: {
+      value: totalCampanhas,
+      novas: campanhasNovas,
+      trend: calcularTrend(
+        campanhasNovas,
+        campanhasAnteriores,
+      ),
+    },
+
+    mensagens: {
+      value: mensagensAtual,
+      whatsapp: whatsappAtual,
+      email: emailAtual,
+      trend: calcularTrend(
+        mensagensAtual,
+        mensagensAnterior,
+      ),
+    },
+
+    clientesAtingidos: {
+      value: clientesAtual.length,
+      total: totalClientes,
+      trend: calcularTrend(
+        clientesAtual.length,
+        clientesAnterior.length,
+      ),
+    },
+
+    produtos: {
+      value: totalProdutosEmCampanhas.length,
+      aguardando: produtosAguardando,
+      trend: calcularTrend(
+        produtosAtual.length,
+        produtosAnterior.length,
+      ),
+    },
+  };
+}
+
 }

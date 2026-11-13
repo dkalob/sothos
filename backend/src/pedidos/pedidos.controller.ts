@@ -21,6 +21,11 @@ export class PedidosController {
         return this.pedidosService.findAll(usuario.contaId);
     }
 
+    @Get('cards')
+    async getCard(@UsuarioLogado() usuario: JwtPayload) {
+        return this.pedidosService.getCard(usuario.contaId);
+    }
+
     @Get(":id")
     async findOne(@Param("id") id: string, @UsuarioLogado() usuario: JwtPayload) {
         return this.pedidosService.findOne(usuario.contaId, id)

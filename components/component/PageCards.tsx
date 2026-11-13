@@ -3,10 +3,8 @@ import {
   ProgressLabel,
   ProgressValue,
 } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
-
-// COMPONENTES DOS 4 CARDS QUE APARECEM APÓS O CABEÇALHOS NAS PÁGINAS:
-// DASHBOARD, CLIENTES E PRODUTOS
 
 type PageCardsProps = {
   icon: LucideIcon;
@@ -24,10 +22,18 @@ type PageCardsProps = {
     label: string;
     value: number;
   };
+  loading?: boolean;
 };
 
-const PageCards = ({ icon: Icon, title, value, trend, footer, progress }: PageCardsProps) => {
-  
+const PageCards = ({
+  icon: Icon,
+  title,
+  value,
+  trend,
+  footer,
+  progress,
+  loading = false,
+}: PageCardsProps) => {
   const isUp = trend.direction === "up";
   const TrendIcon = isUp ? TrendingUp : TrendingDown;
 
@@ -40,29 +46,50 @@ const PageCards = ({ icon: Icon, title, value, trend, footer, progress }: PageCa
           size={36}
           className="rounded-full bg-primary/40 border border-primary/10 p-2"
         />
-        <div className="flex gap-2">
-          <TrendIcon size={20} />
-          <span
-            className={`text-sm font-medium ${isUp ? "text-green-600" : "text-red-600"}`}
-          >
-            {trend.value}
-          </span>
-        </div>
+
+        {loading ? (
+          <Skeleton className="h-5 w-16 rounded-full" />
+        ) : (
+          <div className="flex gap-2">
+            <TrendIcon size={20} />
+            <span
+              className={`text-sm font-medium ${isUp ? "text-green-600" : "text-red-600"}`}
+            >
+              {trend.value}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* TÍTULO + VALOR */}
       <div className="flex flex-col mt-3">
-        <span className="text-md font-medium">{title}</span>
-        <span className="text-5xl font-extrabold">{value}</span>
+        {loading ? (
+          <>
+            <Skeleton className="h-5 w-36 mb-2" />
+            <Skeleton className="h-12 w-28" />
+          </>
+        ) : (
+          <>
+            <span className="text-md font-medium">{title}</span>
+            <span className="text-5xl font-extrabold">{value}</span>
+          </>
+        )}
       </div>
 
-      {/* RODAPÉ: progress bar OU dados simples, nunca os dois */}
+      {/* RODAPÉ */}
       {progress && (
         <div className="flex gap-8 mt-4">
-          <Progress value={progress.value} className="w-full max-w-sm">
-            <ProgressLabel>{progress.label}</ProgressLabel>
-            <ProgressValue />
-          </Progress>
+          {loading ? (
+            <div className="w-full space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-2 w-full rounded-full" />
+            </div>
+          ) : (
+            <Progress value={progress.value} className="w-full max-w-sm">
+              <ProgressLabel>{progress.label}</ProgressLabel>
+              <ProgressValue />
+            </Progress>
+          )}
         </div>
       )}
 
@@ -70,8 +97,17 @@ const PageCards = ({ icon: Icon, title, value, trend, footer, progress }: PageCa
         <div className="flex gap-8 mt-4">
           {footer.map((item) => (
             <div key={item.label} className="flex flex-col">
-              <span className="text-sm font-normal">{item.label}</span>
-              <span className="font-bold text-primary">{item.value}</span>
+              {loading ? (
+                <>
+                  <Skeleton className="h-4 w-28 mb-2" />
+                  <Skeleton className="h-5 w-12" />
+                </>
+              ) : (
+                <>
+                  <span className="text-sm font-normal">{item.label}</span>
+                  <span className="font-bold text-primary">{item.value}</span>
+                </>
+              )}
             </div>
           ))}
         </div>

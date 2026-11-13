@@ -7,7 +7,6 @@ import ProdutoCombobox, {
   Produto,
 } from "@/components/component/ProdutoComboBox";
 import { Button } from "@/components/ui/button";
-import { WandSparkles } from "lucide-react";
 import { useState } from "react";
 import {
   Breadcrumb,
@@ -17,6 +16,13 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import {
+  Barcode,
+  WandSparkles,
+  CreditCard,
+  ShoppingCart,
+  CalendarDays,
+} from "lucide-react";
 import Link from "next/link";
 
 const AssociarProdutos = () => {
@@ -91,28 +97,28 @@ const AssociarProdutos = () => {
           <div className="grid w-1/2 grid-cols-2 grid-rows-2 gap-4">
             <InsightCard
               title="Valor vendido"
-              icon="payments"
+              icon={CreditCard}
               color="text-green-600 bg-green-100"
               value={20}
               valueType="currency"
             />
             <InsightCard
               title="Categoria"
-              icon="receipt_long"
+              icon={Barcode}
               color="text-orange-600 bg-orange-100"
               value={40}
               valueType="currency"
             />
             <InsightCard
               title="Pedidos"
-              icon="shopping_cart"
+              icon={ShoppingCart}
               color="text-blue-600 bg-blue-100"
               value={40}
               valueType="number"
             />
             <InsightCard
               title="Última compra"
-              icon="calendar_month"
+              icon={CalendarDays}
               color="text-purple-600 bg-purple-100"
               date={new Date()}
             />

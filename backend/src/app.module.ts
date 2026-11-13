@@ -18,6 +18,7 @@ import { MensagensIaModule } from './mensagens/mensagens.module';
 import { CampanhasModule } from './campanhas/campanhas.module';
 import { TelefoneModule } from './telefones/telefone.module';
 import { ImportacaoModule } from './importacao/importacao.module';
+import { IndicadoresModule } from './indicadores/indicadores.module';
 
 
 @Module({
@@ -39,6 +40,7 @@ import { ImportacaoModule } from './importacao/importacao.module';
     CampanhasModule,
     TelefoneModule,
     ImportacaoModule,
+    IndicadoresModule
   ],
   controllers: [AppController],
   providers: [AppService],

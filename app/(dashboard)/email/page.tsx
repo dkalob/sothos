@@ -135,6 +135,7 @@ const Email = () => {
 
   
   async function gerarMensagem() {
+    console.log("Botão clicado!");
       
       const result = emailSchema.safeParse({
         produto: produtoSelecionado,

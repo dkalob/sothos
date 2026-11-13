@@ -86,23 +86,25 @@ const Clientes = () => {
         <PageCards
           icon={Users}
           title="Clientes totais"
+          loading={carregando}
           value={carregando ? "..." : (dashboard?.totalClientes.value ?? 0)}
           trend={
             dashboard?.totalClientes.trend ?? { direction: "up", value: "0%" }
           }
           footer={[
-            { label: "Novos", value: dashboard?.totalClientes.novosMes ?? 0 },
+            { label: "Novos no mês atual", value: dashboard?.totalClientes.novosMes ?? 0 },
           ]}
         />
 
         <PageCards
           icon={UserStar}
           title="Taxa de retenção"
+          loading={carregando}
           value={carregando ? "..." : `${dashboard?.retencao.value ?? 0}%`}
           trend={dashboard?.retencao.trend ?? { direction: "up", value: "0%" }}
           footer={[
             {
-              label: "Clientes que voltaram a comprar",
+              label: "Clientes que voltaram a comprar no mês atual",
               value: dashboard?.retencao.clientesRecorrentes ?? 0,
             },
           ]}
@@ -111,6 +113,7 @@ const Clientes = () => {
         <PageCards
           icon={UsersRound}
           title="Quantidade de grupos"
+          loading={carregando}
           value={carregando ? "..." : (dashboard?.grupos.value ?? 0)}
           trend={dashboard?.grupos.trend ?? { direction: "up", value: "0%" }}
           footer={[
@@ -124,13 +127,14 @@ const Clientes = () => {
         <PageCards
           icon={Megaphone}
           title="Valor gasto no mês"
+          loading={carregando}
           value={
             carregando ? "..." : formatarMoeda(dashboard?.gastos.value ?? 0)
           }
           trend={dashboard?.gastos.trend ?? { direction: "up", value: "0%" }}
           footer={[
             {
-              label: "Quantidade de pedidos realizados",
+              label: "Quantidade de pedidos realizados no mês atual",
               value: dashboard?.gastos.pedidosMes ?? 0,
             },
           ]}

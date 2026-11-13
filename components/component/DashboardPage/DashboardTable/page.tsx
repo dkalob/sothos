@@ -1,3 +1,5 @@
+"use client"
+
 import { DashboardTableColumns, columns } from "./columns";
 import { DataTable } from "../../DataTable";
 

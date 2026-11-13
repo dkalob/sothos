@@ -86,11 +86,12 @@ const Produtos = () => {
         <PageCards
           icon={PackageSearch}
           title="Produtos cadastrados"
+          loading={carregando}
           value={carregando ? "..." : dashboard?.produtos.value ?? 0}
           trend={dashboard?.produtos.trend ?? { direction: "up", value: "0%" }}
           footer={[
             {
-              label: "Novos",
+              label: "Novos no mês atual",
               value: dashboard?.produtos.novosMes ?? 0,
             },
           ]}
@@ -99,6 +100,7 @@ const Produtos = () => {
         <PageCards
           icon={ShoppingCart}
           title="Produtos sem venda"
+          loading={carregando}
           value={carregando ? "..." : `${dashboard?.semVenda.value ?? 0}%`}
           trend={dashboard?.semVenda.trend ?? { direction: "up", value: "0%" }}
           footer={[
@@ -112,6 +114,7 @@ const Produtos = () => {
         <PageCards
           icon={Boxes}
           title="Quantidade vendida"
+          loading={carregando}
           value={carregando ? "..." : dashboard?.vendas.value ?? 0}
           trend={dashboard?.vendas.trend ?? { direction: "up", value: "0%" }}
           footer={[
@@ -125,6 +128,7 @@ const Produtos = () => {
         <PageCards
           icon={Megaphone}
           title="Campanhas vinculadas a produtos"
+          loading={carregando}
           value={carregando ? "..." : dashboard?.campanhas.value ?? 0}
           trend={dashboard?.campanhas.trend ?? { direction: "up", value: "0%" }}
           footer={[

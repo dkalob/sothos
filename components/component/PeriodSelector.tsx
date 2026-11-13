@@ -1,31 +1,36 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "../ui/button";
 import { ButtonGroup } from "../ui/button-group";
 
-// COMPONENTE DE FILTRO DE PERÍODO COM 3 BOTÕES
+type Periodo = "DIARIO" | "SEMANAL" | "MENSAL";
 
-const opcoes = ["Diário", "Semanal", "Mensal"];
+type PeriodSelectorProps = {
+  periodo: Periodo;
+  onChange: (periodo: Periodo) => void;
+};
 
+const opcoes: { label: string; value: Periodo }[] = [
+  { label: "Diário", value: "DIARIO" },
+  { label: "Semanal", value: "SEMANAL" },
+  { label: "Mensal", value: "MENSAL" },
+];
 
-const PeriodSelector = () => {
-  const [periodo, setPeriodo] = useState("Diário");
-
+const PeriodSelector = ({ periodo, onChange }: PeriodSelectorProps) => {
   return (
     <ButtonGroup>
       {opcoes.map((opcao) => (
         <Button
-          key={opcao}
+          key={opcao.value}
           variant="outline"
-          onClick={() => setPeriodo(opcao)}
+          onClick={() => onChange(opcao.value)}
           className={
-            periodo === opcao
+            periodo === opcao.value
               ? "bg-primary text-white hover:bg-primary hover:text-white"
               : "hover:bg-primary-foreground hover:text-chart-3"
           }
         >
-          {opcao}
+          {opcao.label}
         </Button>
       ))}
     </ButtonGroup>

@@ -19,11 +19,13 @@ import {
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import Image from "next/image";
 import { useState } from "react";
 import { registerSchema, RegisterFormErrors } from "../schemas/RegisterSchema";
 import { useRouter } from "next/navigation";
 import { apiPost } from "@/lib/api";
 import { toast } from "@/components/ui/toast";
+import { Eye, EyeOff } from "lucide-react";
 
 type RegisterForm = {
   nomeLoja: string;
@@ -65,6 +67,7 @@ const Cadastro = () => {
   const [errors, setErrors] = useState<RegisterFormErrors>({});
   const [carregando, setCarregando] = useState(false);
   const [erroGeral, setErroGeral] = useState("");
+  const [mostrarSenha, setMostrarSenha] = useState(false);
   const router = useRouter();
 
   async function validaUsuario(dados: RegisterForm) {
@@ -117,7 +120,10 @@ const Cadastro = () => {
     <main className="flex h-screen w-full items-center justify-center bg-red-50">
       <Card className="w-full max-w-sm justify-center">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold">Sothos</CardTitle>
+          <div className="flex justify-center items-center">
+            <Image src="/logo.svg" alt="logo" width={36} height={36} />
+            <span className="font-bold text-primary text-3xl">othos</span>
+          </div>
           <CardDescription>Realize o seu cadastro!</CardDescription>
         </CardHeader>
 
@@ -201,17 +207,27 @@ const Cadastro = () => {
               <div className="grid gap-2">
                 <Field>
                   <FieldLabel className="text-md">Senha</FieldLabel>
-                  <Input
-                    id="password"
-                    className="p-4"
-                    type="password"
-                    placeholder="*******"
-                    value={form.senha}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, senha: e.target.value }))
-                    }
-                    aria-invalid={!!errors.senha}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      className="p-4"
+                      type={mostrarSenha ? "text" : "password"}
+                      placeholder="•••••••"
+                      value={form.senha}
+                      onChange={(e) =>
+                        setForm((prev) => ({ ...prev, senha: e.target.value }))
+                      }
+                      aria-invalid={!!errors.senha}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setMostrarSenha(!mostrarSenha)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary cursor-pointer"
+                    >
+                      {mostrarSenha ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </Button>
+                  </div>
                   <FieldDescription
                     className={errors.senha ? "text-destructive" : undefined}
                   >

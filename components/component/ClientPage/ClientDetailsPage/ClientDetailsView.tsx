@@ -16,6 +16,7 @@ import NameCard from "@/components/component/ClientPage/ClientDetailsPage/NameCa
 import InsightCard from "@/components/component/ClientPage/ClientDetailsPage/InsightCard";
 import FormCard from "@/components/component/ClientPage/ClientDetailsPage/FormCard";
 import { RFMSegmento } from "@/components/component/RFMBadge";
+import { CalendarDays, CreditCard, Receipt, ShoppingCart } from "lucide-react";
 
 type Cliente = {
   id: string;
@@ -109,28 +110,28 @@ const ClienteDetalhe = ({ id }: ClienteDetalheProps) => {
           <div className="grid grid-cols-2 gap-3">
             <InsightCard
               title="Total gasto"
-              icon="payments"
+              icon={CreditCard}
               color="text-green-600 bg-green-100"
               value={cliente.totalGasto}
               valueType="currency"
             />
             <InsightCard
               title="Ticket médio"
-              icon="receipt_long"
+              icon={Receipt}
               color="text-orange-600 bg-orange-100"
               value={cliente.ticketMedio}
               valueType="currency"
             />
             <InsightCard
               title="Pedidos"
-              icon="shopping_cart"
+              icon={ShoppingCart}
               color="text-blue-600 bg-blue-100"
               value={cliente.quantidadePedidos}
               valueType="number"
             />
             <InsightCard
               title="Última compra"
-              icon="calendar_month"
+              icon={CalendarDays}
               color="text-purple-600 bg-purple-100"
               date={
                 cliente.ultimaCompra

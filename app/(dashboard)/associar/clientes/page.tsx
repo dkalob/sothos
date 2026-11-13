@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { WandSparkles } from "lucide-react";
+import { CalendarDays, CreditCard, Receipt, ShoppingCart, WandSparkles } from "lucide-react";
 import ClienteCombobox from "@/components/component/ClienteComboBox";
 import InsightCard from "@/components/component/ClientPage/ClientDetailsPage/InsightCard";
 import PageHeader from "@/components/component/PageHeader";
@@ -82,28 +82,28 @@ const AssociarClientes = () => {
           <div className="grid w-1/2 grid-cols-2 grid-rows-2 gap-4">
             <InsightCard
               title="Total gasto"
-              icon="payments"
+              icon={CreditCard}
               color="text-green-600 bg-green-100"
               value={20}
               valueType="currency"
             />
             <InsightCard
               title="Ticket médio"
-              icon="receipt_long"
+              icon={Receipt}
               color="text-orange-600 bg-orange-100"
               value={40}
               valueType="currency"
             />
             <InsightCard
               title="Pedidos"
-              icon="shopping_cart"
+              icon={ShoppingCart}
               color="text-blue-600 bg-blue-100"
               value={40}
               valueType="number"
             />
             <InsightCard
               title="Última compra"
-              icon="calendar_month"
+              icon={CalendarDays}
               color="text-purple-600 bg-purple-100"
               date={new Date()}
             />

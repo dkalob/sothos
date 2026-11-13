@@ -1,6 +1,8 @@
+import { LucideIcon } from "lucide-react";
+
 type InsightCardProps = {
   title: string;
-  icon: string;
+  icon: LucideIcon;
   color: string;
   value?: number;
   valueType?: "currency" | "number";
@@ -10,7 +12,7 @@ type InsightCardProps = {
 
 const InsightCard = ({
   title,
-  icon,
+  icon: Icon,
   color,
   value,
   valueType,
@@ -31,9 +33,9 @@ const InsightCard = ({
       <div className="flex justify-between">
         <h1 className="font-semibold">{title}</h1>
         <span
-          className={`material-symbols-outlined rounded-full border border-primary/10 p-2 ${color}`}
+          className={`rounded-full border border-primary/10 p-2 ${color}`}
         >
-          {icon}
+          <Icon size={24}/>
         </span>
       </div>
       {value !== undefined && <span>{formattedValue}</span>}

@@ -15,18 +15,24 @@ export class CampanhasController {
     return this.campanhasService.create(dto, usuario.contaId);
   }
 
-  @Get()findAll(@UsuarioLogado() usuario: { contaId: string }) {
+  @Get()
+  findAll(@UsuarioLogado() usuario: { contaId: string }) {
     return this.campanhasService.findAll(usuario.contaId);
   }
 
+  @Get('cards')
+  getCard(@UsuarioLogado() usuario: { contaId: string }) {
+    return this.campanhasService.getCard(usuario.contaId);
+  }
+
   @Get(':id')
-    findOne(@Param('id') id: string, @UsuarioLogado() usuario: { contaId: string }) {
-      return this.campanhasService.findOne(id, usuario.contaId);
+  findOne(@Param('id') id: string, @UsuarioLogado() usuario: { contaId: string }) {
+    return this.campanhasService.findOne(id, usuario.contaId);
   }
 
   @Put(':id')
-    update(@Param('id') id: string, @Body() dto: CriarCampanhaDto, @UsuarioLogado() usuario: { contaId: string }) {
-      return this.campanhasService.update(id, dto, usuario.contaId);
+  update(@Param('id') id: string, @Body() dto: CriarCampanhaDto, @UsuarioLogado() usuario: { contaId: string }) {
+    return this.campanhasService.update(id, dto, usuario.contaId);
   }
 
   @Delete(':id')
