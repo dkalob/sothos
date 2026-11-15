@@ -13,6 +13,8 @@ import {
   LogOutIcon,
   Users,
   Store,
+  Package,
+  ShoppingBag,
 } from "lucide-react";
 import {
   Sidebar,
@@ -54,12 +56,12 @@ const items = [
   },
   {
     label: "Produtos",
-    icon: ShoppingBasket,
+    icon: Package,
     url: "/produtos",
   },
   {
     label: "Pedidos",
-    icon: Store,
+    icon: ShoppingBag,
     url: "/pedidos",
   },
   {

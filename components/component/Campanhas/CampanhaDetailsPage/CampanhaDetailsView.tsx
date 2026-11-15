@@ -2,7 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CalendarClock, Mail, MessageCircle, Users, Flag } from "lucide-react";
+import {
+  CalendarClock,
+  Mail,
+  MessageCircle,
+  Users,
+  Flag,
+  Pause,
+  Play,
+} from "lucide-react";
 import PageHeader from "@/components/component/PageHeader";
 import {
   Breadcrumb,
@@ -12,7 +20,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MoldeEmail } from "@/components/component/MoldeEmail";
 import MoldeCelular from "@/components/component/MoldeCelular";
@@ -22,13 +30,12 @@ import { COR_STATUS, OBJETIVO, STATUS, TIPO, TOM } from "../columns";
 import { useUsuario } from "@/hooks/use-usuario";
 import { CampanhaDetalhe } from "../CampanhaSheet";
 
-
-
 const formatar = (iso: string | null) =>
   iso
-    ? new Intl.DateTimeFormat("pt-BR", { dateStyle: "long", timeStyle: "short" }).format(
-        new Date(iso),
-      )
+    ? new Intl.DateTimeFormat("pt-BR", {
+        dateStyle: "long",
+        timeStyle: "short",
+      }).format(new Date(iso))
     : "—";
 
 const Resumo = ({
@@ -49,7 +56,13 @@ const Resumo = ({
   </div>
 );
 
-const Linha = ({ rotulo, valor }: { rotulo: string; valor: React.ReactNode }) => (
+const Linha = ({
+  rotulo,
+  valor,
+}: {
+  rotulo: string;
+  valor: React.ReactNode;
+}) => (
   <div className="flex justify-between gap-4 border-b py-3 text-sm last:border-b-0">
     <span className="text-muted-foreground">{rotulo}</span>
     <span className="text-right font-medium">{valor}</span>
@@ -74,7 +87,10 @@ const CampanhaDetailsView = ({ id }: { id: string }) => {
         if (!cancelado) setCampanha(dados);
       })
       .catch((e) => {
-        if (!cancelado) setErro(e instanceof Error ? e.message : "Erro ao carregar a campanha");
+        if (!cancelado)
+          setErro(
+            e instanceof Error ? e.message : "Erro ao carregar a campanha",
+          );
       })
       .finally(() => {
         if (!cancelado) setCarregando(false);
@@ -102,8 +118,13 @@ const CampanhaDetailsView = ({ id }: { id: string }) => {
   if (erro || !campanha) {
     return (
       <div className="flex flex-col items-start gap-4">
-        <p className="text-muted-foreground">{erro ?? "Campanha não encontrada."}</p>
-        <Link href="/campanhas" className={buttonVariants({ variant: "outline" })}>
+        <p className="text-muted-foreground">
+          {erro ?? "Campanha não encontrada."}
+        </p>
+        <Link
+          href="/campanhas"
+          className={buttonVariants({ variant: "outline" })}
+        >
           Voltar para campanhas
         </Link>
       </div>
@@ -128,12 +149,26 @@ const CampanhaDetailsView = ({ id }: { id: string }) => {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <PageHeader title={campanha.titulo} subtitle="Detalhes da campanha." />
+      <div className="flex justify-between items-center">
+        <PageHeader title={campanha.titulo} subtitle="Detalhes da campanha." />
+        <div className="flex gap-2">
+          <Button variant="outline" className="w-40 hover:bg-primary/10">
+            <Play />
+            Ativar Campanha
+          </Button>
+          <Button variant="outline" className="w-40 hover:bg-primary/10">
+            <Pause />
+            Pausar Campanha
+          </Button>
+        </div>
+      </div>
 
       {/* RESUMO */}
       <section className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Resumo icone={Flag} titulo="Status">
-          <span className={`rounded-full px-2.5 py-0.5 text-xs ${COR_STATUS[campanha.status] ?? ""}`}>
+          <span
+            className={`rounded-full px-2.5 py-0.5 text-xs ${COR_STATUS[campanha.status] ?? ""}`}
+          >
             {STATUS[campanha.status] ?? campanha.status}
           </span>
         </Resumo>
@@ -152,27 +187,40 @@ const CampanhaDetailsView = ({ id }: { id: string }) => {
         {/* INFORMAÇÕES */}
         <div className="w-full rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:w-1/3">
           <h2 className="text-lg font-semibold">Informações</h2>
-          <p className="mb-4 text-sm text-muted-foreground">Dados desta campanha.</p>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Dados desta campanha.
+          </p>
 
-          <Linha rotulo="Grupo de clientes" valor={campanha.grupo?.nome ?? "—"} />
+          <Linha
+            rotulo="Grupo de clientes"
+            valor={campanha.grupo?.nome ?? "—"}
+          />
           <Linha rotulo="Mensagem" valor={m?.titulo ?? "—"} />
           <Linha rotulo="Produto" valor={m?.produto?.nome ?? "—"} />
           <Linha rotulo="Tom" valor={m ? (TOM[m.tom] ?? m.tom) : "—"} />
-          <Linha rotulo="Objetivo" valor={m ? (OBJETIVO[m.objetivo] ?? m.objetivo) : "—"} />
+          <Linha
+            rotulo="Objetivo"
+            valor={m ? (OBJETIVO[m.objetivo] ?? m.objetivo) : "—"}
+          />
           <Linha rotulo="Criada em" valor={formatar(campanha.criadoEm)} />
 
-          <div className="mt-6 flex gap-2">
-            <Link href="/campanhas" className={buttonVariants({ variant: "outline" })}>
-              Voltar
-            </Link>
-            {m && (
+          <div className="mt-6 flex flex-col gap-2">
+            <div>
               <Link
-                href={`${paginaIa}?mensagem=${m.id}`}
+                href="/campanhas"
                 className={buttonVariants({ variant: "outline" })}
               >
-                Editar mensagem
+                Voltar
               </Link>
-            )}
+              {m && (
+                <Link
+                  href={`${paginaIa}?mensagem=${m.id}`}
+                  className={buttonVariants({ variant: "outline" })}
+                >
+                  Editar mensagem
+                </Link>
+              )}
+            </div>
           </div>
         </div>
 

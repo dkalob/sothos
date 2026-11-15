@@ -579,6 +579,116 @@ export class ClientesService {
     };
   }
 
+  // Busca o histórico de compras e campanhas de um cliente e exibe em clientes/[id]
+  async findHistorico(id: string, contaId: string) {
+    const cliente = await this.prisma.cliente.findFirst({
+      where: {
+        id,
+        contaId,
+      },
+      select: {
+        id: true,
+
+        pedidos: {
+          orderBy: {
+            realizadoEm: 'desc',
+          },
+          select: {
+            id: true,
+            numero: true,
+            valorTotal: true,
+            realizadoEm: true,
+            status: true,
+
+            itens: {
+              select: {
+                id: true,
+                produtoId: true,
+                nomeProduto: true,
+
+                produto: {
+                  select: {
+                    id: true,
+                    nome: true,
+                    imagem: true,
+                    categoria: {
+                      select: {
+                        nome: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+
+        campanhas: {
+          orderBy: {
+            criadoEm: 'desc',
+          },
+          select: {
+            criadoEm: true,
+            status: true,
+
+            campanha: {
+              select: {
+                id: true,
+                titulo: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!cliente) {
+      throw new NotFoundException('Cliente não encontrado');
+    }
+
+    // Remove produtos repetidos, mantendo apenas uma ocorrência
+    const produtosMap = new Map();
+
+    for (const pedido of cliente.pedidos) {
+      for (const item of pedido.itens) {
+        const produtoId = item.produto?.id;
+
+        // Se o produto foi excluído da origem,
+        // utilizamos o registro do item da venda.
+        const chave = produtoId ?? `item-${item.id}`;
+
+        if (!produtosMap.has(chave)) {
+          produtosMap.set(chave, {
+            id: produtoId ?? item.id,
+            nome: item.produto?.nome ?? item.nomeProduto,
+            categoria: item.produto?.categoria?.nome ?? 'Sem categoria',
+            foto: item.produto?.imagem ?? null,
+          });
+        }
+      }
+    }
+
+    return {
+      produtos: Array.from(produtosMap.values()),
+
+      pedidos: cliente.pedidos.map((pedido) => ({
+        id: pedido.numero ?? pedido.id,
+        valorTotal: Number(pedido.valorTotal),
+        realizadoEm: pedido.realizadoEm,
+        status: pedido.status,
+      })),
+
+      campanhas: cliente.campanhas.map((item) => ({
+        criadoEm: item.criadoEm,
+        status: item.status,
+        campanha: {
+          id: item.campanha.id,
+          nome: item.campanha.titulo,
+        },
+      })),
+    };
+  }
+
 
 
 

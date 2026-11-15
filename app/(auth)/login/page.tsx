@@ -87,7 +87,7 @@ const Login = () => {
           {/* LADO ESQUERDO - ILUSTRAÇÃO */}
           <div className="col-span-1 flex flex-col items-center justify-center">
             <Image
-              src="/Marketing-amico.svg"
+              src="/login.svg"
               alt="Capa"
               width={850}
               height={800}

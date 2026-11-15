@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarDays, CreditCard, Receipt, ShoppingCart, WandSparkles } from "lucide-react";
+import { CalendarDays, CreditCard, Receipt, ShoppingBag, ShoppingCart, WandSparkles } from "lucide-react";
 import ClienteCombobox from "@/components/component/ClienteComboBox";
 import InsightCard from "@/components/component/ClientPage/ClientDetailsPage/InsightCard";
 import PageHeader from "@/components/component/PageHeader";
@@ -96,7 +96,7 @@ const AssociarClientes = () => {
             />
             <InsightCard
               title="Pedidos"
-              icon={ShoppingCart}
+              icon={ShoppingBag}
               color="text-blue-600 bg-blue-100"
               value={40}
               valueType="number"

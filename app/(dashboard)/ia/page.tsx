@@ -6,7 +6,7 @@ import {
   Mail,
   MessageSquareText,
   Users,
-  ShoppingBag,
+  Package,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -44,7 +44,7 @@ const cards = [
       "Descubra quais clientes podem gostar de um produto",
     btnLabel: "Explorar produtos",
     url: "/associar/produtos",
-    icon: ShoppingBag,
+    icon: Package,
     cor: "blue",
   },
 ];

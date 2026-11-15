@@ -16,7 +16,10 @@ import NameCard from "@/components/component/ClientPage/ClientDetailsPage/NameCa
 import InsightCard from "@/components/component/ClientPage/ClientDetailsPage/InsightCard";
 import FormCard from "@/components/component/ClientPage/ClientDetailsPage/FormCard";
 import { RFMSegmento } from "@/components/component/RFMBadge";
-import { CalendarDays, CreditCard, Receipt, ShoppingCart } from "lucide-react";
+import { CalendarDays, CreditCard, Receipt, ShoppingBag, ShoppingCart } from "lucide-react";
+import CampanhaList from "./HistoricoCards/CampanhaCard";
+import ProdutoList from "./HistoricoCards/ProdutoCard";
+import PedidoList from "./HistoricoCards/PedidoCard";
 
 type Cliente = {
   id: string;
@@ -32,14 +35,30 @@ type Cliente = {
   ticketMedio: number;
   quantidadePedidos: number;
   ultimaCompra: string | null;
-  campanhas: {
-    criadoEm: string;
-    campanha: { id: string; nome: string };
+};
+
+type HistoricoCliente = {
+  produtos: {
+    id: string;
+    nome: string;
+    categoria: string;
+    foto: string | null;
   }[];
+
   pedidos: {
     id: string;
     valorTotal: number;
     realizadoEm: string;
+    status: string;
+  }[];
+
+  campanhas: {
+    criadoEm: string;
+    status: string;
+    campanha: {
+      id: string;
+      nome: string;
+    };
   }[];
 };
 
@@ -51,32 +70,53 @@ const ClienteDetalhe = ({ id }: ClienteDetalheProps) => {
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
+  const [historico, setHistorico] = useState<HistoricoCliente | null>(null);
 
   const token = useToken();
 
   useEffect(() => {
-    if (!token) return;
+  
+  if (!token) return;
 
-    async function buscarCliente() {
-      try {
-        const dados = await apiGet<Cliente>(`/clientes/${id}`, token!);
-        setCliente(dados);
-      } catch (e) {
-        setErro("Não foi possível carregar o cliente.");
-      } finally {
-        setCarregando(false);
-      }
+  async function buscarCliente() {
+    try {
+      const dados = await apiGet<Cliente>(`/clientes/${id}`, token!);
+      setCliente(dados);
+    } catch (e) {
+      setErro("Não foi possível carregar o cliente.");
+    } finally {
+      setCarregando(false);
     }
+  }
 
-    buscarCliente();
-  }, [id, token]);
+  async function buscarHistorico() {
+    try {
+      const dados = await apiGet<HistoricoCliente>(
+        `/clientes/${id}/historico`,
+        token!
+      );
+
+      setHistorico(dados);
+    } catch (e) {
+      console.error("Erro ao carregar histórico:", e);
+    }
+  }
+
+  buscarCliente();
+  buscarHistorico();
+
+}, [id, token]);
 
   if (carregando) {
     return <div className="mt-4">Carregando...</div>;
   }
 
   if (erro || !cliente) {
-    return <div className="mt-4 text-destructive">{erro ?? "Cliente não encontrado."}</div>;
+    return (
+      <div className="mt-4 text-destructive">
+        {erro ?? "Cliente não encontrado."}
+      </div>
+    );
   }
 
   return (
@@ -124,7 +164,7 @@ const ClienteDetalhe = ({ id }: ClienteDetalheProps) => {
             />
             <InsightCard
               title="Pedidos"
-              icon={ShoppingCart}
+              icon={ShoppingBag}
               color="text-blue-600 bg-blue-100"
               value={cliente.quantidadePedidos}
               valueType="number"
@@ -143,15 +183,11 @@ const ClienteDetalhe = ({ id }: ClienteDetalheProps) => {
         </div>
 
         <div className="w-full xl:w-2/3 space-y-6">
-          <div className="bg-primary-foreground p-4 rounded-lg">
-            Campanhas que o cliente participou
-          </div>
-          <div className="bg-primary-foreground p-4 rounded-lg">
-            Produtos que o cliente já comprou
-          </div>
-          <div className="bg-primary-foreground p-4 rounded-lg">
-            Pedidos do cliente
-          </div>
+          <CampanhaList campanhas={historico?.campanhas ?? []} />
+
+          <ProdutoList produtos={historico?.produtos ?? []} />
+
+          <PedidoList pedidos={historico?.pedidos ?? []} />
         </div>
       </div>
     </div>

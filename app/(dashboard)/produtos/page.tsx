@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import PageCards from "@/components/component/PageCards";
 import PageHeader from "@/components/component/PageHeader";
 import ProductTable from "@/components/component/ProductsPage/ProductTable";
-import { Boxes, Megaphone, PackageSearch, ShoppingCart } from "lucide-react";
+import { Boxes, Megaphone, Package, PackageSearch, ShoppingCart } from "lucide-react";
 import { apiGet } from "@/lib/api";
 import { useToken } from "@/hooks/use-token";
 import { toast } from "@/components/ui/toast";
@@ -84,7 +84,7 @@ const Produtos = () => {
       {/* CARDS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 justify-items-start mt-8 gap-4">
         <PageCards
-          icon={PackageSearch}
+          icon={Package}
           title="Produtos cadastrados"
           loading={carregando}
           value={carregando ? "..." : dashboard?.produtos.value ?? 0}
@@ -98,7 +98,7 @@ const Produtos = () => {
         />
 
         <PageCards
-          icon={ShoppingCart}
+          icon={PackageSearch}
           title="Produtos sem venda"
           loading={carregando}
           value={carregando ? "..." : `${dashboard?.semVenda.value ?? 0}%`}

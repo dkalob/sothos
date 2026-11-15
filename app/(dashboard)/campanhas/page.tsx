@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import CampanhaTable from "@/components/component/Campanhas/CampanhaTable";
 import PageCards from "@/components/component/PageCards";
 import PageHeader from "@/components/component/PageHeader";
-import { Boxes, Megaphone, PackageSearch, ShoppingCart } from "lucide-react";
+import { Boxes, Megaphone, Package, PackageSearch, Send, ShoppingCart, Users } from "lucide-react";
 import { apiGet } from "@/lib/api";
 import { useToken } from "@/hooks/use-token";
 import { toast } from "@/components/ui/toast";
@@ -76,7 +76,7 @@ const Campanhas = () => {
       {/* CARDS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 justify-items-start mt-8 gap-4">
           <PageCards
-            icon={PackageSearch}
+            icon={Megaphone}
             title="Total de campanhas cadastradas"
             value={valor(cards?.campanhas.value ?? 0)}
             loading={carregando}
@@ -88,7 +88,7 @@ const Campanhas = () => {
           />
 
           <PageCards
-            icon={ShoppingCart}
+            icon={Send}
             title="Total de mensagens enviadas"
             value={valor(cards?.mensagens.value ?? 0)}
             loading={carregando}
@@ -103,7 +103,7 @@ const Campanhas = () => {
           />
 
           <PageCards
-            icon={Boxes}
+            icon={Users}
             title="Clientes atingidos no mês atual"
             loading={carregando}
             trend={{
@@ -118,7 +118,7 @@ const Campanhas = () => {
           />
 
           <PageCards
-            icon={Megaphone}
+            icon={Package}
             title="Produtos em campanhas no mês atual"
             loading={carregando}
             value={valor(cards?.produtos.value ?? 0)}

@@ -6,7 +6,7 @@ import PageHeader from "@/components/component/PageHeader";
 import { toast } from "@/components/ui/toast";
 import { useToken } from "@/hooks/use-token";
 import { apiGet } from "@/lib/api";
-import { Megaphone, Users, UsersRound, UserStar } from "lucide-react";
+import { Megaphone, Users, UserGroup, UserStar, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 
 type Trend = {
@@ -111,7 +111,7 @@ const Clientes = () => {
         />
 
         <PageCards
-          icon={UsersRound}
+          icon={UserGroup}
           title="Quantidade de grupos"
           loading={carregando}
           value={carregando ? "..." : (dashboard?.grupos.value ?? 0)}
@@ -125,7 +125,7 @@ const Clientes = () => {
         />
 
         <PageCards
-          icon={Megaphone}
+          icon={Wallet}
           title="Valor gasto no mês"
           loading={carregando}
           value={

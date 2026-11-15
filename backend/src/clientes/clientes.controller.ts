@@ -36,6 +36,11 @@ export class ClientesController {
     return this.clientesService.findOne(id, usuario.contaId);
   }
 
+  @Get(':id/historico')
+  async findHistorico(@Param('id') id: string, @UsuarioLogado() usuario: JwtPayload) {
+    return this.clientesService.findHistorico(id, usuario.contaId);
+  }
+
   @Put(':id')
   async update( @Param('id') id: string, @Body() dto: ClienteDto, @UsuarioLogado() usuario: JwtPayload,) {
     return this.clientesService.update(id, dto, usuario.contaId);

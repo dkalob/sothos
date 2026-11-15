@@ -54,7 +54,7 @@ const NameCard = ({ id, cliente, segmento }: NameCardProps) => {
   };
 
   return (
-    <div className="bg-primary-foreground p-4 rounded-lg shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white p-5.5 shadow-sm">
       <div className="flex justify-between">
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-semibold ml-1">{cliente}</h1>

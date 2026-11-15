@@ -22,6 +22,7 @@ import {
   CreditCard,
   ShoppingCart,
   CalendarDays,
+  ShoppingBag,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -111,7 +112,7 @@ const AssociarProdutos = () => {
             />
             <InsightCard
               title="Pedidos"
-              icon={ShoppingCart}
+              icon={ShoppingBag}
               color="text-blue-600 bg-blue-100"
               value={40}
               valueType="number"

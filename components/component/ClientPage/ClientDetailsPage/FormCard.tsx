@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/hover-card";
 import { apiPut } from "@/lib/api";
 import { useToken } from "@/hooks/use-token";
+import { Separator } from "@/components/ui/separator";
 
 // TIPAGEM DOS FORMS PARA O BANCO
 type ClienteForm = {
@@ -197,7 +198,6 @@ const FormCard = ({ cliente }: FormCardProps) => {
     });
 
     if (!resultado.success) {
-
       toast.add({
         title: "Corrija os campos antes de salvar",
         type: "warning",
@@ -224,17 +224,19 @@ const FormCard = ({ cliente }: FormCardProps) => {
 
   async function editarCliente() {
     try {
-      await apiPut(`/clientes/${form.id}`, {
-        nome: form.nome,
-        email: form.email,
-        telefone: form.telefone,
-        cpf: form.cpf || null,
-        estado: form.estado,
-        cidade: form.cidade,
-        aceitaMarketing: form.aceitaMarketing,
-      },
-      token ?? undefined,
-    );
+      await apiPut(
+        `/clientes/${form.id}`,
+        {
+          nome: form.nome,
+          email: form.email,
+          telefone: form.telefone,
+          cpf: form.cpf || null,
+          estado: form.estado,
+          cidade: form.cidade,
+          aceitaMarketing: form.aceitaMarketing,
+        },
+        token ?? undefined,
+      );
 
       toast.add({
         title: "Cliente atualizado com sucesso!",
@@ -252,7 +254,7 @@ const FormCard = ({ cliente }: FormCardProps) => {
   }
 
   return (
-    <div className="bg-primary-foreground p-4 rounded-lg shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex justify-between items-center">
         <h1 className="text-xl font-semibold">Dados</h1>
 
@@ -288,9 +290,13 @@ const FormCard = ({ cliente }: FormCardProps) => {
       <div className="flex flex-col gap-8 px-4 py-2 mt-2">
         {/* SEÇÃO: DADOS PESSOAIS */}
         <div className="flex flex-col gap-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Dados Pessoais
-          </p>
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Dados Pessoais
+            </p>
+            <Separator />
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
               label="Nome"
@@ -337,9 +343,12 @@ const FormCard = ({ cliente }: FormCardProps) => {
 
         {/* SEÇÃO: LOCALIZAÇÃO */}
         <div className="flex flex-col gap-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Localização
-          </p>
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Localização
+            </p>
+            <Separator />
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {edit ? (
@@ -438,9 +447,12 @@ const FormCard = ({ cliente }: FormCardProps) => {
 
         {/* SEÇÃO: PREFERÊNCIAS */}
         <div className="flex flex-col gap-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Preferências
-          </p>
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Preferências
+            </p>
+            <Separator />
+          </div>
 
           <div className="flex items-center justify-between rounded-lg bg-muted/30 px-4 py-3">
             <div className="flex flex-col">

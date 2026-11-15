@@ -5,14 +5,13 @@ import { useEffect, useState } from "react";
 import PeriodSelector from "@/components/component/PeriodSelector";
 import PageCards from "@/components/component/PageCards";
 import DashboardChart from "@/components/component/DashboardPage/DashboardChart";
-import DashboardTable from "@/components/component/DashboardPage/DashboardTable/page";
 import PageHeader from "@/components/component/PageHeader";
 
 import { toast } from "@/components/ui/toast";
 import { useToken } from "@/hooks/use-token";
 import { apiGet } from "@/lib/api";
 
-import { Ad, HandCoins, Users, Wallet } from "lucide-react";
+import { Ad, HandCoins, Megaphone, Package, Users, Wallet } from "lucide-react";
 
 // TIPOS
 
@@ -232,7 +231,7 @@ const Indicadores = () => {
 
         {/* CAMPANHAS */}
         <PageCards
-          icon={Ad}
+          icon={Megaphone}
           title="Campanhas criadas"
           loading={carregando}
           value={campanhas?.campanhas.value ?? 0}
@@ -251,7 +250,7 @@ const Indicadores = () => {
 
         {/* PRODUTOS */}
         <PageCards
-          icon={HandCoins}
+          icon={Package}
           title="Produtos vendidos"
           loading={carregando}
           value={produtos?.produtosVendidos.value ?? 0}
