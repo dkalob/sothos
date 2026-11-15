@@ -19,6 +19,7 @@ import { CampanhasModule } from './campanhas/campanhas.module';
 import { TelefoneModule } from './telefones/telefone.module';
 import { ImportacaoModule } from './importacao/importacao.module';
 import { IndicadoresModule } from './indicadores/indicadores.module';
+import { ExportacaoModule } from './exportacao/exportacao.module';
 
 
 @Module({
@@ -40,7 +41,8 @@ import { IndicadoresModule } from './indicadores/indicadores.module';
     CampanhasModule,
     TelefoneModule,
     ImportacaoModule,
-    IndicadoresModule
+    IndicadoresModule,
+    ExportacaoModule
   ],
   controllers: [AppController],
   providers: [AppService],

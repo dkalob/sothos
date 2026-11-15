@@ -51,6 +51,33 @@ export async function apiPost<T>(caminho: string, corpo: unknown, token?: string
   return dados as T;
 }
 
+export async function apiPostFormData<T>(
+  caminho: string,
+  corpo: FormData,
+  token?: string,
+): Promise<T> {
+  const resposta = await fetch(`${API_URL}${caminho}`, {
+    method: "POST",
+    headers: montarHeaders(token),
+    body: corpo,
+  });
+
+  const texto = await resposta.text();
+  const dados = texto ? JSON.parse(texto) : null;
+
+  if (!resposta.ok) {
+    const erro = dados as ApiError;
+    const mensagem = Array.isArray(erro.message)
+      ? erro.message[0]
+      : erro.message;
+
+    throw new Error(mensagem ?? "Erro ao comunicar com o servidor");
+  }
+
+  return dados as T;
+}
+
+
 export async function apiDelete<T>(caminho: string, token?: string): Promise<T> {
   const resposta = await fetch(`${API_URL}${caminho}`, {
     method: "DELETE",
@@ -97,3 +124,45 @@ export async function apiPut<T>( caminho: string, corpo: unknown, token?: string
 
   return dados as T;
 }
+
+export async function apiDownload(
+  caminho: string,
+  token?: string,
+  nomeArquivo = "exportacao.csv",
+): Promise<void> {
+  const resposta = await fetch(`${API_URL}${caminho}`, {
+    method: "GET",
+    headers: montarHeaders(token),
+  });
+
+  if (!resposta.ok) {
+    const texto = await resposta.text();
+
+    let mensagem = "Não foi possível exportar os dados.";
+
+    try {
+      const erro = JSON.parse(texto) as ApiError;
+      mensagem = Array.isArray(erro.message)
+        ? erro.message[0]
+        : erro.message ?? mensagem;
+    } catch {
+      // Mantém a mensagem padrão se a resposta não for JSON.
+    }
+
+    throw new Error(mensagem);
+  }
+
+  const blob = await resposta.blob();
+  const url = window.URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = nomeArquivo;
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  window.URL.revokeObjectURL(url);
+}
+

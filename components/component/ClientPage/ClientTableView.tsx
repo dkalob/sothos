@@ -7,11 +7,12 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientTableColumns, GroupTableColumns } from "./columns";
 import { Download, Plus } from "lucide-react";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiDownload, apiGet, apiPost } from "@/lib/api";
 import { useToken } from "@/hooks/use-token";
 import ClientSheet from "./ClientSheet";
 import GroupClientSheet from "./GroupClientSheet";
 import { toast } from "@/components/ui/toast";
+import ImportarClientesSheet from "./ImportarClientesSheet";
 
 interface ClientTableViewProps {
   columnsClient: (
@@ -55,6 +56,8 @@ const ClientTableView = ({
   const [grupoSheet, setGrupoSheet] = useState(false);
   const [grupoSelecionado, setGrupoSelecionado] = useState<string | null>(null);
   const [recalculando, setRecalculando] = useState(false);
+  const [importarClienteSheet, setImportarClienteSheet] = useState(false);
+  const [exportando, setExportando] = useState(false);
 
   const token = useToken();
 
@@ -103,7 +106,7 @@ const ClientTableView = ({
     try {
       await apiPost("/rfm/recalcular", {}, token ?? undefined);
       toast.add({ title: "Segmentação RFM recalculada!", type: "success" });
-      await buscarClientes();   // a função que você já usa para recarregar a lista
+      await buscarClientes(); // a função que você já usa para recarregar a lista
     } catch (erro) {
       toast.add({
         title:
@@ -120,6 +123,37 @@ const ClientTableView = ({
   if (carregando) {
     return <TabelaSkeleton />;
   }
+
+  
+  async function exportarClientes() {
+    if (!token) return;
+
+    setExportando(true);
+
+    try {
+      await apiDownload(
+        "/exportacao/clientes",
+        token,
+        "clientes.csv",
+      );
+
+      toast.add({
+        title: "Clientes exportados com sucesso!",
+        type: "success",
+      });
+    } catch (erro) {
+      toast.add({
+        title:
+          erro instanceof Error
+            ? erro.message
+            : "Não foi possível exportar os clientes",
+        type: "error",
+      });
+    } finally {
+      setExportando(false);
+    }
+  }
+
 
   return (
     <div className="mt-8">
@@ -165,14 +199,36 @@ const ClientTableView = ({
 
           {/* BOTÕES */}
           <div className="flex gap-2 items-center">
-            <Button variant="outline" className="w-40 truncate">
+            <Button
+              variant="outline"
+              className="w-40 truncate"
+              onClick={() => {
+                if (aba === "clientes") {
+                  exportarClientes();
+                }
+              }}
+              disabled={aba !== "clientes" || exportando}
+            >
               <Download />
-              {aba === "clientes" ? "Exportar Clientes" : "Exportar Grupos"}
+              {aba === "clientes"
+                ? exportando
+                  ? "Exportando..."
+                  : "Exportar Clientes"
+                : "Exportar Grupos"}
             </Button>
-            <Button variant="outline" className="w-40 truncate">
+            <Button
+              variant="outline"
+              className="w-40 truncate"
+              onClick={() => {
+                if (aba === "clientes") {
+                  setImportarClienteSheet(true);
+                }
+              }}
+            >
               <Download className="rotate-180" />
               {aba === "clientes" ? "Importar Clientes" : "Importar Grupos"}
             </Button>
+
             <Button
               variant="default"
               className="w-32 truncate"
@@ -200,6 +256,11 @@ const ClientTableView = ({
               }}
               grupoId={grupoSelecionado}
               onGrupoCadastrado={buscarGrupos}
+            />
+            <ImportarClientesSheet
+              open={importarClienteSheet}
+              onOpenChange={setImportarClienteSheet}
+              onClientesImportados={buscarClientes}
             />
           </div>
         </div>

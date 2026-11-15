@@ -8,14 +8,15 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ProductTableColumns } from "./columns";
 import { Download, Plus } from "lucide-react";
 import ProductSheet from "./ProductSheet";
-import { apiGet } from "@/lib/api";
+import { apiDownload, apiGet } from "@/lib/api";
 import { useToken } from "@/hooks/use-token";
 import { toast } from "@/components/ui/toast";
+import ImportarProdutosSheet from "./ImportarProdutoSheet";
 
 interface ProductTableViewProps {
   columnsProduct: (
     onEditarProduto: (id: string) => void,
-    atualizarProdutos: () => Promise<void>
+    atualizarProdutos: () => Promise<void>,
   ) => ColumnDef<ProductTableColumns>[];
 }
 
@@ -44,6 +45,8 @@ const ProductTableView = ({ columnsProduct }: ProductTableViewProps) => {
   const [productsData, setProductsData] = useState<ProductTableColumns[]>([]);
   const [produtoId, setProdutoId] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
+  const [importarProdutosSheet, setImportarProdutosSheet] = useState(false);
+  const [exportando, setExportando] = useState(false);
 
   const token = useToken();
 
@@ -51,10 +54,7 @@ const ProductTableView = ({ columnsProduct }: ProductTableViewProps) => {
     if (!token) return;
 
     try {
-      const produtos = await apiGet<ProductTableColumns[]>(
-        "/produtos",
-        token,
-      );
+      const produtos = await apiGet<ProductTableColumns[]>("/produtos", token);
 
       setProductsData(produtos);
     } catch (error) {
@@ -78,36 +78,72 @@ const ProductTableView = ({ columnsProduct }: ProductTableViewProps) => {
   function editarProduto(id: string) {
     setProdutoId(id);
     setProdutoSheet(true);
-}
-
-  
+  }
 
   if (carregando) {
     return <TabelaSkeleton />;
   }
+
+  
+  async function exportarProdutos() {
+    if (!token) return;
+
+    setExportando(true);
+
+    try {
+      await apiDownload(
+        "/exportacao/produtos",
+        token,
+        "produtos.csv",
+      );
+
+      toast.add({
+        title: "Produtos exportados com sucesso!",
+        type: "success",
+      });
+    } catch (erro) {
+      toast.add({
+        title:
+          erro instanceof Error
+            ? erro.message
+            : "Não foi possível exportar os produtos",
+        type: "error",
+      });
+    } finally {
+      setExportando(false);
+    }
+  }
+
 
   return (
     <div className="mt-8">
       <div className="flex flex-col gap-2 ml-2.5">
         <div className="flex justify-between items-center">
           <div className="flex flex-col">
-            <span className="text-md font-medium">
-              Todos os produtos
-            </span>
+            <span className="text-md font-medium">Todos os produtos</span>
 
             <span className="text-sm text-gray-600">
-              Visualize e administre todos os produtos da sua loja em uma
-              única tela
+              Visualize e administre todos os produtos da sua loja em uma única
+              tela
             </span>
           </div>
 
           <div className="flex gap-2 items-center">
-            <Button variant="outline" className="w-40 truncate">
+            <Button
+              variant="outline"
+              className="w-40 truncate"
+              onClick={exportarProdutos}
+              disabled={exportando}
+            >
               <Download />
-              Exportar Produtos
+              {exportando ? "Exportando..." : "Exportar Produtos"}
             </Button>
 
-            <Button variant="outline" className="w-40 truncate">
+            <Button
+              variant="outline"
+              className="w-40 truncate"
+              onClick={() => setImportarProdutosSheet(true)}
+            >
               <Download className="rotate-180" />
               Importar Produtos
             </Button>
@@ -137,13 +173,16 @@ const ProductTableView = ({ columnsProduct }: ProductTableViewProps) => {
               produtoId={produtoId}
             />
           </div>
+
+          <ImportarProdutosSheet
+            open={importarProdutosSheet}
+            onOpenChange={setImportarProdutosSheet}
+            onProdutosImportados={atualizarProdutos}
+          />
         </div>
 
         <DataTable
-          columns={columnsProduct(
-            editarProduto,
-            atualizarProdutos
-          )}
+          columns={columnsProduct(editarProduto, atualizarProdutos)}
           data={productsData}
           hasFilter
           hasPagination

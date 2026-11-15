@@ -8,9 +8,11 @@ import { ColumnDef } from "@tanstack/react-table";
 import { OrderTableColumns } from "./columns";
 import { Download, Plus } from "lucide-react";
 import OrderSheet from "./OrderSheet";
-import { apiDelete, apiGet } from "@/lib/api";
+import { apiDelete, apiDownload, apiGet } from "@/lib/api";
 import { useToken } from "@/hooks/use-token";
 import { toast } from "@/components/ui/toast";
+import ImportarPedidosSheet from "./ImportarPedidoSheet";
+
 
 interface OrderTableViewProps {
   columnsOrder: (
@@ -44,9 +46,9 @@ const OrderTableView = ({ columnsOrder }: OrderTableViewProps) => {
   const [orderData, setOrderData] = useState<OrderTableColumns[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [orderSheet, setOrderSheet] = useState(false);
-  const [pedidoSelecionado, setPedidoSelecionado] = useState<string | null>(
-    null,
-  );
+  const [pedidoSelecionado, setPedidoSelecionado] = useState<string | null>(null);
+  const [importarPedidos, setImportarPedidos] = useState(false);
+  const [exportando, setExportando] = useState(false);
 
   const token = useToken();
 
@@ -98,6 +100,37 @@ const OrderTableView = ({ columnsOrder }: OrderTableViewProps) => {
     return <TabelaSkeleton />;
   }
 
+  
+  async function exportarPedidos() {
+    if (!token) return;
+
+    setExportando(true);
+
+    try {
+      await apiDownload(
+        "/exportacao/pedidos",
+        token,
+        "pedidos.csv",
+      );
+
+      toast.add({
+        title: "Pedidos exportados com sucesso!",
+        type: "success",
+      });
+    } catch (erro) {
+      toast.add({
+        title:
+          erro instanceof Error
+            ? erro.message
+            : "Não foi possível exportar os pedidos",
+        type: "error",
+      });
+    } finally {
+      setExportando(false);
+    }
+  }
+
+
   return (
     <div className="mt-8">
       <div className="flex flex-col gap-2 ml-2.5">
@@ -114,12 +147,21 @@ const OrderTableView = ({ columnsOrder }: OrderTableViewProps) => {
 
           {/* BOTÕES */}
           <div className="flex gap-2 items-center">
-            <Button variant="outline" className="w-40 truncate">
+            <Button
+              variant="outline"
+              className="w-40 truncate"
+              onClick={exportarPedidos}
+              disabled={exportando}
+            >
               <Download />
-              Exportar Pedidos
+              {exportando ? "Exportando..." : "Exportar Pedidos"}
             </Button>
 
-            <Button variant="outline" className="w-40 truncate">
+            <Button
+              variant="outline"
+              className="w-40 truncate"
+              onClick={() => setImportarPedidos(true)}
+            >
               <Download className="rotate-180" />
               Importar Pedidos
             </Button>
@@ -146,6 +188,12 @@ const OrderTableView = ({ columnsOrder }: OrderTableViewProps) => {
               }}
               pedidoId={pedidoSelecionado}
               onPedidoCadastrado={buscarPedidos}
+            />
+
+            <ImportarPedidosSheet
+              open={importarPedidos}
+              onOpenChange={setImportarPedidos}
+              onPedidosImportados={buscarPedidos}
             />
           </div>
         </div>
