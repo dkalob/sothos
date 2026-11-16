@@ -67,6 +67,7 @@ export class EmailService {
     conteudo: string,
     imagemUrl?: string | null,
     nomeLoja?: string,
+    textoBotao?: string | null,
   ) {
     const escaparHtml = (texto: string) =>
       texto
@@ -80,6 +81,9 @@ export class EmailService {
     const anoAtual = new Date().getFullYear();
 
     const conteudoSeguro = escaparHtml(conteudo).replace(/\n/g, '<br>');
+    const textoBotaoSeguro = textoBotao?.trim()
+  ? escaparHtml(textoBotao.trim())
+  : null;
 
     // Só permite imagens de endereços HTTP ou HTTPS.
     const imagemValida =
@@ -197,6 +201,30 @@ export class EmailService {
                         ${conteudoSeguro}
                       </div>
 
+                      ${
+                        textoBotaoSeguro
+                          ? `
+                            <div style="
+                              margin-top: 28px;
+                              text-align: center;
+                            ">
+                              <span style="
+                                display: inline-block;
+                                background-color: #9445ef;
+                                color: #ffffff;
+                                padding: 14px 32px;
+                                border-radius: 8px;
+                                font-size: 15px;
+                                font-weight: 700;
+                                text-align: center;
+                              ">
+                                ${textoBotaoSeguro}
+                              </span>
+                            </div>
+                          `
+                          : ''
+                      }
+
                     </td>
                   </tr>
 
@@ -223,7 +251,7 @@ export class EmailService {
                         font-size: 12px;
                         line-height: 1.6;
                       ">
-                        &copy; ${anoAtual} — Sothos —}.
+                        &copy; ${anoAtual} — Sothos.
                         Todos os direitos reservados.
                       </p>
                     </td>

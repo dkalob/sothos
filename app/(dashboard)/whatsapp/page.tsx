@@ -1,4 +1,3 @@
-
 "use client";
 
 import PageHeader from "@/components/component/PageHeader";
@@ -34,7 +33,10 @@ import GrupoClienteCombobox from "@/components/component/GrupoClienteComboBox";
 import { apiGet, apiPost, apiPut } from "@/lib/api";
 import { useToken } from "@/hooks/use-token";
 import { toast } from "@/components/ui/toast";
-import { WhatsappFormErrors, whatsappSchema } from "@/components/component/Whatsapp/WhatsappSchema";
+import {
+  WhatsappFormErrors,
+  whatsappSchema,
+} from "@/components/component/Whatsapp/WhatsappSchema";
 import { Input } from "@/components/ui/input";
 
 const Tom = [
@@ -85,7 +87,9 @@ const Whatsapp = () => {
   const [grupoSelecionado, setGrupoSelecionado] = useState("");
   const [nomeGrupoSelecionado, setNomeGrupoSelecionado] = useState("");
   const [tomSelecionado, setTomSelecionado] = useState<string | null>(null);
-  const [objetivoSelecionado, setObjetivoSelecionado] = useState<string | null>(null);
+  const [objetivoSelecionado, setObjetivoSelecionado] = useState<string | null>(
+    null,
+  );
   const [salvando, setSalvando] = useState(false);
   const [adaptando, setAdaptando] = useState(false);
   const [descricao, setDescricao] = useState("");
@@ -96,6 +100,7 @@ const Whatsapp = () => {
   const [mensagemId, setMensagemId] = useState<string | null>(null);
   const [errors, setErrors] = useState<WhatsappFormErrors>({});
   const [mensagemGerada, setMensagemGerada] = useState(false);
+  const [reprocessandoImagem, setReprocessandoImagem] = useState(false);
 
   const token = useToken();
 
@@ -127,7 +132,10 @@ const Whatsapp = () => {
       })
       .catch((erro) => {
         console.error(erro);
-        toast.add({ title: "Não foi possível carregar a mensagem", type: "error" });
+        toast.add({
+          title: "Não foi possível carregar a mensagem",
+          type: "error",
+        });
       });
 
     return () => {
@@ -205,6 +213,44 @@ const Whatsapp = () => {
       });
     } finally {
       setSalvando(false);
+    }
+  }
+
+  async function reprocessarImagem(instrucao: string) {
+    if (!mensagemId || !token) {
+      toast.add({
+        title: "Não foi possível identificar a mensagem",
+        type: "error",
+      });
+      return;
+    }
+
+    if (reprocessandoImagem) return;
+
+    setReprocessandoImagem(true);
+
+    try {
+      const resultado = await apiPost<{
+        arteId: string;
+        imagemUrl: string;
+      }>(`/mensagens/${mensagemId}/reprocessar-imagem`, { instrucao }, token);
+
+      setImagemUrl(resultado.imagemUrl);
+
+      toast.add({
+        title: "Imagem reprocessada com sucesso!",
+        type: "success",
+      });
+    } catch (erro) {
+      toast.add({
+        title:
+          erro instanceof Error
+            ? erro.message
+            : "Não foi possível reprocessar a imagem",
+        type: "error",
+      });
+    } finally {
+      setReprocessandoImagem(false);
     }
   }
 
@@ -451,7 +497,8 @@ const Whatsapp = () => {
 
                     <div className="mt-2 flex justify-end">
                       <BotaoReprocessarImagem
-                        onConfirmar={(instrucao) => console.log(instrucao)}
+                        onConfirmar={reprocessarImagem}
+                        processando={reprocessandoImagem}
                       />
                     </div>
 

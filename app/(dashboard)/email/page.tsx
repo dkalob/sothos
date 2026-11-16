@@ -1,4 +1,3 @@
-
 "use client";
 
 import DicasEngajaento from "@/components/component/DicasEngajamento";
@@ -31,7 +30,10 @@ import { useRouter } from "next/navigation";
 import BotaoReprocessarImagem from "@/components/component/BotaoReprocessarImagem";
 import { Input } from "@/components/ui/input";
 import { MoldeEmail } from "@/components/component/MoldeEmail";
-import { EmailFormErrors, emailSchema } from "@/components/component/Email/EmailSchema";
+import {
+  EmailFormErrors,
+  emailSchema,
+} from "@/components/component/Email/EmailSchema";
 import { useToken } from "@/hooks/use-token";
 import { apiGet, apiPost, apiPut } from "@/lib/api";
 import { toast } from "@/components/ui/toast";
@@ -87,7 +89,9 @@ const Email = () => {
   const [grupoSelecionado, setGrupoSelecionado] = useState("");
   const [nomeGrupoSelecionado, setNomeGrupoSelecionado] = useState("");
   const [tomSelecionado, setTomSelecionado] = useState<string | null>(null);
-  const [objetivoSelecionado, setObjetivoSelecionado] = useState<string | null>(null);
+  const [objetivoSelecionado, setObjetivoSelecionado] = useState<string | null>(
+    null,
+  );
   const [salvando, setSalvando] = useState(false);
   const [adaptando, setAdaptando] = useState(false);
   const [descricao, setDescricao] = useState("");
@@ -100,6 +104,7 @@ const Email = () => {
   const [gerando, setGerando] = useState(false);
   const [errors, setErrors] = useState<EmailFormErrors>({});
   const [mensagemGerada, setMensagemGerada] = useState(false);
+  const [reprocessandoImagem, setReprocessandoImagem] = useState(false);
 
   const token = useToken();
   const usuarioLogado = useUsuario();
@@ -201,6 +206,44 @@ const Email = () => {
       });
     } finally {
       setGerando(false);
+    }
+  }
+
+  async function reprocessarImagem(instrucao: string) {
+    if (!mensagemId || !token) {
+      toast.add({
+        title: "Não foi possível identificar a mensagem",
+        type: "error",
+      });
+      return;
+    }
+
+    if (reprocessandoImagem) return;
+
+    setReprocessandoImagem(true);
+
+    try {
+      const resultado = await apiPost<{
+        arteId: string;
+        imagemUrl: string;
+      }>(`/mensagens/${mensagemId}/reprocessar-imagem`, { instrucao }, token);
+
+      setImagemUrl(resultado.imagemUrl);
+
+      toast.add({
+        title: "Imagem reprocessada com sucesso!",
+        type: "success",
+      });
+    } catch (erro) {
+      toast.add({
+        title:
+          erro instanceof Error
+            ? erro.message
+            : "Não foi possível reprocessar a imagem",
+        type: "error",
+      });
+    } finally {
+      setReprocessandoImagem(false);
     }
   }
 
@@ -529,7 +572,8 @@ const Email = () => {
 
                 <div className="mt-2 flex justify-end">
                   <BotaoReprocessarImagem
-                    onConfirmar={(instrucao) => console.log(instrucao)}
+                    onConfirmar={reprocessarImagem}
+                    processando={reprocessandoImagem}
                   />
                 </div>
 

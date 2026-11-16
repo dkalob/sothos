@@ -197,7 +197,7 @@ const controlarCampanha = async (acao: "executar" | "pausar") => {
   }
 
   const m = campanha.mensagem;
-  const paginaIa = campanha.tipo === "EMAIL" ? "/ia/email" : "/ia/whatsapp";
+  const paginaIa = campanha.tipo === "EMAIL" ? "/email" : "/whatsapp";
   const IconeTipo = campanha.tipo === "EMAIL" ? Mail : MessageCircle;
 
   return (

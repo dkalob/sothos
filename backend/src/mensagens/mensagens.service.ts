@@ -527,6 +527,197 @@ Create a polished, premium-quality advertisement suitable for both WhatsApp and 
 `;
   }
 
+
+async reprocessarImagem(
+  id: string,
+  instrucao: string,
+  contaId: string,
+) {
+  if (!instrucao?.trim() || instrucao.trim().length < 3) {
+    throw new BadRequestException(
+      'Informe uma orientação com pelo menos 3 caracteres',
+    );
+  }
+
+  const mensagem = await this.prisma.mensagemIa.findFirst({
+    where: { id, contaId },
+    select: {
+      id: true,
+      arteId: true,
+      tom: true,
+      objetivo: true,
+      observacoes: true,
+      arte: {
+        select: {
+          imagemUrl: true,
+        },
+      },
+      produto: {
+        select: {
+          nome: true,
+          categoria: {
+            select: { nome: true },
+          },
+          caracteristicas: {
+            select: {
+              valor: true,
+              caracteristica: {
+                select: { nome: true },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!mensagem) {
+    throw new NotFoundException('Mensagem não encontrada');
+  }
+
+  if (!mensagem.arteId || !mensagem.arte?.imagemUrl) {
+    throw new BadRequestException(
+      'Esta mensagem não possui uma imagem para reprocessar',
+    );
+  }
+
+  if (!mensagem.produto) {
+    throw new BadRequestException(
+      'Esta mensagem não possui um produto vinculado',
+    );
+  }
+
+  const produto = mensagem.produto;
+
+  const caracteristicas = produto.caracteristicas.length
+    ? produto.caracteristicas
+        .map(
+          (c) => `${c.caracteristica.nome}: ${c.valor}`,
+        )
+        .join(', ')
+    : 'não informadas';
+
+  
+const prompt = `
+You are an expert advertising designer editing an existing advertisement.
+
+The user has evaluated the previous generated image and is NOT satisfied
+with specific aspects of its visual result.
+
+Your task is to IMPROVE THE EXISTING IMAGE according to the user's feedback,
+not create an unrelated advertisement from scratch.
+
+ORIGINAL IMAGE:
+Use the provided image as the main reference.
+Analyze its composition, layout, colors, typography and product presentation.
+
+PRODUCT:
+- Name: ${produto.nome}
+- Category: ${produto.categoria?.nome ?? 'not informed'}
+- Characteristics: ${caracteristicas}
+
+CAMPAIGN:
+- Tone: ${TOM[mensagem.tom]}
+- Objective: ${OBJETIVO[mensagem.objetivo]}
+
+USER FEEDBACK — WHAT MUST BE IMPROVED:
+${instrucao.trim()}
+
+DESIGN INSTRUCTIONS:
+- Correct the aspects explicitly criticized by the user.
+- Apply the requested visual improvements carefully.
+- Preserve elements of the original image that the user did not ask to change.
+- Maintain the original campaign's purpose and advertising identity.
+- Improve visual balance, hierarchy and professional quality when appropriate.
+
+PRODUCT PRESERVATION:
+- Preserve the exact product packaging, shape, proportions, colors, logo,
+  label and brand identity.
+- Never replace, redesign or distort the product.
+- Do not invent product benefits, specifications or claims.
+- Do not invent prices, discounts or payment conditions.
+- Only display a price if the original store instructions explicitly requested it,
+  and use only the registered product price if available.
+
+FINAL REQUIREMENTS:
+- All text displayed in the image must be in Brazilian Portuguese.
+- Keep text clear, correctly spelled and readable.
+- Maintain a professional commercial advertisement suitable for WhatsApp and email.
+- The result must be an improved version of the provided image,
+  respecting the user's feedback.
+`;
+
+
+  const inicio = Date.now();
+
+  let imagemNova: string;
+
+  try {
+    imagemNova = await this.cloudinaryImage.gerarImagem(
+      mensagem.arte.imagemUrl,
+      prompt,
+    );
+  } catch (erro) {
+    await this.prisma.execucaoIa.create({
+      data: {
+        arteId: mensagem.arteId,
+        mensagemId: mensagem.id,
+        provedor: 'cloudinary',
+        modeloIa: 'nano-banana-2-lite-edit',
+        prompt,
+        status: StatusExecucaoIa.FALHA,
+        duracaoMs: Date.now() - inicio,
+        mensagemErro:
+          erro instanceof Error ? erro.message : String(erro),
+      },
+    });
+
+    throw erro;
+  }
+
+  const resultado = await this.prisma.$transaction(async (tx) => {
+    const novaArte = await tx.arteIa.create({
+      data: {
+        imagemUrl: imagemNova,
+      },
+    });
+
+    await tx.mensagemIa.update({
+      where: { id: mensagem.id },
+      data: {
+        arteId: novaArte.id,
+        observacoes: [
+          mensagem.observacoes,
+          `Reprocessamento: ${instrucao.trim()}`,
+        ]
+          .filter(Boolean)
+          .join('\n'),
+      },
+    });
+
+    await tx.execucaoIa.create({
+      data: {
+        arteId: novaArte.id,
+        mensagemId: mensagem.id,
+        provedor: 'cloudinary',
+        modeloIa: 'nano-banana-2-lite-edit',
+        prompt,
+        resposta: imagemNova,
+        status: StatusExecucaoIa.SUCESSO,
+        duracaoMs: Date.now() - inicio,
+      },
+    });
+
+    return novaArte;
+  });
+
+  return {
+    arteId: resultado.id,
+    imagemUrl: resultado.imagemUrl,
+  };
+}
+
+
   private separarEmail(texto: string) {
     const [primeira, ...resto] = texto.split('\n');
     const achou = primeira.match(/^[\s*_#]*assunto[\s*_]*:[\s*_]*(.*)$/i);

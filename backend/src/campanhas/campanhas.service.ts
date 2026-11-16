@@ -427,6 +427,7 @@ export class CampanhasService {
           select: {
             assunto: true,
             conteudo: true,
+            textoBotao: true,
             arte: {
               select: {
                 imagemUrl: true,
@@ -516,6 +517,7 @@ export class CampanhasService {
           campanha.mensagem.assunto,
           campanha.mensagem.conteudo,
           campanha.mensagem.arte?.imagemUrl,
+          campanha.mensagem.textoBotao ?? undefined,
           conta.nome,
         );
 

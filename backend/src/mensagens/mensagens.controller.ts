@@ -89,5 +89,17 @@ export class MensagensIaController {
     return this.cloudflareService.testarComReferencia(imagemUrl);
   }
 
+
+  @Post(':id/reprocessar-imagem')
+  reprocessarImagem(
+    @Param('id') id: string, @Body('instrucao') instrucao: string, @UsuarioLogado() usuario: { contaId: string }) {
+    return this.service.reprocessarImagem(
+      id,
+      instrucao,
+      usuario.contaId,
+    );
+  }
+
+
   
 }
