@@ -39,5 +39,16 @@ export class CampanhasController {
   remove(@Param('id') id: string, @UsuarioLogado() usuario: { contaId: string }) {
     return this.campanhasService.remove(id, usuario.contaId);
   }
+
+  @Post(':id/executar')
+  executar(@Param('id') id: string, @UsuarioLogado() usuario: { contaId: string }) {
+    return this.campanhasService.executar(id, usuario.contaId);
+  }
+
+  @Post(':id/pausar')
+  pausar(@Param('id') id: string, @UsuarioLogado() usuario: { contaId: string }) {
+    return this.campanhasService.pausar(id, usuario.contaId);
+  }
+
   
 }

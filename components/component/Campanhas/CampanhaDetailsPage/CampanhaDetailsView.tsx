@@ -24,7 +24,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MoldeEmail } from "@/components/component/MoldeEmail";
 import MoldeCelular from "@/components/component/MoldeCelular";
-import { apiGet } from "@/lib/api";
+import { apiGet, apiPost } from "@/lib/api";
 import { useToken } from "@/hooks/use-token";
 import { COR_STATUS, OBJETIVO, STATUS, TIPO, TOM } from "../columns";
 import { useUsuario } from "@/hooks/use-usuario";
@@ -76,6 +76,71 @@ const CampanhaDetailsView = ({ id }: { id: string }) => {
 
   const token = useToken();
   const usuario = useUsuario();
+
+  const [executando, setExecutando] = useState(false);
+  const [pausando, setPausando] = useState(false);
+
+  const atualizarCampanha = async () => {
+  const dados = await apiGet<CampanhaDetalhe>(`/campanhas/${id}`, token!);
+  setCampanha(dados);
+  return dados;
+};
+
+const controlarCampanha = async (acao: "executar" | "pausar") => {
+  if (!token) return;
+
+  if (acao === "executar") {
+    if (executando) return;
+
+    setExecutando(true);
+    setErro(null);
+
+    // A execução continua em segundo plano para permitir a pausa.
+    void apiPost(`/campanhas/${id}/executar`, {}, token)
+      .then(() => atualizarCampanha())
+      .catch(async (e) => {
+        setErro(
+          e instanceof Error ? e.message : "Erro ao executar campanha",
+        );
+        await atualizarCampanha().catch(() => {});
+      })
+      .finally(() => setExecutando(false));
+
+    // Aguarda o backend confirmar que a campanha começou.
+    for (let tentativa = 0; tentativa < 20; tentativa++) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+
+      const dados = await atualizarCampanha();
+
+      if (dados.status === "EM_EXECUCAO") break;
+
+      if (
+        dados.status !== "AGENDADA" &&
+        dados.status !== "PAUSADA"
+      ) {
+        break;
+      }
+    }
+
+    return;
+  }
+
+  if (pausando) return;
+
+  try {
+    setPausando(true);
+    setErro(null);
+
+    await apiPost(`/campanhas/${id}/pausar`, {}, token);
+    await atualizarCampanha();
+  } catch (e) {
+    setErro(
+      e instanceof Error ? e.message : "Erro ao pausar campanha",
+    );
+  } finally {
+    setPausando(false);
+  }
+};
 
   useEffect(() => {
     if (!token) return;
@@ -152,11 +217,31 @@ const CampanhaDetailsView = ({ id }: { id: string }) => {
       <div className="flex justify-between items-center">
         <PageHeader title={campanha.titulo} subtitle="Detalhes da campanha." />
         <div className="flex gap-2">
-          <Button variant="outline" className="w-40 hover:bg-primary/10">
+          <Button
+            variant="outline"
+            className="w-40 hover:bg-primary/10"
+            onClick={() => controlarCampanha("executar")}
+            disabled={
+              executando ||
+              campanha.status === "EM_EXECUCAO" ||
+              campanha.status === "CONCLUIDA" ||
+              campanha.status === "CANCELADA"
+            }
+          >
             <Play />
-            Ativar Campanha
+            {executando ? "Aguarde..." : "Ativar Campanha"}
           </Button>
-          <Button variant="outline" className="w-40 hover:bg-primary/10">
+
+          <Button
+            variant="outline"
+            className="w-40 hover:bg-primary/10"
+            onClick={() => controlarCampanha("pausar")}
+            disabled={
+              pausando ||
+              (campanha.status !== "EM_EXECUCAO" &&
+                campanha.status !== "AGENDADA")
+            }
+          >
             <Pause />
             Pausar Campanha
           </Button>

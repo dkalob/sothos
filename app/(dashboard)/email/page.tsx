@@ -1,3 +1,4 @@
+
 "use client";
 
 import DicasEngajaento from "@/components/component/DicasEngajamento";
@@ -26,6 +27,7 @@ import ProdutoCombobox from "@/components/component/ProdutoComboBox";
 import { useEffect, useState } from "react";
 import GrupoClienteCombobox from "@/components/component/GrupoClienteComboBox";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import BotaoReprocessarImagem from "@/components/component/BotaoReprocessarImagem";
 import { Input } from "@/components/ui/input";
 import { MoldeEmail } from "@/components/component/MoldeEmail";
@@ -74,13 +76,20 @@ type MensagemCompleta = {
   produtoId: string | null;
 };
 
+type MensagemAdaptada = {
+  id: string;
+};
+
 const Email = () => {
+  const router = useRouter();
+
   const [produtoSelecionado, setProdutoSelecionado] = useState("");
   const [grupoSelecionado, setGrupoSelecionado] = useState("");
   const [nomeGrupoSelecionado, setNomeGrupoSelecionado] = useState("");
   const [tomSelecionado, setTomSelecionado] = useState<string | null>(null);
   const [objetivoSelecionado, setObjetivoSelecionado] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
+  const [adaptando, setAdaptando] = useState(false);
   const [descricao, setDescricao] = useState("");
   const [assunto, setAssunto] = useState("");
   const [mensagem, setMensagem] = useState("");
@@ -95,129 +104,187 @@ const Email = () => {
   const token = useToken();
   const usuarioLogado = useUsuario();
 
-  // Carrega a mensagem do editar mensagem na tabela
-    useEffect(() => {
-      const id = new URLSearchParams(window.location.search).get("mensagem");
-      console.log("efeito de carregar mensagem", { id, temToken: !!token });
-  
-      if (!id || !token) return;
-  
-      let cancelado = false;
-  
-      apiGet<MensagemCompleta>(`/mensagens/${id}`, token)
-        .then((m) => {
-          if (cancelado) return;
-  
-          if (m.tipo !== "EMAIL") {
-            toast.add({ title: "Esta mensagem é de outro tipo", type: "error" });
-            return;
-          }
-  
-          setMensagemId(m.id);
-          setTitulo(m.titulo);                 // o nome do seu state de título
-          setProdutoSelecionado(m.produtoId ?? "");
-          setTomSelecionado(m.tom);
-          setObjetivoSelecionado(m.objetivo);
-          setDescricao(m.observacoes ?? "");
-          setMensagem(m.conteudo);
-          setImagemUrl(m.imagemUrl);
-          setMensagemGerada(true);
-        })
-        .catch((erro) => {
-          console.error(erro);
-          toast.add({ title: "Não foi possível carregar a mensagem", type: "error" });
-        });
-  
-      return () => {
-        cancelado = true;
-      };
-    }, [token]);
+  // Carrega a mensagem para edição
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("mensagem");
 
-  
-  async function gerarMensagem() {
-    console.log("Botão clicado!");
-      
-      const result = emailSchema.safeParse({
-        produto: produtoSelecionado,
-        tom: tomSelecionado,
-        objetivo: objetivoSelecionado,
-      });
-  
-      if (!result.success) {
-        const fieldErrors = result.error.flatten().fieldErrors;
-        setErrors({
-          produto: fieldErrors.produto?.[0],
-          tom: fieldErrors.tom?.[0],
-          objetivo: fieldErrors.objetivo?.[0],
-        });
-        return;
-      }
-  
-      setErrors({});
-  
-      setGerando(true);
-  
-      try {
-        const gerada = await apiPost<MensagemGerada>(
-          "/mensagens/gerar",
-          {
-            produtoId: produtoSelecionado,
-            tipo: "EMAIL",
-            tom: tomSelecionado,
-            objetivo: objetivoSelecionado,
-            observacoes: descricao.trim() || undefined,
-          },
-          token ?? undefined,
-        );
-        
-        setAssunto(gerada.assunto ?? "");
-        setMensagem(gerada.conteudo);
-        setImagemUrl(gerada.imagemUrl);
-        setMensagemId(gerada.id);
+    if (!id || !token) return;
+
+    let cancelado = false;
+
+    apiGet<MensagemCompleta>(`/mensagens/${id}`, token)
+      .then((m) => {
+        if (cancelado) return;
+
+        if (m.tipo !== "EMAIL") {
+          toast.add({
+            title: "Esta mensagem é de outro tipo",
+            type: "error",
+          });
+          return;
+        }
+
+        setMensagemId(m.id);
+        setTitulo(m.titulo);
+        setProdutoSelecionado(m.produtoId ?? "");
+        setTomSelecionado(m.tom);
+        setObjetivoSelecionado(m.objetivo);
+        setDescricao(m.observacoes ?? "");
+        setAssunto(m.assunto ?? "");
+        setMensagem(m.conteudo);
+        setbtnText(m.textoBotao ?? "");
+        setImagemUrl(m.imagemUrl);
         setMensagemGerada(true);
-      } catch (erro) {
+      })
+      .catch((erro) => {
+        console.error(erro);
         toast.add({
-          title:
-            erro instanceof Error
-              ? erro.message
-              : "Não foi possível gerar a mensagem",
+          title: "Não foi possível carregar a mensagem",
           type: "error",
         });
-      } finally {
-        setGerando(false);
-      }
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [token]);
+
+  async function gerarMensagem() {
+    const result = emailSchema.safeParse({
+      produto: produtoSelecionado,
+      tom: tomSelecionado,
+      objetivo: objetivoSelecionado,
+    });
+
+    if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors;
+
+      setErrors({
+        produto: fieldErrors.produto?.[0],
+        tom: fieldErrors.tom?.[0],
+        objetivo: fieldErrors.objetivo?.[0],
+      });
+
+      return;
     }
-  
+
+    setErrors({});
+    setGerando(true);
+
+    try {
+      const gerada = await apiPost<MensagemGerada>(
+        "/mensagens/gerar",
+        {
+          produtoId: produtoSelecionado,
+          tipo: "EMAIL",
+          tom: tomSelecionado,
+          objetivo: objetivoSelecionado,
+          observacoes: descricao.trim() || undefined,
+        },
+        token ?? undefined,
+      );
+
+      setAssunto(gerada.assunto ?? "");
+      setMensagem(gerada.conteudo);
+      setImagemUrl(gerada.imagemUrl);
+      setMensagemId(gerada.id);
+      setTitulo(gerada.titulo);
+      setbtnText(gerada.textoBotao ?? "");
+      setMensagemGerada(true);
+    } catch (erro) {
+      toast.add({
+        title:
+          erro instanceof Error
+            ? erro.message
+            : "Não foi possível gerar a mensagem",
+        type: "error",
+      });
+    } finally {
+      setGerando(false);
+    }
+  }
+
   async function salvarMensagem() {
-      if (!mensagemId) return;
-  
-      setSalvando(true);
-  
-      try {
-        await apiPut(`/mensagens/${mensagemId}`,
-          { 
-            assunto,
-            titulo: titulo,
-            conteudo: mensagem,
-            textoBotao: btnText,
-          },
-          token ?? undefined,
-        );
-        
-        toast.add({ title: "Mensagem salva com sucesso!", type: "success" })
-  
-      } catch (erro) {
-        console.log(erro)
-  
-        toast.add({
-          title: "Não foi possível salvar a mensagem",
-          type: "error",
-        });
-  
-      } finally {
-        setSalvando(false);
-      }
-    }  
+    if (!mensagemId) return;
+
+    setSalvando(true);
+
+    try {
+      await apiPut(
+        `/mensagens/${mensagemId}`,
+        {
+          assunto,
+          titulo,
+          conteudo: mensagem,
+          textoBotao: btnText,
+        },
+        token ?? undefined,
+      );
+
+      toast.add({
+        title: "Mensagem salva com sucesso!",
+        type: "success",
+      });
+    } catch (erro) {
+      console.error(erro);
+
+      toast.add({
+        title: "Não foi possível salvar a mensagem",
+        type: "error",
+      });
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  async function adaptarParaWhatsapp() {
+    if (!mensagemId) return;
+
+    setAdaptando(true);
+
+    try {
+      // Salva as alterações atuais do e-mail antes da adaptação
+      await apiPut(
+        `/mensagens/${mensagemId}`,
+        {
+          assunto,
+          titulo,
+          conteudo: mensagem,
+          textoBotao: btnText,
+        },
+        token ?? undefined,
+      );
+
+      // Solicita uma nova mensagem para WhatsApp,
+      // reutilizando a arte da mensagem original
+      const adaptada = await apiPost<MensagemAdaptada>(
+        `/mensagens/${mensagemId}/adaptar`,
+        {
+          tipo: "WHATSAPP",
+        },
+        token ?? undefined,
+      );
+
+      toast.add({
+        title: "Mensagem adaptada para WhatsApp!",
+        type: "success",
+      });
+
+      router.push(`/whatsapp?mensagem=${adaptada.id}`);
+    } catch (erro) {
+      console.error(erro);
+
+      toast.add({
+        title:
+          erro instanceof Error
+            ? erro.message
+            : "Não foi possível adaptar a mensagem",
+        type: "error",
+      });
+    } finally {
+      setAdaptando(false);
+    }
+  }
 
   return (
     <main>
@@ -240,7 +307,6 @@ const Email = () => {
 
       {/* DEFINIÇÕES */}
       <section className="mt-6 flex gap-4 lg:flex-row">
-        {/* CONFIGURAÇÕES */}
         <div className="w-2/3 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-6">
             <h2 className="text-lg font-semibold">Definições</h2>
@@ -249,97 +315,104 @@ const Email = () => {
             </p>
           </div>
 
-          {/* SELEÇÕES */}
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <Field className="min-w-0">
-                <div className="flex gap-0.5">
-                  <FieldLabel>Produto</FieldLabel>
-                  <span className="text-destructive">*</span>
-                </div>
-                <ProdutoCombobox
-                  value={produtoSelecionado}
-                  onSelect={() => {}}
-                  onChange={setProdutoSelecionado}
-                />
-                <FieldDescription
-                  className={errors.produto ? "text-destructive" : undefined}
-                >
-                  {errors.produto ?? "Este campo deve ser preenchido."}
-                </FieldDescription>
-              </Field>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <Field className="min-w-0">
+              <div className="flex gap-0.5">
+                <FieldLabel>Produto</FieldLabel>
+                <span className="text-destructive">*</span>
+              </div>
 
-              <Field className="min-w-0">
-                <FieldLabel>Grupo de clientes</FieldLabel>
-                <div className="mt-1.25">
-                  <GrupoClienteCombobox
+              <ProdutoCombobox
+                value={produtoSelecionado}
+                onSelect={() => {}}
+                onChange={setProdutoSelecionado}
+              />
+
+              <FieldDescription
+                className={errors.produto ? "text-destructive" : undefined}
+              >
+                {errors.produto ?? "Este campo deve ser preenchido."}
+              </FieldDescription>
+            </Field>
+
+            <Field className="min-w-0">
+              <FieldLabel>Grupo de clientes</FieldLabel>
+
+              <div className="mt-1.25">
+                <GrupoClienteCombobox
                   value={grupoSelecionado}
                   onChange={setGrupoSelecionado}
                   onNomeChange={setNomeGrupoSelecionado}
                 />
-                </div>
-                
-              </Field>
+              </div>
+            </Field>
 
-              <Field className="min-w-0">
-                <div className="flex gap-0.5">
-                  <FieldLabel>Tom da mensagem</FieldLabel>
-                  <span className="text-destructive">*</span>
-                </div>
-                <Select
-                  items={Tom}
-                  value={tomSelecionado}
-                  onValueChange={setTomSelecionado}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Selecione o tom" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {Tom.map((item) => (
-                        <SelectItem key={item.value} value={item.value}>
-                          {item.label}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-                <FieldDescription
-                  className={errors.tom ? "text-destructive" : undefined}
-                >
-                  {errors.tom ?? "Este campo deve ser preenchido."}
-                </FieldDescription>
-              </Field>
+            <Field className="min-w-0">
+              <div className="flex gap-0.5">
+                <FieldLabel>Tom da mensagem</FieldLabel>
+                <span className="text-destructive">*</span>
+              </div>
 
-              <Field className="min-w-0">
-                <div className="flex gap-0.5">
-                  <FieldLabel>Objetivo da mensagem</FieldLabel>
-                  <span className="text-destructive">*</span>
-                </div>
-                <Select
-                  items={Objetivo}
-                  value={objetivoSelecionado}
-                  onValueChange={setObjetivoSelecionado}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Selecione o objetivo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {Objetivo.map((item) => (
-                        <SelectItem key={item.value} value={item.value}>
-                          {item.label}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-                <FieldDescription
-                  className={errors.objetivo ? "text-destructive" : undefined}
-                >
-                  {errors.objetivo ?? "Este campo deve ser preenchido."}
-                </FieldDescription>
-              </Field>
-            </div>
+              <Select
+                items={Tom}
+                value={tomSelecionado}
+                onValueChange={setTomSelecionado}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione o tom" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  <SelectGroup>
+                    {Tom.map((item) => (
+                      <SelectItem key={item.value} value={item.value}>
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+
+              <FieldDescription
+                className={errors.tom ? "text-destructive" : undefined}
+              >
+                {errors.tom ?? "Este campo deve ser preenchido."}
+              </FieldDescription>
+            </Field>
+
+            <Field className="min-w-0">
+              <div className="flex gap-0.5">
+                <FieldLabel>Objetivo da mensagem</FieldLabel>
+                <span className="text-destructive">*</span>
+              </div>
+
+              <Select
+                items={Objetivo}
+                value={objetivoSelecionado}
+                onValueChange={setObjetivoSelecionado}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione o objetivo" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  <SelectGroup>
+                    {Objetivo.map((item) => (
+                      <SelectItem key={item.value} value={item.value}>
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+
+              <FieldDescription
+                className={errors.objetivo ? "text-destructive" : undefined}
+              >
+                {errors.objetivo ?? "Este campo deve ser preenchido."}
+              </FieldDescription>
+            </Field>
+          </div>
 
           {/* DESCRIÇÃO */}
           <div className="mt-6 border-t pt-5">
@@ -349,6 +422,7 @@ const Email = () => {
                 Adicione informações para orientar a inteligência artificial na
                 criação da mensagem.
               </FieldDescription>
+
               <Textarea
                 value={descricao}
                 onChange={(e) => setDescricao(e.target.value)}
@@ -358,14 +432,14 @@ const Email = () => {
             </Field>
           </div>
 
-          {/* BOTÃO */}
           <Button
             variant="default"
             className="mt-5"
             onClick={gerarMensagem}
-            disabled={gerando}
+            disabled={gerando || adaptando}
           >
             {gerando ? "Gerando mensagem..." : "Gerar mensagem com IA"}
+
             {gerando ? (
               <Loader2 className="ml-2 size-4 animate-spin" />
             ) : (
@@ -384,35 +458,37 @@ const Email = () => {
       <section className="mt-6 flex gap-4 lg:flex-row" id="mensagem">
         <div className="w-full rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold">Visualização</h2>
+
           <p className="text-sm text-muted-foreground">
             Confira como sua mensagem será apresentada.
           </p>
-            
-          { mensagemGerada && (
-            <>
-          <div className="flex gap-6 mt-6">
-            {/* EMAIL */}
-            <div className="w-1/2 mt-0.5">
-              <MoldeEmail
-                assunto={assunto}
-                nome={nomeGrupoSelecionado}
-                imagem={imagemUrl}
-                mensagem={mensagem}
-                textoBotao={btnText}
-                usuario={usuarioLogado?.usuario?.nome ?? "Sothos"}
-              />
-            </div>
 
-            {/* EDIÇÃO */}
-            <div className="w-1/2">
+          {mensagemGerada && (
+            <div className="mt-6 flex gap-6">
+              {/* EMAIL */}
+              <div className="mt-0.5 w-1/2">
+                <MoldeEmail
+                  assunto={assunto}
+                  nome={nomeGrupoSelecionado}
+                  imagem={imagemUrl}
+                  mensagem={mensagem}
+                  textoBotao={btnText}
+                  usuario={usuarioLogado?.usuario?.nome ?? "Sothos"}
+                />
+              </div>
 
-              {/* Titulo */}
+              {/* EDIÇÃO */}
+              <div className="w-1/2">
+                {/* TÍTULO */}
                 <div>
                   <Field>
-                    <FieldLabel>Título da mensagem </FieldLabel>
-                      <FieldDescription>
-                        Este campo é para controle interno e não aparecerá para o cliente.
-                      </FieldDescription>
+                    <FieldLabel>Título da mensagem</FieldLabel>
+
+                    <FieldDescription>
+                      Este campo é para controle interno e não aparecerá para o
+                      cliente.
+                    </FieldDescription>
+
                     <Input
                       placeholder="Digite o título da mensagem"
                       value={titulo}
@@ -421,77 +497,95 @@ const Email = () => {
                   </Field>
                 </div>
 
-              {/* ASSUNTO */}
-              <div className="mt-4">
-                <Field>
-                  <FieldLabel>Assunto</FieldLabel>
-                  <Input
-                    placeholder="Digite o assunto do email"
-                    value={assunto}
-                    onChange={(e) => setAssunto(e.target.value)}
+                {/* ASSUNTO */}
+                <div className="mt-4">
+                  <Field>
+                    <FieldLabel>Assunto</FieldLabel>
+
+                    <Input
+                      placeholder="Digite o assunto do email"
+                      value={assunto}
+                      onChange={(e) => setAssunto(e.target.value)}
+                    />
+                  </Field>
+                </div>
+
+                {/* IMAGEM */}
+                <Field className="mt-4 min-w-0">
+                  <FieldLabel>Editar Imagem</FieldLabel>
+                </Field>
+
+                {imagemUrl ? (
+                  <img
+                    src={imagemUrl}
+                    alt="Imagem da campanha"
+                    className="mt-2 w-full rounded-lg border object-cover"
+                  />
+                ) : (
+                  <div className="mt-2 flex h-40 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
+                    A imagem gerada aparecerá aqui
+                  </div>
+                )}
+
+                <div className="mt-2 flex justify-end">
+                  <BotaoReprocessarImagem
+                    onConfirmar={(instrucao) => console.log(instrucao)}
+                  />
+                </div>
+
+                {/* MENSAGEM */}
+                <Field className="min-w-0">
+                  <FieldLabel>Editar Mensagem</FieldLabel>
+
+                  <FieldDescription>
+                    Utilize este campo para editar a mensagem gerada pela IA.
+                  </FieldDescription>
+
+                  <Textarea
+                    className="h-40"
+                    value={mensagem}
+                    onChange={(e) => setMensagem(e.target.value)}
                   />
                 </Field>
-              </div>
 
-              {/* IMAGEM */}
-              <Field className="min-w-0 mt-4">
-                <FieldLabel>Editar Imagem</FieldLabel>
-              </Field>
-
-              {imagemUrl ? (
-                <img
-                  src={imagemUrl}
-                  alt="Imagem da campanha"
-                  className="mt-2 w-full rounded-lg border object-cover"
-                />
-              ) : (
-                <div className="mt-2 flex h-40 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
-                  A imagem gerada aparecerá aqui
-                </div>
-              )}
-
-              <div className="flex justify-end mt-2">
-                <BotaoReprocessarImagem
-                  onConfirmar={(instrucao) => console.log(instrucao)}
-                />
-              </div>
-
-              {/* MENSAGEM */}
-              <Field className="min-w-0">
-                <FieldLabel>Editar Mensagem</FieldLabel>
-                <FieldDescription>
-                  Utilize este campo para editar a mensagem gerada pela IA
-                </FieldDescription>
-                <Textarea
-                  className="h-40"
-                  value={mensagem}
-                  onChange={(e) => setMensagem(e.target.value)}
-                />
-              </Field>
-
-              {/* BOTÃO */}
-              <Field className="mt-4">
+                {/* BOTÃO */}
+                <Field className="mt-4">
                   <FieldLabel>Texto do Botão</FieldLabel>
+
                   <Input
                     placeholder="Digite o texto do botão"
                     value={btnText}
                     onChange={(e) => setbtnText(e.target.value)}
                   />
-              </Field>
+                </Field>
 
-              {/* AÇÕES */}
-              <div className="mt-4 flex justify-end">
-                  <Button 
+                {/* AÇÕES */}
+                <div className="mt-4 flex flex-wrap justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={adaptarParaWhatsapp}
+                    disabled={!mensagemId || salvando || adaptando || gerando}
+                  >
+                    {adaptando ? (
+                      <>
+                        Adaptando...
+                        <Loader2 className="ml-2 size-4 animate-spin" />
+                      </>
+                    ) : (
+                      "Adaptar para WhatsApp"
+                    )}
+                  </Button>
+
+                  <Button
                     onClick={salvarMensagem}
-                    disabled={!mensagemId || salvando}
-                    >
+                    disabled={!mensagemId || salvando || adaptando}
+                  >
                     {salvando ? "Salvando..." : "Salvar mensagem"}
                   </Button>
+                </div>
               </div>
             </div>
-          </div>
-          </>
-          )}  
+          )}
         </div>
       </section>
     </main>

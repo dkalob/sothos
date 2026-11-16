@@ -1,3 +1,4 @@
+
 "use client";
 
 import PageHeader from "@/components/component/PageHeader";
@@ -24,6 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, WandSparkles } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import MoldeCelular from "@/components/component/MoldeCelular";
 import BotaoReprocessarImagem from "@/components/component/BotaoReprocessarImagem";
@@ -34,7 +36,6 @@ import { useToken } from "@/hooks/use-token";
 import { toast } from "@/components/ui/toast";
 import { WhatsappFormErrors, whatsappSchema } from "@/components/component/Whatsapp/WhatsappSchema";
 import { Input } from "@/components/ui/input";
-
 
 const Tom = [
   { value: "FORMAL", label: "Formal" },
@@ -59,6 +60,10 @@ type MensagemGerada = {
   imagemUrl: string | null;
 };
 
+type MensagemAdaptada = {
+  id: string;
+};
+
 type MensagemCompleta = {
   id: string;
   titulo: string;
@@ -74,12 +79,15 @@ type MensagemCompleta = {
 };
 
 const Whatsapp = () => {
+  const router = useRouter();
+
   const [produtoSelecionado, setProdutoSelecionado] = useState("");
   const [grupoSelecionado, setGrupoSelecionado] = useState("");
   const [nomeGrupoSelecionado, setNomeGrupoSelecionado] = useState("");
   const [tomSelecionado, setTomSelecionado] = useState<string | null>(null);
   const [objetivoSelecionado, setObjetivoSelecionado] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
+  const [adaptando, setAdaptando] = useState(false);
   const [descricao, setDescricao] = useState("");
   const [titulo, setTitulo] = useState("");
   const [mensagem, setMensagem] = useState("");
@@ -91,10 +99,8 @@ const Whatsapp = () => {
 
   const token = useToken();
 
-  // Carrega a mensagem do editar mensagem na tabela
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get("mensagem");
-    console.log("efeito de carregar mensagem", { id, temToken: !!token });
 
     if (!id || !token) return;
 
@@ -110,7 +116,7 @@ const Whatsapp = () => {
         }
 
         setMensagemId(m.id);
-        setTitulo(m.titulo);                 // o nome do seu state de título
+        setTitulo(m.titulo);
         setProdutoSelecionado(m.produtoId ?? "");
         setTomSelecionado(m.tom);
         setObjetivoSelecionado(m.objetivo);
@@ -128,10 +134,8 @@ const Whatsapp = () => {
       cancelado = true;
     };
   }, [token]);
-  
 
   async function gerarMensagem() {
-    
     const result = whatsappSchema.safeParse({
       produto: produtoSelecionado,
       tom: tomSelecionado,
@@ -149,7 +153,6 @@ const Whatsapp = () => {
     }
 
     setErrors({});
-
     setGerando(true);
 
     try {
@@ -188,22 +191,58 @@ const Whatsapp = () => {
     setSalvando(true);
 
     try {
-      await apiPut(`/mensagens/${mensagemId}`,
+      await apiPut(
+        `/mensagens/${mensagemId}`,
         { titulo: titulo, conteudo: mensagem },
         token ?? undefined,
       );
-      
-      toast.add({ title: "Mensagem salva com sucesso!", type: "success" })
 
+      toast.add({ title: "Mensagem salva com sucesso!", type: "success" });
     } catch (erro) {
-
       toast.add({
         title: "Não foi possível salvar a mensagem",
         type: "error",
       });
-
     } finally {
       setSalvando(false);
+    }
+  }
+
+  async function adaptarParaEmail() {
+    if (!mensagemId || !token) return;
+
+    setAdaptando(true);
+
+    try {
+      // Salva o texto atual antes de criar a versão adaptada.
+      await apiPut(
+        `/mensagens/${mensagemId}`,
+        { titulo: titulo, conteudo: mensagem },
+        token,
+      );
+
+      const adaptada = await apiPost<MensagemAdaptada>(
+        `/mensagens/${mensagemId}/adaptar`,
+        { tipo: "EMAIL" },
+        token,
+      );
+
+      toast.add({
+        title: "Mensagem adaptada para e-mail!",
+        type: "success",
+      });
+
+      router.push(`/email?mensagem=${adaptada.id}`);
+    } catch (erro) {
+      toast.add({
+        title:
+          erro instanceof Error
+            ? erro.message
+            : "Não foi possível adaptar a mensagem",
+        type: "error",
+      });
+    } finally {
+      setAdaptando(false);
     }
   }
 
@@ -227,9 +266,7 @@ const Whatsapp = () => {
       />
 
       <section className="mt-6 flex flex-col gap-4 lg:flex-row">
-        {/* DEFINIÇÕES */}
         <div className="flex w-full flex-col gap-4 lg:w-1/3">
-          {/* CONFIGURAÇÕES */}
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-6">
               <h2 className="text-lg font-semibold">Definições</h2>
@@ -238,7 +275,6 @@ const Whatsapp = () => {
               </p>
             </div>
 
-            {/* SELEÇÕES */}
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Field className="min-w-0">
                 <div className="flex gap-0.5">
@@ -261,12 +297,11 @@ const Whatsapp = () => {
                 <FieldLabel>Grupo de clientes</FieldLabel>
                 <div className="mt-1.25">
                   <GrupoClienteCombobox
-                  value={grupoSelecionado}
-                  onChange={setGrupoSelecionado}
-                  onNomeChange={setNomeGrupoSelecionado}
-                />
+                    value={grupoSelecionado}
+                    onChange={setGrupoSelecionado}
+                    onNomeChange={setNomeGrupoSelecionado}
+                  />
                 </div>
-                
               </Field>
 
               <Field className="min-w-0">
@@ -330,7 +365,6 @@ const Whatsapp = () => {
               </Field>
             </div>
 
-            {/* DESCRIÇÃO */}
             <div className="mt-6 border-t pt-5">
               <Field>
                 <FieldLabel>Descrição adicional</FieldLabel>
@@ -347,7 +381,6 @@ const Whatsapp = () => {
               </Field>
             </div>
 
-            {/* BOTÃO */}
             <Button
               variant="default"
               className="mt-5 w-full"
@@ -363,19 +396,17 @@ const Whatsapp = () => {
             </Button>
           </div>
 
-          {/* DICAS */}
           <DicasEngajaento />
         </div>
 
-        {/* VISUALIZAÇÃO */}
         <div className="w-full lg:w-2/3">
           <div className="min-h-full rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold">Visualização</h2>
             <p className="text-sm text-muted-foreground">
               Confira como sua mensagem será apresentada.
             </p>
+
             <div className="flex mt-6 min-h-full gap-4">
-              {/* CONVERSA */}
               <div className="w-1/2">
                 <MoldeCelular
                   mensagem={mensagem}
@@ -384,73 +415,83 @@ const Whatsapp = () => {
                 />
               </div>
 
-              {/* EDIÇÃO */}
               <div className="w-1/2">
-              {mensagemGerada && (
-                <>
-                {/* Titulo */}
-                <div>
-                  <Field>
-                    <FieldLabel>Título da mensagem </FieldLabel>
+                {mensagemGerada && (
+                  <>
+                    <div>
+                      <Field>
+                        <FieldLabel>Título da mensagem</FieldLabel>
+                        <FieldDescription>
+                          Este campo é para controle interno e não aparecerá
+                          para o cliente.
+                        </FieldDescription>
+                        <Input
+                          placeholder="Digite o título da mensagem"
+                          value={titulo}
+                          onChange={(e) => setTitulo(e.target.value)}
+                        />
+                      </Field>
+                    </div>
+
+                    <Field className="min-w-0 mt-4">
+                      <FieldLabel>Editar Imagem</FieldLabel>
+                    </Field>
+
+                    {imagemUrl ? (
+                      <img
+                        src={imagemUrl}
+                        alt="Imagem da campanha"
+                        className="mt-2 w-full rounded-lg border object-cover"
+                      />
+                    ) : (
+                      <div className="mt-2 flex h-40 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
+                        A imagem gerada aparecerá aqui
+                      </div>
+                    )}
+
+                    <div className="mt-2 flex justify-end">
+                      <BotaoReprocessarImagem
+                        onConfirmar={(instrucao) => console.log(instrucao)}
+                      />
+                    </div>
+
+                    <Field className="mt-4 min-w-0">
+                      <FieldLabel>Editar Mensagem</FieldLabel>
                       <FieldDescription>
-                        Este campo é para controle interno e não aparecerá para o cliente.
+                        Utilize este campo para editar a mensagem gerada pela IA
                       </FieldDescription>
-                    <Input
-                      placeholder="Digite o título da mensagem"
-                      value={titulo}
-                      onChange={(e) => setTitulo(e.target.value)}
-                    />
-                  </Field>
-                </div>
-              
-                {/* IMAGEM */}
-                <Field className="min-w-0 mt-4">
-                  <FieldLabel>Editar Imagem</FieldLabel>
-                </Field>
+                      <Textarea
+                        className="h-40"
+                        value={mensagem}
+                        onChange={(e) => setMensagem(e.target.value)}
+                      />
+                    </Field>
 
-                {imagemUrl ? (
-                  <img
-                    src={imagemUrl}
-                    alt="Imagem da campanha"
-                    className="mt-2 w-full rounded-lg border object-cover"
-                  />
-                ) : (
-                  <div className="mt-2 flex h-40 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
-                    A imagem gerada aparecerá aqui
-                  </div>
+                    <div className="mt-4 flex flex-wrap justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={adaptarParaEmail}
+                        disabled={!mensagemId || adaptando || salvando}
+                      >
+                        {adaptando ? (
+                          <>
+                            <Loader2 className="mr-2 size-4 animate-spin" />
+                            Adaptando...
+                          </>
+                        ) : (
+                          "Adaptar para E-mail"
+                        )}
+                      </Button>
+
+                      <Button
+                        onClick={salvarMensagem}
+                        disabled={!mensagemId || salvando || adaptando}
+                      >
+                        {salvando ? "Salvando..." : "Salvar mensagem"}
+                      </Button>
+                    </div>
+                  </>
                 )}
-
-                <div className="mt-2 flex justify-end">
-                  <BotaoReprocessarImagem
-                    onConfirmar={(instrucao) => console.log(instrucao)}
-                  />
-                </div>
-
-                {/* MENSAGEM */}
-                <Field className="mt-4 min-w-0">
-                  <FieldLabel>Editar Mensagem</FieldLabel>
-                  <FieldDescription>
-                    Utilize este campo para editar a mensagem gerada pela IA
-                  </FieldDescription>
-                  <Textarea
-                    className="h-40"
-                    value={mensagem}
-                    onChange={(e) => setMensagem(e.target.value)}
-                  />
-                </Field>
-
-                {/* ENVIAR DE: combobox entra aqui depois */}
-
-                <div className="mt-4 flex justify-end">
-                  <Button 
-                    onClick={salvarMensagem}
-                    disabled={!mensagemId || salvando}
-                    >
-                      {salvando ? "Salvando..." : "Salvar mensagem"}
-                    </Button>
-                </div>
-              </>
-              )}
               </div>
             </div>
           </div>

@@ -59,4 +59,209 @@ export class EmailService {
       throw erro;
     }
   }
+
+ 
+  async enviarCampanha(
+    destinatario: string,
+    assunto: string,
+    conteudo: string,
+    imagemUrl?: string | null,
+    nomeLoja?: string,
+  ) {
+    const escaparHtml = (texto: string) =>
+      texto
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+    const nomeMarca = nomeLoja?.trim() || 'Sothos';
+    const anoAtual = new Date().getFullYear();
+
+    const conteudoSeguro = escaparHtml(conteudo).replace(/\n/g, '<br>');
+
+    // Só permite imagens de endereços HTTP ou HTTPS.
+    const imagemValida =
+      imagemUrl && /^https?:\/\/\S+$/i.test(imagemUrl)
+        ? escaparHtml(imagemUrl)
+        : null;
+
+    const html = `
+      <!DOCTYPE html>
+      <html lang="pt-BR">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <meta name="color-scheme" content="light">
+        </head>
+
+        <body style="
+          margin: 0;
+          padding: 0;
+          background-color: #f4f4f7;
+          font-family: Arial, Helvetica, sans-serif;
+          color: #333333;
+        ">
+
+          <table
+            role="presentation"
+            width="100%"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            style="background-color: #f4f4f7; padding: 32px 12px;"
+          >
+            <tr>
+              <td align="center">
+
+                <table
+                  role="presentation"
+                  width="100%"
+                  cellpadding="0"
+                  cellspacing="0"
+                  border="0"
+                  style="
+                    max-width: 600px;
+                    background-color: #ffffff;
+                    border-radius: 12px;
+                    overflow: hidden;
+                  "
+                >
+
+                  <!-- CABEÇALHO -->
+                  <tr>
+                    <td
+                      align="center"
+                      style="
+                        background-color: #9445ef;
+                        padding: 30px 24px;
+                      "
+                    >
+                      <h1 style="
+                        margin: 0;
+                        color: #ffffff;
+                        font-size: 28px;
+                        font-weight: 700;
+                        letter-spacing: 0.5px;
+                      ">
+                        ${escaparHtml(nomeMarca)}
+                      </h1>
+
+                      <p style="
+                        margin: 8px 0 0;
+                        color: #f1e6ff;
+                        font-size: 13px;
+                      ">
+                        Novidades e ofertas especiais
+                      </p>
+                    </td>
+                  </tr>
+
+                  <!-- CONTEÚDO -->
+                  <tr>
+                    <td style="padding: 32px 28px;">
+
+                      ${
+                        imagemValida
+                          ? `
+                            <div style="
+                              margin: 0 0 28px;
+                              text-align: center;
+                            ">
+                              <img
+                                src="${imagemValida}"
+                                alt="Imagem da campanha"
+                                width="544"
+                                style="
+                                  display: block;
+                                  width: 100%;
+                                  max-width: 544px;
+                                  height: auto;
+                                  margin: 0 auto;
+                                  border: 0;
+                                  border-radius: 10px;
+                                "
+                              />
+                            </div>
+                          `
+                          : ''
+                      }
+
+                      <div style="
+                        font-size: 15px;
+                        line-height: 1.8;
+                        color: #444444;
+                        word-wrap: break-word;
+                      ">
+                        ${conteudoSeguro}
+                      </div>
+
+                    </td>
+                  </tr>
+
+                  <!-- RODAPÉ -->
+                  <tr>
+                    <td style="
+                      background-color: #faf9fc;
+                      border-top: 1px solid #eeeeee;
+                      padding: 24px;
+                      text-align: center;
+                    ">
+                      <p style="
+                        margin: 0 0 8px;
+                        color: #555555;
+                        font-size: 13px;
+                      ">
+                        Atenciosamente,
+                        <strong>${escaparHtml(nomeMarca)}</strong>
+                      </p>
+
+                      <p style="
+                        margin: 0;
+                        color: #999999;
+                        font-size: 12px;
+                        line-height: 1.6;
+                      ">
+                        &copy; ${anoAtual} — Sothos —}.
+                        Todos os direitos reservados.
+                      </p>
+                    </td>
+                  </tr>
+
+                </table>
+
+                <p style="
+                  margin: 18px 0 0;
+                  color: #aaaaaa;
+                  font-size: 11px;
+                  text-align: center;
+                ">
+                  Mensagem enviada por ${escaparHtml(nomeMarca)}.
+                </p>
+
+              </td>
+            </tr>
+          </table>
+
+        </body>
+      </html>
+    `;
+
+    try {
+      await this.transporter.sendMail({
+        from: this.config.get<string>('EMAIL_FROM'),
+        to: destinatario,
+        subject: assunto,
+        html,
+      });
+    } catch (erro) {
+      this.logger.error(
+        `Falha ao enviar campanha por e-mail para ${destinatario}`,
+        erro,
+      );
+      throw erro;
+    }
+  }
+
 }

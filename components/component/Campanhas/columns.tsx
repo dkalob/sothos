@@ -59,6 +59,7 @@ export const STATUS: Record<string, string> = {
   RASCUNHO: "Rascunho",
   AGENDADA: "Agendada",
   EM_EXECUCAO: "Em execução",
+  PAUSADA: "Pausada",
   CONCLUIDA: "Concluída",
   CANCELADA: "Cancelada",
 };
@@ -67,6 +68,7 @@ export const COR_STATUS: Record<string, string> = {
   RASCUNHO: "bg-gray-100 text-gray-700",
   AGENDADA: "bg-yellow-100 text-yellow-700",
   EM_EXECUCAO: "bg-purple-100 text-purple-700",
+  PAUSADA: "bg-orange-100 text-orange-700",
   CONCLUIDA: "bg-green-100 text-green-700",
   CANCELADA: "bg-red-100 text-red-700",
 };

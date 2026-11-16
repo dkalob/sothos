@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-
 type Props = {
   mensagem: string;
   imagemUrl?: string | null;
@@ -34,8 +33,11 @@ export default function WhatsappMockup({
   contato = "(11) 99876-5432",
   nome,
 }: Props) {
-  
   const [mostrarResposta, setMostrarResposta] = useState(false);
+  console.log("Dados do mockup:", {
+  imagemUrl,
+  mensagem,
+});
 
   // animação que simula uma resposta do cliente
   useEffect(() => {
@@ -51,7 +53,6 @@ export default function WhatsappMockup({
 
     setMostrarResposta(false);
   }, [imagemUrl, mensagem]);
-
 
   return (
     <div className="flex w-full items-center justify-center p-4">
@@ -102,14 +103,13 @@ export default function WhatsappMockup({
               </Message>
 
               {/* ENVIADA (a que a IA gera) */}
-              {imagemUrl && mensagem && (
+              {/* ENVIADA (a que a IA gera) */}
+              {mensagem && (
                 <Message align="end">
                   <MessageAvatar>
-                    <Avatar>
-                      <AvatarImage src="/avatars/10.png" alt="@avatar" />
-                      <AvatarFallback>R</AvatarFallback>
-                    </Avatar>
+                    {/* mantenha aqui o conteúdo atual do avatar */}
                   </MessageAvatar>
+
                   <MessageContent>
                     <BubbleGroup>
                       {imagemUrl && (
@@ -123,13 +123,12 @@ export default function WhatsappMockup({
                           </BubbleContent>
                         </Bubble>
                       )}
-                      {mensagem && (
-                        <Bubble>
-                          <BubbleContent className="whitespace-pre-line">
-                            {mensagem}
-                          </BubbleContent>
-                        </Bubble>
-                      )}
+
+                      <Bubble>
+                        <BubbleContent className="whitespace-pre-line">
+                          {mensagem}
+                        </BubbleContent>
+                      </Bubble>
                     </BubbleGroup>
                   </MessageContent>
                 </Message>
@@ -150,8 +149,8 @@ export default function WhatsappMockup({
                       <Bubble variant="muted">
                         <BubbleContent>Eu quero comprar!!</BubbleContent>
                         <BubbleReactions aria-label="Reactions: thumbs up">
-                      <span>❤️</span>
-                    </BubbleReactions>
+                          <span>❤️</span>
+                        </BubbleReactions>
                       </Bubble>
                     </MessageContent>
                   </Message>

@@ -5,10 +5,12 @@ import { AuthModule } from '../auth/auth.module';
 import { IaModule } from '../ia/ia.module';
 import { MensagensIaController } from './mensagens.controller';
 import { MensagensIaService } from './mensagens.service';
+import { TelegramService } from './telegram.service';
 
 @Module({
   imports: [PrismaModule, AuthModule, PassportModule, IaModule],
   controllers: [MensagensIaController],
-  providers: [MensagensIaService],
+  providers: [MensagensIaService, TelegramService],
+  exports: [TelegramService],
 })
 export class MensagensIaModule {}
