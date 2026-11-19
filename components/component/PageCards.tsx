@@ -38,8 +38,7 @@ const PageCards = ({
   const TrendIcon = isUp ? TrendingUp : TrendingDown;
 
   return (
-    <div className="flex flex-col bg-gray-100 p-5 rounded-lg w-full max-w-sm shadow-md">
-
+    <div className="flex min-w-0 w-full flex-col rounded-lg bg-gray-100 p-4 shadow-md sm:p-5">
       {/* ÍCONE + PORCENTAGEM */}
       <div className="flex justify-between items-center">
         <Icon
@@ -71,14 +70,16 @@ const PageCards = ({
         ) : (
           <>
             <span className="text-md font-medium">{title}</span>
-            <span className="text-5xl font-extrabold">{value}</span>
+            <span className="wrap-break-word text-3xl font-extrabold sm:text-4xl lg:text-5xl">
+              {value}
+            </span>
           </>
         )}
       </div>
 
       {/* RODAPÉ */}
       {progress && (
-        <div className="flex gap-8 mt-4">
+        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-3">
           {loading ? (
             <div className="w-full space-y-2">
               <Skeleton className="h-4 w-32" />
@@ -94,7 +95,7 @@ const PageCards = ({
       )}
 
       {footer && !progress && (
-        <div className="flex gap-8 mt-4">
+        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-3">
           {footer.map((item) => (
             <div key={item.label} className="flex flex-col">
               {loading ? (
@@ -104,7 +105,9 @@ const PageCards = ({
                 </>
               ) : (
                 <>
-                  <span className="text-sm font-normal">{item.label}</span>
+                  <span className="text-xs font-normal sm:text-sm">
+                    {item.label}
+                  </span>
                   <span className="font-bold text-primary">{item.value}</span>
                 </>
               )}

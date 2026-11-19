@@ -80,29 +80,30 @@ const Login = () => {
   }
 
   return (
-    <main className="flex h-screen w-full items-center justify-center bg-red-50">
-      <Card className="w-full max-w-4xl overflow-hidden">
-        <div className="grid min-h-120 grid-cols-2">
+    <main className="flex min-h-screen w-full items-center justify-center bg-red-50 p-4 sm:p-6">
+  <Card className="w-full max-w-4xl overflow-hidden">
+    <div className="grid grid-cols-1 md:min-h-120 md:grid-cols-2">
 
           {/* LADO ESQUERDO - ILUSTRAÇÃO */}
-          <div className="col-span-1 flex flex-col items-center justify-center">
-            <Image
-              src="/login.svg"
-              alt="Capa"
-              width={850}
-              height={800}
-              className="h-115 w-auto object-contain"
-            />
-            <a
-              href="https://storyset.com/communication"
-              className="text-muted-foreground"
-            >
-              Communication illustrations by Storyset
-            </a>
-          </div>
+          <div className="flex flex-col items-center justify-center px-6 pt-6 md:col-span-1 md:px-0 md:pt-0">
+  <Image
+    src="/login.svg"
+    alt="Capa"
+    width={850}
+    height={800}
+    className="h-40 w-auto object-contain sm:h-52 md:h-115"
+  />
+
+  <a
+    href="https://storyset.com/communication"
+    className="mt-2 text-xs text-muted-foreground"
+  >
+    Communication illustrations by Storyset
+  </a>
+</div>
 
           {/* LADO DIREITO - LOGIN */}
-          <div className="col-span-1 flex flex-col justify-center px-10 py-8">
+          <div className="flex flex-col justify-center px-5 py-6 sm:px-10 md:col-span-1 md:py-8">
             <CardHeader className="text-center">
               <CardTitle>
                 <div className="flex justify-center items-center">
@@ -201,7 +202,7 @@ const Login = () => {
             </CardContent>
 
             <Button
-              className="self-center w-80 text-lg p-6 mt-4 cursor-pointer"
+              className="mt-4 w-full self-center p-6 text-lg cursor-pointer md:w-80"
               onClick={() => validaUsuario(form)}
               disabled={carregando}
             >

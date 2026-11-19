@@ -25,11 +25,11 @@ interface ClientTableViewProps {
 }
 
 const TabelaSkeleton = () => (
-  <div className="overflow-hidden rounded-md border bg-white">
+  <div className="w-full overflow-x-auto rounded-md border bg-white mt-4">
     {Array.from({ length: 4 }).map((_, i) => (
       <div
         key={i}
-        className="flex items-center gap-4 border-b p-4 last:border-b-0"
+        className="flex min-w-150 items-center gap-4 border-b p-4 last:border-b-0"
       >
         <Skeleton className="size-10 rounded-md" />
         <div className="flex flex-1 flex-col gap-2">
@@ -158,7 +158,7 @@ const ClientTableView = ({
   return (
     <div className="mt-8">
       {/* ABAS */}
-      <div className="flex items-center gap-2 mb-2">
+      <div className="mb-3 flex flex-wrap items-center gap-1 sm:gap-2">
         <Button
           variant="link"
           className={aba === "clientes" ? "text-black" : "text-gray-400"}
@@ -176,9 +176,9 @@ const ClientTableView = ({
       </div>
 
       <div className="flex flex-col gap-2">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* TÍTULO + SUBTÍTULO */}
-          <div className="flex flex-col ml-3">
+          <div className="flex min-w-0 flex-col px-1 sm:px-0">
             {aba === "clientes" ? (
               <>
                 <span className="text-md font-medium">Todos os clientes</span>
@@ -198,10 +198,10 @@ const ClientTableView = ({
           </div>
 
           {/* BOTÕES */}
-          <div className="flex gap-2 items-center">
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end">
             <Button
               variant="outline"
-              className="w-40 truncate"
+              className="w-full min-w-0 truncate sm:w-40"
               onClick={() => {
                 if (aba === "clientes") {
                   exportarClientes();
@@ -218,7 +218,7 @@ const ClientTableView = ({
             </Button>
             <Button
               variant="outline"
-              className="w-40 truncate"
+              className="w-full min-w-0 truncate sm:w-40"
               onClick={() => {
                 if (aba === "clientes") {
                   setImportarClienteSheet(true);
@@ -231,7 +231,7 @@ const ClientTableView = ({
 
             <Button
               variant="default"
-              className="w-32 truncate"
+              className="col-span-2 w-full min-w-0 truncate sm:col-span-1 sm:w-32"
               onClick={() =>
                 aba === "clientes" ? setClienteSheet(true) : setGrupoSheet(true)
               }

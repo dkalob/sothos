@@ -30,10 +30,12 @@ const InsightCard = ({
 
   return (
     <div className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex justify-between">
-        <h1 className="font-semibold">{title}</h1>
+      <div className="flex items-start justify-between gap-2">
+        <h2 className="min-w-0 text-sm font-semibold sm:text-base">
+  {title}
+</h2>
         <span
-          className={`rounded-full border border-primary/10 p-2 ${color}`}
+          className={`shrink-0 rounded-full border border-primary/10 p-2 ${color}`}
         >
           <Icon size={24}/>
         </span>

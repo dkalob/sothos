@@ -74,11 +74,6 @@ const items = [
     icon: Megaphone,
     url: "/campanhas",
   },
-  {
-    label: "Pop-ups",
-    icon: PictureInPicture,
-    url: "#",
-  },
 ];
 
 const SidebarComponent = () => {
@@ -89,13 +84,15 @@ const SidebarComponent = () => {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
+              tooltip="Início"
               render={
                 <Link href="/dashboard">
                   <Image src="/logo.svg" alt="logo" width={20} height={20} />
                   <span className="font-bold text-primary">Sothos</span>
                 </Link>
               }
-            ></SidebarMenuButton>
+            >
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -109,6 +106,7 @@ const SidebarComponent = () => {
                 return (
                   <SidebarMenuItem key={item.label}>
                     <SidebarMenuButton
+                      tooltip={item.label}
                       className="hover:bg-secondary hover:text-primary"
                       render={
                         <Link href={item.url}>
@@ -130,7 +128,7 @@ const SidebarComponent = () => {
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                  <SidebarMenuButton className="hover:bg-secondary hover:text-primary">
+                  <SidebarMenuButton tooltip="Usuário" className="hover:bg-secondary hover:text-primary">
                     <User2 /> Usuário <ChevronUp className="ml-auto" />
                   </SidebarMenuButton>
                 }
@@ -153,10 +151,6 @@ const SidebarComponent = () => {
                   </div>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="focus:bg-secondary focus:text-primary not-data-[variant=destructive]:focus:**:text-primary">
-                  <CreditCard />
-                  Adicionar crédito
-                </DropdownMenuItem>
                 <DropdownMenuItem className="focus:bg-secondary focus:text-primary not-data-[variant=destructive]:focus:**:text-primary">
                   <Link href="/configuracoes" className="flex w-full items-center gap-2">
                     <Settings2 />

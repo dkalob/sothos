@@ -1,8 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { StatusSincronizacao, TipoSincronizacao } from '@prisma/client';
-import { createHash } from 'crypto';
+import {
+  StatusSincronizacao,
+  TipoSincronizacao,
+  TipoCaracteristica,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { CAMPOS_PRODUTO, CampoProduto, normalizarTexto } from './campos';
+import { CAMPOS_PRODUTO, DefinicaoCampo, normalizarTexto } from './campos';
 import {
   categoriaFinal,
   converterBooleano,
@@ -24,13 +27,17 @@ type Ocorrencia = { linha?: number; produto?: string; mensagem: string };
 
 // Um produto já montado a partir das suas linhas (variações)
 type ProdutoConvertido = {
-  chave: string; // identificador ou nome: agrupa as variações
   linhaInicial: number;
   nome: string;
   categoria: string | null;
-  preco: string; // preço atual: promocional quando houver
+  preco: string | null;
+  imagem: string | null;
   sku: string | null;
-  ativo: boolean | null; // null = não informado, não altera
+  ativo: boolean | null;
+  caracteristicas: {
+    caracteristicaId: string;
+    valor: string;
+  }[];
 };
 
 export type ResultadoImportacaoProdutos = {
@@ -52,223 +59,306 @@ export class ImportacaoProdutosService {
   constructor(private readonly prisma: PrismaService) {}
 
   // Prévia: não grava nada
-  gerarPrevia(arquivo: Buffer): Previa<CampoProduto> {
-    return montarPrevia(lerCsv(arquivo), CAMPOS_PRODUTO);
-  }
+  async gerarPrevia(contaId: string, arquivo: Buffer): Promise<Previa<string>> {
+  const caracteristicas = await this.prisma.caracteristicaProduto.findMany({
+    where: {
+      contaId,
+      ativo: true,
+    },
+    select: {
+      id: true,
+      nome: true,
+    },
+  });
+
+  const camposDinamicos: DefinicaoCampo<string>[] = caracteristicas.map(
+    (caracteristica) => ({
+      campo: `caracteristica_${caracteristica.id}`,
+      rotulo: caracteristica.nome,
+      obrigatorio: false,
+      aliases: [caracteristica.nome],
+    }),
+  );
+
+  const definicoes: DefinicaoCampo<string>[] = [
+    ...CAMPOS_PRODUTO,
+    ...camposDinamicos,
+  ];
+
+  return montarPrevia(lerCsv(arquivo), definicoes);
+}
 
   // Importa o catálogo. Cada linha da planilha é uma variação (cor/tamanho);
   // as linhas com o mesmo identificador viram UM produto no Sothos.
   // Produto que já existe (mesmo nome) é atualizado, não duplicado.
   async executar(
-    contaId: string,
-    arquivo: Buffer,
-    mapeamentoJson: string,
-  ): Promise<ResultadoImportacaoProdutos> {
-    const { colunas, linhas } = lerCsv(arquivo);
-    const mapeamento = validarMapeamento(mapeamentoJson, colunas, CAMPOS_PRODUTO);
-    const indice = new Map(colunas.map((c, i) => [c, i]));
+  contaId: string,
+  arquivo: Buffer,
+  mapeamentoJson: string,
+): Promise<ResultadoImportacaoProdutos> {
+  const { colunas, linhas } = lerCsv(arquivo);
 
-    const ler = (linha: LinhaCsv, campo: CampoProduto) => {
-      const coluna = mapeamento[campo];
-      if (!coluna) return '';
-      return (linha.valores[indice.get(coluna)!] ?? '').trim();
-    };
+  const caracteristicas = await this.prisma.caracteristicaProduto.findMany({
+    where: { contaId, ativo: true },
+    select: {
+      id: true,
+      nome: true,
+      tipo: true,
+    },
+  });
 
-    const erros: Ocorrencia[] = [];
-    const avisos: Ocorrencia[] = [];
+  const camposDinamicos: DefinicaoCampo<string>[] = caracteristicas.map(
+    (caracteristica) => ({
+      campo: `caracteristica_${caracteristica.id}`,
+      rotulo: caracteristica.nome,
+      obrigatorio: false,
+      aliases: [caracteristica.nome],
+    }),
+  );
 
-    // 1. Agrupa as linhas: pelo identificador, ou pelo nome se não houver
-    const grupos = new Map<string, LinhaCsv[]>();
-    for (const linha of linhas) {
-      const chave = mapeamento.identificador
-        ? ler(linha, 'identificador')
-        : ler(linha, 'nome');
-      if (!chave) {
-        erros.push({
-          linha: linha.numero,
-          mensagem: mapeamento.identificador
-            ? 'identificador do produto vazio'
-            : 'nome do produto vazio',
-        });
-        continue;
-      }
-      const grupo = grupos.get(chave) ?? [];
-      grupo.push(linha);
-      grupos.set(chave, grupo);
+  const definicoes: DefinicaoCampo<string>[] = [
+    ...CAMPOS_PRODUTO,
+    ...camposDinamicos,
+  ];
+
+  const mapeamento = validarMapeamento(
+    mapeamentoJson,
+    colunas,
+    definicoes,
+  );
+
+  const indice = new Map(colunas.map((c, i) => [c, i]));
+
+  const ler = (linha: LinhaCsv, campo: string) => {
+    const coluna = mapeamento[campo];
+    if (!coluna) return '';
+
+    return (linha.valores[indice.get(coluna)!] ?? '').trim();
+  };
+
+  const erros: Ocorrencia[] = [];
+  const avisos: Ocorrencia[] = [];
+  const produtos: ProdutoConvertido[] = [];
+
+  // Cada linha é processada individualmente.
+  for (const linha of linhas) {
+    const nome = ler(linha, 'nome');
+    const problemas: string[] = [];
+
+    if (!nome) {
+      problemas.push('nome do produto vazio');
+    } else if (nome.length > 200) {
+      problemas.push('nome com mais de 200 caracteres');
     }
 
-    // 2. Monta e valida cada produto
-    const produtos: ProdutoConvertido[] = [];
-    for (const [chave, grupo] of grupos) {
-      const primeiraCom = (campo: CampoProduto) =>
-        grupo.map((l) => ler(l, campo)).find((v) => v !== '') ?? '';
+    const precoTexto = ler(linha, 'preco');
+    const preco = precoTexto ? converterValor(precoTexto) : null;
 
-      const nome = primeiraCom('nome');
-      const linhaInicial = grupo[0].numero;
-      const problemas: string[] = [];
+    if (precoTexto && (preco === null || Number(preco) < 0)) {
+      problemas.push(`preço inválido (${precoTexto})`);
+    }
 
-      if (!nome) problemas.push('nenhuma linha tem o nome do produto');
-      else if (nome.length > 200) problemas.push('nome com mais de 200 caracteres');
+    const imagem = ler(linha, 'imagem') || null;
 
-      // Preço da primeira variação que tiver preço
-      const linhaPreco = grupo.find((l) => ler(l, 'preco') !== '');
-      const precoTexto = linhaPreco ? ler(linhaPreco, 'preco') : '';
-      const preco = converterValor(precoTexto);
-      if (!precoTexto) problemas.push('preço vazio');
-      else if (preco === null || Number(preco) < 0) problemas.push(`preço inválido (${precoTexto})`);
+    if (imagem && imagem.length > 1000) {
+      problemas.push('link da imagem muito longo');
+    }
 
-      const promoTexto = linhaPreco ? ler(linhaPreco, 'precoPromocional') : '';
-      const promo = promoTexto ? converterValor(promoTexto) : null;
-      if (promoTexto && promo === null) {
-        problemas.push(`preço promocional inválido (${promoTexto})`);
-      }
+    if (problemas.length > 0) {
+      erros.push({
+        linha: linha.numero,
+        produto: nome || undefined,
+        mensagem: problemas.join('; '),
+      });
+      continue;
+    }
 
-      if (problemas.length > 0) {
-        erros.push({ linha: linhaInicial, produto: nome || chave, mensagem: problemas.join('; ') });
-        continue;
-      }
+    const ativoTexto = ler(linha, 'ativo');
+    const ativo = ativoTexto ? converterBooleano(ativoTexto) : null;
 
-      // Opcionais: problema aqui vira aviso, o produto entra mesmo assim
-      const ativoTexto = primeiraCom('ativo');
-      const ativo = ativoTexto ? converterBooleano(ativoTexto) : null;
-      if (ativoTexto && ativo === null) {
-        avisos.push({
-          linha: linhaInicial,
-          produto: nome,
-          mensagem: `valor de "mostrar na loja" não reconhecido (${ativoTexto}); não foi alterado`,
-        });
-      }
-
-      // SKU do produto só quando todas as variações têm o mesmo
-      // (com cores e tamanhos, cada variação tem o seu SKU)
-      const skus = new Set(grupo.map((l) => ler(l, 'sku')).filter(Boolean));
-      const sku = skus.size === 1 ? [...skus][0].slice(0, 80) : null;
-
-      produtos.push({
-        chave,
-        linhaInicial,
-        nome,
-        categoria: categoriaFinal(primeiraCom('categoria')),
-        // Preço atual = o que a cliente paga hoje
-        preco: promo !== null && Number(promo) > 0 ? promo : preco!,
-        sku,
-        ativo,
+    if (ativoTexto && ativo === null) {
+      avisos.push({
+        linha: linha.numero,
+        produto: nome,
+        mensagem: `valor de "mostrar na loja" não reconhecido (${ativoTexto}); não foi alterado`,
       });
     }
 
-    const resultado: ResultadoImportacaoProdutos = {
-      totalLinhas: linhas.length,
-      produtosNovos: 0,
-      produtosAtualizados: 0,
-      produtosIgnorados: grupos.size - produtos.length,
-      categoriasNovas: 0,
-      totalErros: 0,
-      totalAvisos: 0,
-      erros: [],
-      avisos: [],
-    };
+    const skuTexto = ler(linha, 'sku');
 
-    if (produtos.length === 0) {
-      return this.finalizar(resultado, erros, avisos);
-    }
+    const valoresCaracteristicas = caracteristicas
+      .map((caracteristica) => ({
+        caracteristicaId: caracteristica.id,
+        valor: ler(
+          linha,
+          `caracteristica_${caracteristica.id}`,
+        ),
+      }))
+      .filter((item) => item.valor !== '');
 
-    // 3. Grava
-    const loja = await obterLojaCsv(this.prisma, contaId);
-    const sincronizacao = await this.prisma.sincronizacao.create({
-      data: { lojaId: loja.id, tipo: TipoSincronizacao.MANUAL },
+    produtos.push({
+      linhaInicial: linha.numero,
+      nome,
+      categoria: categoriaFinal(ler(linha, 'categoria')),
+      preco,
+      imagem,
+      sku: skuTexto ? skuTexto.slice(0, 80) : null,
+      ativo,
+      caracteristicas: valoresCaracteristicas,
     });
+  }
 
-    try {
-      const categoriaPorNome = await this.salvarCategorias(contaId, produtos, resultado);
+  const resultado: ResultadoImportacaoProdutos = {
+    totalLinhas: linhas.length,
+    produtosNovos: 0,
+    produtosAtualizados: 0,
+    produtosIgnorados: linhas.length - produtos.length,
+    categoriasNovas: 0,
+    totalErros: 0,
+    totalAvisos: 0,
+    erros: [],
+    avisos: [],
+  };
 
-      // Produtos existentes da conta, por nome e pelo identificador da loja CSV
-      const existentes = await this.prisma.produto.findMany({
-        where: { contaId },
-        select: { id: true, nome: true, lojaId: true, idExterno: true },
-      });
-      const idPorNome = new Map(existentes.map((p) => [normalizarTexto(p.nome), p.id]));
-      const idPorExterno = new Map(
-        existentes
-          .filter((p) => p.lojaId === loja.id && p.idExterno)
-          .map((p) => [p.idExterno!, p.id]),
-      );
-
-      for (const p of produtos) {
-        const idExterno = this.idExterno(p);
-        const categoriaId = p.categoria
-          ? categoriaPorNome.get(normalizarTexto(p.categoria)) ?? null
-          : null;
-
-        const dados = {
-          nome: p.nome,
-          precoAtual: p.preco,
-          // undefined = não altera o que já está cadastrado
-          categoriaId: categoriaId ?? undefined,
-          sku: p.sku ?? undefined,
-          ativo: p.ativo ?? undefined,
-        };
-
-        try {
-          const id = idPorExterno.get(idExterno) ?? idPorNome.get(normalizarTexto(p.nome));
-          if (id) {
-            await this.prisma.produto.update({ where: { id }, data: dados });
-            resultado.produtosAtualizados++;
-          } else {
-            const criado = await this.prisma.produto.create({
-              data: { contaId, lojaId: loja.id, idExterno, ...dados },
-              select: { id: true },
-            });
-            // Evita duplicar se o mesmo nome aparecer de novo no arquivo
-            idPorNome.set(normalizarTexto(p.nome), criado.id);
-            idPorExterno.set(idExterno, criado.id);
-            resultado.produtosNovos++;
-          }
-        } catch (erro) {
-          this.logger.error(`Falha ao salvar produto ${p.nome}`, erro as Error);
-          resultado.produtosIgnorados++;
-          erros.push({
-            linha: p.linhaInicial,
-            produto: p.nome,
-            mensagem: 'não foi importado por um erro ao gravar no banco',
-          });
-        }
-      }
-
-      const processados = resultado.produtosNovos + resultado.produtosAtualizados;
-      await this.prisma.sincronizacao.update({
-        where: { id: sincronizacao.id },
-        data: {
-          status:
-            processados === 0
-              ? StatusSincronizacao.FALHA
-              : erros.length > 0
-                ? StatusSincronizacao.PARCIAL
-                : StatusSincronizacao.CONCLUIDA,
-          finalizadaEm: new Date(),
-          produtosProcessados: processados,
-          mensagemErro: erros.length > 0 ? `${erros.length} erro(s) na importação` : null,
-        },
-      });
-      await this.prisma.lojaConectada.update({
-        where: { id: loja.id },
-        data: { ultimaSincronizacaoEm: new Date() },
-      });
-    } catch (erro) {
-      await this.prisma.sincronizacao
-        .update({
-          where: { id: sincronizacao.id },
-          data: {
-            status: StatusSincronizacao.FALHA,
-            finalizadaEm: new Date(),
-            mensagemErro: 'Falha inesperada durante a importação',
-          },
-        })
-        .catch(() => undefined);
-      throw erro;
-    }
-
+  if (produtos.length === 0) {
     return this.finalizar(resultado, erros, avisos);
   }
+
+  const loja = await obterLojaCsv(this.prisma, contaId);
+
+  const sincronizacao = await this.prisma.sincronizacao.create({
+    data: {
+      lojaId: loja.id,
+      tipo: TipoSincronizacao.MANUAL,
+    },
+  });
+
+  try {
+    const categoriaPorNome = await this.salvarCategorias(
+      contaId,
+      produtos,
+      resultado,
+    );
+
+    for (const p of produtos) {
+      const categoriaId = p.categoria
+        ? categoriaPorNome.get(normalizarTexto(p.categoria)) ?? null
+        : null;
+
+      try {
+        await this.prisma.$transaction(async (tx) => {
+          // Cadastra opções novas para características do tipo OPCAO.
+          for (const item of p.caracteristicas) {
+            const caracteristica = caracteristicas.find(
+              (c) => c.id === item.caracteristicaId,
+            );
+
+            if (caracteristica?.tipo !== TipoCaracteristica.OPCAO) {
+              continue;
+            }
+
+            const opcaoExistente = await tx.caracteristicaOpcao.findFirst({
+              where: {
+                caracteristicaId: item.caracteristicaId,
+                valor: item.valor,
+              },
+            });
+
+            if (!opcaoExistente) {
+              await tx.caracteristicaOpcao.create({
+                data: {
+                  caracteristicaId: item.caracteristicaId,
+                  valor: item.valor,
+                },
+              });
+            }
+          }
+
+          // Cria o produto com seus dados e a imagem.
+          const criado = await tx.produto.create({
+            data: {
+              contaId,
+              lojaId: loja.id,
+              nome: p.nome,
+              precoAtual: p.preco,
+              imagem: p.imagem,
+              categoriaId,
+              sku: p.sku,
+              ativo: p.ativo ?? undefined,
+            },
+            select: { id: true },
+          });
+
+          // Salva os valores das características do produto.
+          if (p.caracteristicas.length > 0) {
+            await tx.produtoCaracteristica.createMany({
+              data: p.caracteristicas.map((item) => ({
+                produtoId: criado.id,
+                caracteristicaId: item.caracteristicaId,
+                valor: item.valor,
+              })),
+            });
+          }
+        });
+
+        resultado.produtosNovos++;
+      } catch (erro) {
+        this.logger.error(
+          `Falha ao salvar produto ${p.nome}`,
+          erro as Error,
+        );
+
+        resultado.produtosIgnorados++;
+
+        erros.push({
+          linha: p.linhaInicial,
+          produto: p.nome,
+          mensagem: 'não foi importado por um erro ao gravar no banco',
+        });
+      }
+    }
+
+    const processados = resultado.produtosNovos;
+
+    await this.prisma.sincronizacao.update({
+      where: { id: sincronizacao.id },
+      data: {
+        status:
+          processados === 0
+            ? StatusSincronizacao.FALHA
+            : erros.length > 0
+              ? StatusSincronizacao.PARCIAL
+              : StatusSincronizacao.CONCLUIDA,
+        finalizadaEm: new Date(),
+        produtosProcessados: processados,
+        mensagemErro:
+          erros.length > 0
+            ? `${erros.length} erro(s) na importação`
+            : null,
+      },
+    });
+
+    await this.prisma.lojaConectada.update({
+      where: { id: loja.id },
+      data: { ultimaSincronizacaoEm: new Date() },
+    });
+  } catch (erro) {
+    await this.prisma.sincronizacao
+      .update({
+        where: { id: sincronizacao.id },
+        data: {
+          status: StatusSincronizacao.FALHA,
+          finalizadaEm: new Date(),
+          mensagemErro: 'Falha inesperada durante a importação',
+        },
+      })
+      .catch(() => undefined);
+
+    throw erro;
+  }
+
+  return this.finalizar(resultado, erros, avisos);
+}
 
   // Cria as categorias que ainda não existem na conta (comparação sem
   // acento e sem maiúscula: "Conjuntos" e "CONJUNTOS" são a mesma).
@@ -298,11 +388,25 @@ export class ImportacaoProdutosService {
     return idPorNome;
   }
 
-  // Identificador do produto na loja CSV: o da planilha, ou o nome
-  private idExterno(p: ProdutoConvertido): string {
-    const base = normalizarTexto(p.chave);
-    return base.length <= 80 ? base : createHash('sha1').update(base).digest('hex');
-  }
+  async gerarModeloCsv(contaId: string): Promise<string[]> {
+  const caracteristicas = await this.prisma.caracteristicaProduto.findMany({
+    where: {
+      contaId,
+      ativo: true,
+    },
+    select: {
+      nome: true,
+    },
+    orderBy: {
+      nome: 'asc',
+    },
+  });
+
+  return [
+    ...CAMPOS_PRODUTO.map((campo) => campo.rotulo),
+    ...caracteristicas.map((caracteristica) => caracteristica.nome),
+  ];
+}
 
   private finalizar(
     resultado: ResultadoImportacaoProdutos,

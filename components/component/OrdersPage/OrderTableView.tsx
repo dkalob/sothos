@@ -13,7 +13,6 @@ import { useToken } from "@/hooks/use-token";
 import { toast } from "@/components/ui/toast";
 import ImportarPedidosSheet from "./ImportarPedidoSheet";
 
-
 interface OrderTableViewProps {
   columnsOrder: (
     onEditarPedido: (id: string) => void,
@@ -22,11 +21,11 @@ interface OrderTableViewProps {
 }
 
 const TabelaSkeleton = () => (
-  <div className="overflow-hidden rounded-md border bg-white">
+  <div className="w-full overflow-x-auto rounded-md border bg-white mt-4">
     {Array.from({ length: 4 }).map((_, i) => (
       <div
         key={i}
-        className="flex items-center gap-4 border-b p-4 last:border-b-0"
+        className="flex min-w-150 items-center gap-4 border-b p-4 last:border-b-0"
       >
         <Skeleton className="size-10 rounded-md" />
         <div className="flex flex-1 flex-col gap-2">
@@ -41,12 +40,13 @@ const TabelaSkeleton = () => (
   </div>
 );
 
-
 const OrderTableView = ({ columnsOrder }: OrderTableViewProps) => {
   const [orderData, setOrderData] = useState<OrderTableColumns[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [orderSheet, setOrderSheet] = useState(false);
-  const [pedidoSelecionado, setPedidoSelecionado] = useState<string | null>(null);
+  const [pedidoSelecionado, setPedidoSelecionado] = useState<string | null>(
+    null,
+  );
   const [importarPedidos, setImportarPedidos] = useState(false);
   const [exportando, setExportando] = useState(false);
 
@@ -58,14 +58,12 @@ const OrderTableView = ({ columnsOrder }: OrderTableViewProps) => {
     try {
       const pedidos = await apiGet<OrderTableColumns[]>("/pedidos", token);
 
-
       setOrderData(pedidos);
     } catch (erro) {
       toast.add({
         title: "Não foi possível carregar os pedidos",
         type: "error",
       });
-
     } finally {
       setCarregando(false);
     }
@@ -82,17 +80,17 @@ const OrderTableView = ({ columnsOrder }: OrderTableViewProps) => {
       await apiDelete(`/pedidos/${id}`, token);
 
       toast.add({
-            title: "Pedido excluído com sucesso!",
-            type: "success",
-          });
+        title: "Pedido excluído com sucesso!",
+        type: "success",
+      });
 
       await buscarPedidos();
     } catch (erro) {
       console.error("Erro ao excluir pedido:", erro);
       toast.add({
-            title: "Não foi possível excluir o pedido",
-            type: "error",
-          });
+        title: "Não foi possível excluir o pedido",
+        type: "error",
+      });
     }
   }
 
@@ -100,18 +98,13 @@ const OrderTableView = ({ columnsOrder }: OrderTableViewProps) => {
     return <TabelaSkeleton />;
   }
 
-  
   async function exportarPedidos() {
     if (!token) return;
 
     setExportando(true);
 
     try {
-      await apiDownload(
-        "/exportacao/pedidos",
-        token,
-        "pedidos.csv",
-      );
+      await apiDownload("/exportacao/pedidos", token, "pedidos.csv");
 
       toast.add({
         title: "Pedidos exportados com sucesso!",
@@ -130,12 +123,11 @@ const OrderTableView = ({ columnsOrder }: OrderTableViewProps) => {
     }
   }
 
-
   return (
-    <div className="mt-8">
-      <div className="flex flex-col gap-2 ml-2.5">
+    <div className="flex min-w-0 flex-col">
+      <div className="mt-8 flex min-w-0 flex-col gap-2">
         {/* HEADER */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col">
             <span className="text-md font-medium">Todos os pedidos</span>
 
@@ -146,10 +138,10 @@ const OrderTableView = ({ columnsOrder }: OrderTableViewProps) => {
           </div>
 
           {/* BOTÕES */}
-          <div className="flex gap-2 items-center">
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end">
             <Button
               variant="outline"
-              className="w-40 truncate"
+              className="w-full min-w-0 truncate sm:w-40"
               onClick={exportarPedidos}
               disabled={exportando}
             >
@@ -159,7 +151,7 @@ const OrderTableView = ({ columnsOrder }: OrderTableViewProps) => {
 
             <Button
               variant="outline"
-              className="w-40 truncate"
+              className="w-full min-w-0 truncate sm:w-40"
               onClick={() => setImportarPedidos(true)}
             >
               <Download className="rotate-180" />
@@ -168,7 +160,7 @@ const OrderTableView = ({ columnsOrder }: OrderTableViewProps) => {
 
             <Button
               variant="default"
-              className="w-32 truncate"
+              className="col-span-2 w-full min-w-0 truncate sm:col-span-1 sm:w-32"
               onClick={() => {
                 setPedidoSelecionado(null);
                 setOrderSheet(true);

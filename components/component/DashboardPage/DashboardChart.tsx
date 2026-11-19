@@ -88,12 +88,12 @@ const DashboardChart = ({
     });
 
   return (
-    <div className="grid mt-8 w-full p-3 rounded-lg bg-gray-100">
+    <div className="mt-6 grid w-full min-w-0 rounded-lg bg-gray-100 p-2 sm:mt-8 sm:p-3">
       <Card>
         <CardHeader>
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-            <div>
-              <CardTitle>
+            <div className="min-w-0">
+              <CardTitle className="text-base sm:text-lg">
                 Meta Atingida vs Meta Esperada
               </CardTitle>
 
@@ -124,7 +124,7 @@ const DashboardChart = ({
                   onChange={(e) =>
                     setMetaTemporaria(e.target.value)
                   }
-                  className="w-40"
+                  className="w-full sm:w-40"
                   required
                 />
 
@@ -158,7 +158,7 @@ const DashboardChart = ({
         <CardContent>
           <ChartContainer
             config={chartConfig}
-            className="h-125 w-full"
+            className="h-70 w-full sm:h-87.5 lg:h-125"
           >
             <LineChart
               accessibilityLayer

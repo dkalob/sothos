@@ -93,9 +93,9 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div>
+    <div className="w-full min-w-0">
       {hasFilter && filterColumn && (
-        <div className="flex items-center gap-3 py-4">
+        <div className="flex flex-col gap-3 py-4 sm:flex-row sm:flex-wrap sm:items-center">
           <Input
             placeholder={filterPlaceholder}
             value={
@@ -104,7 +104,7 @@ export function DataTable<TData, TValue>({
             onChange={(event) =>
               table.getColumn(filterColumn)?.setFilterValue(event.target.value)
             }
-            className="max-w-sm"
+            className="w-full sm:max-w-sm"
           />
           {hasRFMFilter && (
             <Select
@@ -124,7 +124,7 @@ export function DataTable<TData, TValue>({
                   ?.setFilterValue(value === "todos" ? undefined : value)
               }
             >
-              <SelectTrigger className="w-45">
+              <SelectTrigger className="w-full sm:w-45">
                 <SelectValue placeholder="Segmento RFM" />
               </SelectTrigger>
               <SelectContent>
@@ -142,6 +142,7 @@ export function DataTable<TData, TValue>({
           {onRecalcularRfm && (
             <Button
               variant="outline"
+              className="w-full sm:w-auto"
               onClick={onRecalcularRfm}
               disabled={recalculandoRfm}
             >
@@ -151,14 +152,14 @@ export function DataTable<TData, TValue>({
           )}
         </div>
       )}
-      <div className="overflow-hidden rounded-md border bg-white shadow-sm">
-        <Table>
+      <div className="w-full overflow-x-auto rounded-md border bg-white shadow-sm">
+        <Table className="min-w-225">
           <TableHeader className="bg-secondary">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead key={header.id} className="whitespace-nowrap">
                       {header.isPlaceholder
                         ? null
                         : flexRender(

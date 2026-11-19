@@ -114,33 +114,38 @@ const Indicadores = () => {
       setCarregando(true);
 
       try {
-        const [dadosClientes, dadosLucro, dadosCampanhas, dadosProdutos, dadosGrafico] =
-          await Promise.all([
-            apiGet<ClientesCard>(
-              `/indicadores/clientes?periodo=${periodo}`,
-              tokenAutenticado,
-            ),
+        const [
+          dadosClientes,
+          dadosLucro,
+          dadosCampanhas,
+          dadosProdutos,
+          dadosGrafico,
+        ] = await Promise.all([
+          apiGet<ClientesCard>(
+            `/indicadores/clientes?periodo=${periodo}`,
+            tokenAutenticado,
+          ),
 
-            apiGet<LucroCard>(
-              `/indicadores/vendas?periodo=${periodo}&meta=${meta}`,
-              tokenAutenticado,
-            ),
+          apiGet<LucroCard>(
+            `/indicadores/vendas?periodo=${periodo}&meta=${meta}`,
+            tokenAutenticado,
+          ),
 
-            apiGet<CampanhasCard>(
-              `/indicadores/campanhas?periodo=${periodo}`,
-              tokenAutenticado,
-            ),
+          apiGet<CampanhasCard>(
+            `/indicadores/campanhas?periodo=${periodo}`,
+            tokenAutenticado,
+          ),
 
-            apiGet<ProdutosCard>(
-              `/indicadores/produtos?periodo=${periodo}`,
-              tokenAutenticado,
-            ),
+          apiGet<ProdutosCard>(
+            `/indicadores/produtos?periodo=${periodo}`,
+            tokenAutenticado,
+          ),
 
-            apiGet<GraficoCard>(
-              `/indicadores/grafico?meta=${meta}`,
-              tokenAutenticado,
-            ),
-          ]);
+          apiGet<GraficoCard>(
+            `/indicadores/grafico?meta=${meta}`,
+            tokenAutenticado,
+          ),
+        ]);
 
         if (!ativo) return;
 
@@ -148,7 +153,7 @@ const Indicadores = () => {
         setLucro(dadosLucro);
         setCampanhas(dadosCampanhas);
         setProdutos(dadosProdutos);
-        setGrafico(dadosGrafico)
+        setGrafico(dadosGrafico);
       } catch (error) {
         if (!ativo) return;
 
@@ -186,17 +191,21 @@ const Indicadores = () => {
   return (
     <main>
       {/* TÍTULO + FILTRO DE PERÍODO */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3">
+        {/* TÍTULO */}
         <PageHeader
           title="Indicadores de Performance"
           subtitle="Acompanhe em tempo real o rendimento de suas campanhas"
         />
 
-        <PeriodSelector periodo={periodo} onChange={setPeriodo} />
+        {/* SELETOR */}
+        <div className="flex justify-end">
+          <PeriodSelector periodo={periodo} onChange={setPeriodo} />
+        </div>
       </div>
 
       {/* CARDS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 justify-items-start mt-8 gap-4">
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {/* CLIENTES */}
         <PageCards
           icon={Users}

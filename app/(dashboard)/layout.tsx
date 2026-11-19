@@ -6,12 +6,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <SidebarProvider>
       <Sidebar />
-      <SidebarInset>
+      <SidebarInset className="min-w-0">
         <Navbar/>
-        <main className='p-6 mt-5'>
+        <main className='mt-3 min-w-0 p-3 sm:mt-5 sm:p-4 md:p-6'>
           {children}
         </main>
-      </SidebarInset>
+      </SidebarInset >
     </SidebarProvider>
   )
 }

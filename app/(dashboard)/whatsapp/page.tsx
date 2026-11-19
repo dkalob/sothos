@@ -446,14 +446,14 @@ const Whatsapp = () => {
         </div>
 
         <div className="w-full lg:w-2/3">
-          <div className="min-h-full rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="w-full min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
             <h2 className="text-lg font-semibold">Visualização</h2>
             <p className="text-sm text-muted-foreground">
               Confira como sua mensagem será apresentada.
             </p>
 
-            <div className="flex mt-6 min-h-full gap-4">
-              <div className="w-1/2">
+            <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start">
+              <div className="flex w-full justify-center lg:w-1/2">
                 <MoldeCelular
                   mensagem={mensagem}
                   imagemUrl={imagemUrl}
@@ -461,7 +461,7 @@ const Whatsapp = () => {
                 />
               </div>
 
-              <div className="w-1/2">
+              <div className="w-full min-w-0 lg:w-1/2">
                 {mensagemGerada && (
                   <>
                     <div>
@@ -514,9 +514,10 @@ const Whatsapp = () => {
                       />
                     </Field>
 
-                    <div className="mt-4 flex flex-wrap justify-end gap-2">
+                    <div className="mt-4 flex justify-end gap-2">
                       <Button
                         variant="outline"
+                        className="min-w-0 flex-1"
                         onClick={adaptarParaEmail}
                         disabled={!mensagemId || adaptando || salvando}
                       >
@@ -532,6 +533,7 @@ const Whatsapp = () => {
 
                       <Button
                         onClick={salvarMensagem}
+                        className="min-w-0 flex-1"
                         disabled={!mensagemId || salvando || adaptando}
                       >
                         {salvando ? "Salvando..." : "Salvar mensagem"}

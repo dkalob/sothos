@@ -41,10 +41,10 @@ const AssociarClientes = () => {
         subtitle="Essa ferramenta irá recomendar potenciais produtos que um cliente da sua loja possa se interessar."
       />
 
-      <div className="mt-8 flex items-stretch gap-6">
+      <div className="mt-8 flex flex-col gap-6 lg:flex-row lg:items-stretch">
         {/* Escolher cliente + botão */}
-        <div className="w-1/2">
-          <div className="group relative isolate min-h-54 overflow-hidden rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+        <div className="w-full lg:w-1/2">
+          <div className="group relative isolate min-h-54 overflow-hidden rounded-xl border border-slate-200 bg-white p-5 sm:p-8 shadow-sm">
             <div className="absolute -right-10 -top-10 -z-10 size-28 rounded-full bg-orange-50" />
 
             <div className="ml-0.5 text-base font-semibold text-black">
@@ -62,7 +62,7 @@ const AssociarClientes = () => {
             </div>
 
             <Button
-              className="mt-4 h-10 text-base"
+              className="mt-4 h-10 w-full text-base sm:w-auto"
               onClick={() => setClienteAnalisado(clienteSelecionado)}
               disabled={!clienteSelecionado}
             >
@@ -79,7 +79,7 @@ const AssociarClientes = () => {
 
         {/* Insights */}
         {clienteSelecionado && (
-          <div className="grid w-1/2 grid-cols-2 grid-rows-2 gap-4">
+          <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:w-1/2 lg:gap-4">
             <InsightCard
               title="Total gasto"
               icon={CreditCard}

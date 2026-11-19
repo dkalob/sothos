@@ -28,7 +28,6 @@ import { useToken } from "@/hooks/use-token";
 import { apiDelete } from "@/lib/api";
 import { toast } from "@/components/ui/toast";
 
-
 export type ProductTableColumns = {
   //Aqui define as colunas da tabela produtos
   id: string;
@@ -44,7 +43,7 @@ export type ProductTableColumns = {
 
 export const columnsProduct = (
   onEditarProduto: (id: string) => void,
-  atualizarProdutos: () => Promise<void>
+  atualizarProdutos: () => Promise<void>,
 ): ColumnDef<ProductTableColumns>[] => [
   {
     accessorKey: "nome",
@@ -55,7 +54,7 @@ export const columnsProduct = (
       const imagem = row.original.imagem;
 
       return (
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-60 items-center gap-3">
           <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border bg-muted">
             {imagem ? (
               <img
@@ -71,7 +70,9 @@ export const columnsProduct = (
           </div>
 
           <div className="flex min-w-0 flex-col">
-            <span className="font-semibold">{nome}</span>
+            <span className="truncate font-semibold" title={nome}>
+              {nome}
+            </span>
 
             <span className="text-sm text-muted-foreground">
               {sku ? `SKU: ${sku}` : "Sem SKU"}
@@ -92,7 +93,7 @@ export const columnsProduct = (
       }
 
       return (
-        <div className="flex flex-col gap-1">
+        <div className="flex min-w-37.5 flex-col gap-1">
           {campanhas.map((campanha) => (
             <span key={campanha}>{campanha}</span>
           ))}
@@ -122,11 +123,9 @@ export const columnsProduct = (
       }).format(new Date(data));
 
       return (
-        <div className="flex flex-col">
+        <div className="flex flex-col whitespace-nowrap">
           <span>{dataFormatada}</span>
-          <span className="text-sm text-muted-foreground">
-            {horaFormatada}
-          </span>
+          <span className="text-sm text-muted-foreground">{horaFormatada}</span>
         </div>
       );
     },
@@ -144,20 +143,20 @@ export const columnsProduct = (
 
           toast.add({
             title: "Produto excluído com sucesso!",
-            type: "sucess"
-          })
+            type: "success",
+          });
 
           setOpen(false);
           await atualizarProdutos();
         } catch (error) {
-          console.error("Erro ao deletar produto:", error)
+          console.error("Erro ao deletar produto:", error);
 
           toast.add({
             title: "Não foi possível excluir o produto",
-            type: "error"
-          })
+            type: "error",
+          });
         }
-      }
+      };
 
       return (
         <>
@@ -174,7 +173,10 @@ export const columnsProduct = (
             <DropdownMenuContent align="end" className="w-36">
               <DropdownMenuGroup>
                 <DropdownMenuItem
-                  onClick={() => {onEditarProduto(r.id)}}>
+                  onClick={() => {
+                    onEditarProduto(r.id);
+                  }}
+                >
                   <Pen />
                   Editar produto
                 </DropdownMenuItem>
@@ -210,7 +212,7 @@ export const columnsProduct = (
                   Cancelar
                 </AlertDialogCancel>
 
-                <AlertDialogAction 
+                <AlertDialogAction
                   variant="destructive"
                   onClick={deletarProduto}
                 >
@@ -224,4 +226,3 @@ export const columnsProduct = (
     },
   },
 ];
-

@@ -64,7 +64,7 @@ export const columnsClient = (
       const cliente = row.getValue("cliente") as string;
       const email = row.original.email;
       return (
-        <div className="flex flex-col">
+        <div className="flex min-w-50 flex-col">
           <span className="font-semibold">{cliente}</span>
           <span className="text-sm text-muted-foreground">{email}</span>
         </div>
@@ -117,7 +117,7 @@ export const columnsClient = (
       }).format(data);
 
       return (
-        <div className="flex flex-col">
+        <div className="flex flex-col whitespace-nowrap">
           <span>{dataFormatada}</span>
           <span className="text-sm text-muted-foreground">{horaFormatada}</span>
         </div>
@@ -238,7 +238,7 @@ export const columnsGroup = (
       }).format(data);
 
       return (
-        <div className="flex flex-col">
+        <div className="flex flex-col whitespace-nowrap">
           <span>{dataFormatada}</span>
           <span className="text-sm text-muted-foreground">{horaFormatada}</span>
         </div>

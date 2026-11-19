@@ -81,66 +81,59 @@ const CampanhaDetailsView = ({ id }: { id: string }) => {
   const [pausando, setPausando] = useState(false);
 
   const atualizarCampanha = async () => {
-  const dados = await apiGet<CampanhaDetalhe>(`/campanhas/${id}`, token!);
-  setCampanha(dados);
-  return dados;
-};
+    const dados = await apiGet<CampanhaDetalhe>(`/campanhas/${id}`, token!);
+    setCampanha(dados);
+    return dados;
+  };
 
-const controlarCampanha = async (acao: "executar" | "pausar") => {
-  if (!token) return;
+  const controlarCampanha = async (acao: "executar" | "pausar") => {
+    if (!token) return;
 
-  if (acao === "executar") {
-    if (executando) return;
+    if (acao === "executar") {
+      if (executando) return;
 
-    setExecutando(true);
-    setErro(null);
+      setExecutando(true);
+      setErro(null);
 
-    // A execução continua em segundo plano para permitir a pausa.
-    void apiPost(`/campanhas/${id}/executar`, {}, token)
-      .then(() => atualizarCampanha())
-      .catch(async (e) => {
-        setErro(
-          e instanceof Error ? e.message : "Erro ao executar campanha",
-        );
-        await atualizarCampanha().catch(() => {});
-      })
-      .finally(() => setExecutando(false));
+      // A execução continua em segundo plano para permitir a pausa.
+      void apiPost(`/campanhas/${id}/executar`, {}, token)
+        .then(() => atualizarCampanha())
+        .catch(async (e) => {
+          setErro(e instanceof Error ? e.message : "Erro ao executar campanha");
+          await atualizarCampanha().catch(() => {});
+        })
+        .finally(() => setExecutando(false));
 
-    // Aguarda o backend confirmar que a campanha começou.
-    for (let tentativa = 0; tentativa < 20; tentativa++) {
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      // Aguarda o backend confirmar que a campanha começou.
+      for (let tentativa = 0; tentativa < 20; tentativa++) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
 
-      const dados = await atualizarCampanha();
+        const dados = await atualizarCampanha();
 
-      if (dados.status === "EM_EXECUCAO") break;
+        if (dados.status === "EM_EXECUCAO") break;
 
-      if (
-        dados.status !== "AGENDADA" &&
-        dados.status !== "PAUSADA"
-      ) {
-        break;
+        if (dados.status !== "AGENDADA" && dados.status !== "PAUSADA") {
+          break;
+        }
       }
+
+      return;
     }
 
-    return;
-  }
+    if (pausando) return;
 
-  if (pausando) return;
+    try {
+      setPausando(true);
+      setErro(null);
 
-  try {
-    setPausando(true);
-    setErro(null);
-
-    await apiPost(`/campanhas/${id}/pausar`, {}, token);
-    await atualizarCampanha();
-  } catch (e) {
-    setErro(
-      e instanceof Error ? e.message : "Erro ao pausar campanha",
-    );
-  } finally {
-    setPausando(false);
-  }
-};
+      await apiPost(`/campanhas/${id}/pausar`, {}, token);
+      await atualizarCampanha();
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Erro ao pausar campanha");
+    } finally {
+      setPausando(false);
+    }
+  };
 
   useEffect(() => {
     if (!token) return;
@@ -214,12 +207,13 @@ const controlarCampanha = async (acao: "executar" | "pausar") => {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <PageHeader title={campanha.titulo} subtitle="Detalhes da campanha." />
-        <div className="flex gap-2">
+
+        <div className="flex w-full min-w-0 gap-2 lg:w-auto">
           <Button
             variant="outline"
-            className="w-40 hover:bg-primary/10"
+            className="min-w-0 flex-1 whitespace-nowrap px-2 hover:bg-primary/10 lg:w-40 lg:flex-none"
             onClick={() => controlarCampanha("executar")}
             disabled={
               executando ||
@@ -228,13 +222,13 @@ const controlarCampanha = async (acao: "executar" | "pausar") => {
               campanha.status === "CANCELADA"
             }
           >
-            <Play />
+            <Play className="size-4 shrink-0" />
             {executando ? "Aguarde..." : "Ativar Campanha"}
           </Button>
 
           <Button
             variant="outline"
-            className="w-40 hover:bg-primary/10"
+            className="min-w-0 flex-1 whitespace-nowrap px-2 hover:bg-primary/10 lg:w-40 lg:flex-none"
             onClick={() => controlarCampanha("pausar")}
             disabled={
               pausando ||
@@ -242,7 +236,7 @@ const controlarCampanha = async (acao: "executar" | "pausar") => {
                 campanha.status !== "AGENDADA")
             }
           >
-            <Pause />
+            <Pause className="size-4 shrink-0" />
             Pausar Campanha
           </Button>
         </div>

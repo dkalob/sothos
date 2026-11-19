@@ -35,6 +35,7 @@ type LinhaConvertida = {
   linha: number;
   numeroPedido: string;
   email: string;
+  cpf: string;
   nome: string;
   telefone: string | null;
   cidade: string | null;
@@ -131,11 +132,16 @@ export class ImportacaoService {
           pedido: ler('numeroPedido') || undefined,
           mensagem: resultado.erro,
         });
-        if (ler('numeroPedido')) pedidosComLinhaInvalida.add(ler('numeroPedido'));
+        if (ler('numeroPedido'))
+          pedidosComLinhaInvalida.add(ler('numeroPedido'));
         continue;
       }
       for (const aviso of resultado.avisos) {
-        avisos.push({ linha: linha.numero, pedido: resultado.linha.numeroPedido, mensagem: aviso });
+        avisos.push({
+          linha: linha.numero,
+          pedido: resultado.linha.numeroPedido,
+          mensagem: aviso,
+        });
       }
       convertidas.push(resultado.linha);
     }
@@ -161,12 +167,15 @@ export class ImportacaoService {
 
     // Todas as linhas de um pedido precisam ser do mesmo cliente
     for (const [numero, itens] of pedidos) {
-      if (new Set(itens.map((i) => i.email)).size > 1) {
+      const cpfs = new Set(itens.map((i) => i.cpf));
+      const emails = new Set(itens.map((i) => i.email));
+
+      if (cpfs.size > 1 || emails.size > 1) {
         pedidos.delete(numero);
         pedidosComLinhaInvalida.add(numero);
         erros.push({
           pedido: numero,
-          mensagem: `Pedido ${numero} não foi importado: as linhas dele têm e-mails diferentes.`,
+          mensagem: `Pedido ${numero} não foi importado: as linhas dele possuem CPFs ou e-mails diferentes.`,
         });
       }
     }
@@ -221,7 +230,7 @@ export class ImportacaoService {
             loja.id,
             numero,
             itens,
-            clientePorEmail.get(itens[0].email)!,
+            clientePorEmail.get(itens[0].cpf)!,
             produtoPorNome,
           );
           if (novo) resultado.pedidosNovos++;
@@ -247,10 +256,12 @@ export class ImportacaoService {
                 ? StatusSincronizacao.PARCIAL
                 : StatusSincronizacao.CONCLUIDA,
           finalizadaEm: new Date(),
-          clientesProcessados: resultado.clientesNovos + resultado.clientesAtualizados,
+          clientesProcessados:
+            resultado.clientesNovos + resultado.clientesAtualizados,
           produtosProcessados: resultado.produtosNovos,
           pedidosProcessados: processados,
-          mensagemErro: erros.length > 0 ? `${erros.length} erro(s) na importação` : null,
+          mensagemErro:
+            erros.length > 0 ? `${erros.length} erro(s) na importação` : null,
         },
       });
       await this.prisma.lojaConectada.update({
@@ -276,7 +287,10 @@ export class ImportacaoService {
     try {
       await this.rfmService.recalcular(contaId);
     } catch (erro) {
-      this.logger.error('Falha ao recalcular RFM após importação', erro as Error);
+      this.logger.error(
+        'Falha ao recalcular RFM após importação',
+        erro as Error,
+      );
       avisos.push({
         mensagem:
           'Os dados foram importados, mas o RFM não foi recalculado. Recalcule manualmente.',
@@ -299,12 +313,23 @@ export class ImportacaoService {
 
     const numeroPedido = ler('numeroPedido');
     if (!numeroPedido) problemas.push('número do pedido vazio');
-    else if (numeroPedido.length > 40) problemas.push('número do pedido muito longo');
+    else if (numeroPedido.length > 40)
+      problemas.push('número do pedido muito longo');
 
     const emailTexto = ler('email');
     const email = converterEmail(emailTexto);
     if (!emailTexto) problemas.push('e-mail vazio');
-    else if (!email || email.length > 180) problemas.push(`e-mail inválido (${emailTexto})`);
+    else if (!email || email.length > 180)
+      problemas.push(`e-mail inválido (${emailTexto})`);
+
+    const cpfTexto = ler('cpf');
+    const cpf = this.normalizarCpf(cpfTexto);
+
+    if (!cpfTexto) {
+      problemas.push('CPF do cliente vazio');
+    } else if (!cpf) {
+      problemas.push(`CPF inválido (${cpfTexto})`);
+    }
 
     const nome = ler('nome');
     if (!nome) problemas.push('nome do cliente vazio');
@@ -312,12 +337,14 @@ export class ImportacaoService {
     const dataTexto = ler('data');
     const realizadoEm = converterData(dataTexto);
     if (!dataTexto) problemas.push('data vazia');
-    else if (!realizadoEm) problemas.push(`data inválida (${dataTexto}); use dd/mm/aaaa`);
+    else if (!realizadoEm)
+      problemas.push(`data inválida (${dataTexto}); use dd/mm/aaaa`);
 
     const totalTexto = ler('total');
     const total = converterValor(totalTexto);
     if (!totalTexto) problemas.push('total vazio');
-    else if (total === null || Number(total) < 0) problemas.push(`total inválido (${totalTexto})`);
+    else if (total === null || Number(total) < 0)
+      problemas.push(`total inválido (${totalTexto})`);
 
     const nomeProduto = ler('nomeProduto');
     if (!nomeProduto) problemas.push('nome do produto vazio');
@@ -331,7 +358,8 @@ export class ImportacaoService {
     const qtdTexto = ler('quantidade');
     const quantidade = converterQuantidade(qtdTexto);
     if (!qtdTexto) problemas.push('quantidade vazia');
-    else if (quantidade === null) problemas.push(`quantidade inválida (${qtdTexto})`);
+    else if (quantidade === null)
+      problemas.push(`quantidade inválida (${qtdTexto})`);
 
     // Campos opcionais: se vierem preenchidos, precisam ser válidos
     const opcionalValor = (campo: CampoPedido, rotulo: string) => {
@@ -367,7 +395,11 @@ export class ImportacaoService {
       statusReconhecido = r.reconhecido;
       if (!r.reconhecido) {
         avisos.push(
-          `status não reconhecido (${[ler('statusPedido'), ler('statusPagamento'), ler('statusEnvio')]
+          `status não reconhecido (${[
+            ler('statusPedido'),
+            ler('statusPagamento'),
+            ler('statusEnvio'),
+          ]
             .filter(Boolean)
             .join(' / ')}); considerado PENDENTE`,
         );
@@ -379,6 +411,7 @@ export class ImportacaoService {
         linha: numero,
         numeroPedido,
         email: email!,
+        cpf: cpf!,
         nome: nome.slice(0, 160),
         telefone: converterTelefone(ler('telefone')),
         cidade: ler('cidade').slice(0, 120) || null,
@@ -411,46 +444,64 @@ export class ImportacaoService {
     aceitaMarketing: boolean,
     resultado: ResultadoImportacao,
   ): Promise<Map<string, string>> {
-    // Dados mais recentes de cada cliente (pedido com a data mais nova)
+    // Mantém os dados da ocorrência mais recente de cada CPF.
     const maisRecente = new Map<string, LinhaConvertida>();
+
     for (const itens of pedidos.values()) {
       const l = itens[0];
-      const atual = maisRecente.get(l.email);
-      if (!atual || l.realizadoEm > atual.realizadoEm) maisRecente.set(l.email, l);
+      const atual = maisRecente.get(l.cpf);
+
+      if (!atual || l.realizadoEm > atual.realizadoEm) {
+        maisRecente.set(l.cpf, l);
+      }
     }
 
     const existentes = await this.prisma.cliente.findMany({
       where: { contaId },
-      select: { id: true, email: true },
+      select: { id: true, cpf: true },
     });
-    const idPorEmail = new Map(existentes.map((c) => [c.email.trim().toLowerCase(), c.id]));
+
+    const idPorCpf = new Map<string, string>();
+
+    for (const cliente of existentes) {
+      if (!cliente.cpf) continue;
+
+      const cpf = this.normalizarCpf(cliente.cpf);
+
+      if (cpf && !idPorCpf.has(cpf)) {
+        idPorCpf.set(cpf, cliente.id);
+      }
+    }
 
     const resposta = new Map<string, string>();
-    for (const [email, l] of maisRecente) {
-      const id = idPorEmail.get(email);
+
+    for (const [cpf, l] of maisRecente) {
+      const id = idPorCpf.get(cpf);
+
       if (id) {
         await this.prisma.cliente.update({
           where: { id },
           data: {
             nome: l.nome,
-            // undefined = não altera: uma planilha sem telefone não apaga o que já existe
+            email: l.email,
+            cpf,
             telefone: l.telefone ?? undefined,
             cidade: l.cidade ?? undefined,
             estado: l.estado ?? undefined,
-            // Nunca retira uma autorização já dada
             aceitaMarketing: aceitaMarketing ? true : undefined,
           },
         });
+
         resultado.clientesAtualizados++;
-        resposta.set(email, id);
+        resposta.set(cpf, id);
       } else {
         const criado = await this.prisma.cliente.create({
           data: {
             contaId,
             lojaId,
-            idExterno: email.length <= 80 ? email : this.hash(email),
             nome: l.nome,
-            email,
+            email: l.email,
+            cpf,
             telefone: l.telefone,
             cidade: l.cidade,
             estado: l.estado,
@@ -458,10 +509,12 @@ export class ImportacaoService {
           },
           select: { id: true },
         });
+
         resultado.clientesNovos++;
-        resposta.set(email, criado.id);
+        resposta.set(cpf, criado.id);
       }
     }
+
     return resposta;
   }
 
@@ -477,17 +530,26 @@ export class ImportacaoService {
       where: { contaId },
       select: { id: true, nome: true },
     });
-    const idPorNome = new Map(existentes.map((p) => [normalizarTexto(p.nome), p.id]));
+    const idPorNome = new Map(
+      existentes.map((p) => [normalizarTexto(p.nome), p.id]),
+    );
 
     // Preço mais recente de cada produto novo
-    const novos = new Map<string, { nome: string; preco: string; data: Date }>();
+    const novos = new Map<
+      string,
+      { nome: string; preco: string; data: Date }
+    >();
     for (const l of linhas) {
       const base = nomeBaseProduto(l.nomeProduto);
       const chave = normalizarTexto(base);
       if (idPorNome.has(chave)) continue;
       const atual = novos.get(chave);
       if (!atual || l.realizadoEm > atual.data) {
-        novos.set(chave, { nome: base, preco: l.valorProduto, data: l.realizadoEm });
+        novos.set(chave, {
+          nome: base,
+          preco: l.valorProduto,
+          data: l.realizadoEm,
+        });
       }
     }
 
@@ -522,12 +584,16 @@ export class ImportacaoService {
     const primeira = linhas[0];
 
     const itens = linhas.map((l) => ({
-      produtoId: produtoPorNome.get(normalizarTexto(nomeBaseProduto(l.nomeProduto))) ?? null,
+      produtoId:
+        produtoPorNome.get(normalizarTexto(nomeBaseProduto(l.nomeProduto))) ??
+        null,
       nomeProduto: l.nomeProduto, // nome completo, congelado na venda
       sku: l.sku,
       quantidade: l.quantidade,
       precoUnitario: l.valorProduto,
-      valorTotal: new Prisma.Decimal(l.valorProduto).mul(l.quantidade).toFixed(2),
+      valorTotal: new Prisma.Decimal(l.valorProduto)
+        .mul(l.quantidade)
+        .toFixed(2),
     }));
 
     const somaItens = itens
@@ -562,10 +628,47 @@ export class ImportacaoService {
       }
 
       await tx.pedido.create({
-        data: { contaId, lojaId, idExterno: numero, ...dados, itens: { create: itens } },
+        data: {
+          contaId,
+          lojaId,
+          idExterno: numero,
+          ...dados,
+          itens: { create: itens },
+        },
       });
       return true;
     });
+  }
+
+  private normalizarCpf(texto: string): string | null {
+    const cpf = texto.replace(/\D/g, '');
+
+    if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) {
+      return null;
+    }
+
+    const calcularDigito = (base: string, pesoInicial: number) => {
+      let soma = 0;
+
+      for (let i = 0; i < base.length; i++) {
+        soma += Number(base[i]) * (pesoInicial - i);
+      }
+
+      const resto = (soma * 10) % 11;
+      return resto === 10 ? 0 : resto;
+    };
+
+    const primeiroDigito = calcularDigito(cpf.substring(0, 9), 10);
+    const segundoDigito = calcularDigito(cpf.substring(0, 10), 11);
+
+    if (
+      primeiroDigito !== Number(cpf[9]) ||
+      segundoDigito !== Number(cpf[10])
+    ) {
+      return null;
+    }
+
+    return cpf;
   }
 
   private hash(texto: string): string {

@@ -19,9 +19,9 @@ interface TelefoneTableViewProps {
 }
 
 const TabelaSkeleton = () => (
-  <div className="overflow-hidden rounded-md border bg-white">
+  <div className="w-full overflow-x-auto rounded-md border bg-white mt-4">
     {Array.from({ length: 3 }).map((_, i) => (
-      <div key={i} className="flex items-center gap-4 border-b p-4 last:border-b-0">
+      <div key={i} className="flex min-w-150 items-center gap-4 border-b p-4 last:border-b-0">
         <div className="flex flex-1 flex-col gap-2">
           <Skeleton className="h-4 w-40" />
           <Skeleton className="h-3 w-24" />

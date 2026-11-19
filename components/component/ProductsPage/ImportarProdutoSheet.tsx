@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -32,7 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { apiPostFormData } from "@/lib/api";
+import { apiGet, apiPostFormData } from "@/lib/api";
 import { useToken } from "@/hooks/use-token";
 
 interface ImportarProdutosSheetProps {
@@ -41,17 +40,10 @@ interface ImportarProdutosSheetProps {
   onProdutosImportados: () => void | Promise<void>;
 }
 
-type CampoProduto =
-  | "identificador"
-  | "nome"
-  | "categoria"
-  | "preco"
-  | "precoPromocional"
-  | "sku"
-  | "ativo";
+type CampoProduto = "nome" | "categoria" | "preco" | "imagem" | "sku" | "ativo";
 
 type CampoPrevia = {
-  campo: CampoProduto;
+  campo: string;
   rotulo: string;
   obrigatorio: boolean;
 };
@@ -62,7 +54,7 @@ type PreviaProdutos = {
   totalLinhas: number;
   separador: string;
   campos: CampoPrevia[];
-  sugestaoMapeamento: Partial<Record<CampoProduto, string>>;
+  sugestaoMapeamento: Record<string, string>;
 };
 
 type Ocorrencia = {
@@ -84,10 +76,9 @@ type ResultadoImportacao = {
 };
 
 const modeloCsv = [
-  "Identificador;Nome;Categoria;Preço;Preço promocional;SKU;Ativo",
-  "camiseta-basica;Camiseta Básica;Roupas;79,90;69,90;CAM001;Sim",
-  "camiseta-basica;Camiseta Básica;Roupas;79,90;69,90;CAM002;Sim",
-  "calca-jeans;Calça Jeans;Calças;149,90;;CAL001;Sim",
+  "Nome;Categoria;Preço;Link da imagem (Cloudinary);SKU;Ativo",
+  "Camiseta Básica;Roupas;79,90;https://res.cloudinary.com/sua-conta/image/upload/imagem.jpg;CAM001;Sim",
+  "Calça Jeans;Calças;149,90;;CAL002;Sim",
 ].join("\n");
 
 const ImportarProdutosSheet = ({
@@ -101,9 +92,7 @@ const ImportarProdutosSheet = ({
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [previa, setPrevia] = useState<PreviaProdutos | null>(null);
 
-  const [mapeamento, setMapeamento] = useState<
-    Partial<Record<CampoProduto, string>>
-  >({});
+  const [mapeamento, setMapeamento] = useState<Record<string, string>>({});
 
   const [erros, setErros] = useState<Ocorrencia[]>([]);
   const [avisos, setAvisos] = useState<Ocorrencia[]>([]);
@@ -203,19 +192,51 @@ const ImportarProdutosSheet = ({
     }
   }
 
-  function baixarModelo() {
-    const blob = new Blob(["\uFEFF" + modeloCsv], {
-      type: "text/csv;charset=utf-8;",
-    });
+  async function baixarModelo() {
+    try {
+      const colunas = await apiGet<string[]>(
+        "/importacao/produtos/modelo",
+        token ?? undefined,
+      );
 
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
+      const exemplo = [
+        "Camiseta Básica",
+        "Roupas",
+        "79,90",
+        "https://res.cloudinary.com/sua-conta/image/upload/imagem.jpg",
+        "CAM001",
+        "Sim",
+        ...colunas.slice(6).map(() => ""),
+      ];
 
-    link.href = url;
-    link.download = "modelo-importacao-produtos.csv";
-    link.click();
+      const escapar = (valor: string) => `"${valor.replace(/"/g, '""')}"`;
 
-    URL.revokeObjectURL(url);
+      const conteudo = [
+        colunas.map(escapar).join(";"),
+        exemplo.map(escapar).join(";"),
+      ].join("\n");
+
+      const blob = new Blob(["\uFEFF" + conteudo], {
+        type: "text/csv;charset=utf-8;",
+      });
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = "modelo-importacao-produtos.csv";
+      link.click();
+
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.add({
+        title:
+          error instanceof Error
+            ? error.message
+            : "Não foi possível baixar o modelo.",
+        type: "error",
+      });
+    }
   }
 
   async function importarProdutos() {
@@ -287,7 +308,6 @@ const ImportarProdutosSheet = ({
         </SheetHeader>
 
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-4 py-4">
-
           {/* ARQUIVO */}
           <div className="grid gap-2">
             <Label>Arquivo de importação</Label>
@@ -437,9 +457,9 @@ const ImportarProdutosSheet = ({
                 <div className="flex items-start gap-2 text-primary">
                   <Info className="ml-1 mt-0.5 size-5 shrink-0" />
                   <span className="text-sm">
-                    {previa.totalLinhas} registros encontrados. As linhas
-                    com o mesmo identificador serão agrupadas em um único
-                    produto. Produtos existentes serão atualizados.
+                    {previa.totalLinhas} registros encontrados. Cada linha será
+                    importada como um produto, incluindo as características
+                    identificadas na planilha.
                   </span>
                 </div>
               </div>
@@ -449,13 +469,10 @@ const ImportarProdutosSheet = ({
           {/* RESULTADO */}
           {resultado && (
             <div className="rounded-xl border bg-muted/30 p-3">
-              <p className="mb-2 text-sm font-medium">
-                Resumo da importação
-              </p>
+              <p className="mb-2 text-sm font-medium">Resumo da importação</p>
 
               <div className="space-y-1 text-sm text-muted-foreground">
                 <p>Produtos novos: {resultado.produtosNovos}</p>
-                <p>Produtos atualizados: {resultado.produtosAtualizados}</p>
                 <p>Produtos ignorados: {resultado.produtosIgnorados}</p>
                 <p>Categorias criadas: {resultado.categoriasNovas}</p>
                 <p>Erros: {resultado.totalErros}</p>
@@ -502,9 +519,7 @@ const ImportarProdutosSheet = ({
               importando
             }
           >
-            {importando && (
-              <Loader2 className="mr-2 size-4 animate-spin" />
-            )}
+            {importando && <Loader2 className="mr-2 size-4 animate-spin" />}
             Importar produtos
           </Button>
 

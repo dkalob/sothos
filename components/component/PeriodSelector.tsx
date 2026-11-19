@@ -18,17 +18,17 @@ const opcoes: { label: string; value: Periodo }[] = [
 
 const PeriodSelector = ({ periodo, onChange }: PeriodSelectorProps) => {
   return (
-    <ButtonGroup>
+    <ButtonGroup className="flex w-full justify-end sm:w-auto">
       {opcoes.map((opcao) => (
         <Button
           key={opcao.value}
           variant="outline"
           onClick={() => onChange(opcao.value)}
-          className={
+          className={`flex-1 sm:flex-none ${
             periodo === opcao.value
               ? "bg-primary text-white hover:bg-primary hover:text-white"
               : "hover:bg-primary-foreground hover:text-chart-3"
-          }
+          }`}
         >
           {opcao.label}
         </Button>

@@ -74,7 +74,7 @@ const Clientes = () => {
     });
 
   return (
-    <div>
+    <div className="w-full min-w-0">
       <PageHeader
         title="Gerenciamento de Clientes"
         subtitle="Gerencie seu portifólio de clientes e acompanhe o crescimento."
@@ -82,7 +82,7 @@ const Clientes = () => {
       />
 
       {/* CARDS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 justify-items-start mt-8 gap-4">
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <PageCards
           icon={Users}
           title="Clientes totais"

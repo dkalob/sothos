@@ -41,6 +41,7 @@ interface ImportarPedidosSheetProps {
 type CampoPedido =
   | "numeroPedido"
   | "email"
+  | "cpf"
   | "nome"
   | "telefone"
   | "cidade"
@@ -94,10 +95,10 @@ type ResultadoImportacao = {
 };
 
 const modeloCsv = [
-  "Número do Pedido;E-mail;Nome do Cliente;Telefone;Cidade;Estado;Data;Status Pedido;Subtotal;Frete;Desconto;Total;Produto;SKU;Quantidade;Valor do Produto",
-  "PED001;ana@email.com;Ana Silva;11999999999;São Paulo;SP;15/01/2025;PAGO;159,80;15,00;10,00;164,80;Camiseta Básica;CAM001;2;79,90",
-  "PED001;ana@email.com;Ana Silva;11999999999;São Paulo;SP;15/01/2025;PAGO;159,80;15,00;10,00;164,80;Calça Jeans;CAL001;1;149,90",
-  "PED002;joao@email.com;João Souza;11988888888;Campinas;SP;16/01/2025;PENDENTE;79,90;0,00;0,00;79,90;Camiseta Básica;CAM001;1;79,90",
+  "ID no e-commerce / ERP;E-mail;CPF;Nome do Cliente;Telefone;Cidade;Estado;Data;Status Pedido;Subtotal;Frete;Desconto;Total do Pedido;Produto;SKU;Quantidade;Valor Unitário",
+  "PED001;ana@email.com;529.982.247-25;Ana Silva;11999999999;São Paulo;SP;15/01/2025;PAGO;309,70;15,00;10,00;314,70;Camiseta Básica;CAM001;2;79,90",
+  "PED001;ana@email.com;529.982.247-25;Ana Silva;11999999999;São Paulo;SP;15/01/2025;PAGO;309,70;15,00;10,00;314,70;Calça Jeans;CAL001;1;149,90",
+  "PED002;joao@email.com;111.444.777-35;João Souza;11988888888;Campinas;SP;16/01/2025;PENDENTE;79,90;0,00;0,00;79,90;Camiseta Básica;CAM001;1;79,90",
 ].join("\n");
 
 const ImportarPedidosSheet = ({
@@ -447,10 +448,11 @@ const ImportarPedidosSheet = ({
                 <div className="flex items-start gap-2 text-primary">
                   <Info className="ml-1 mt-0.5 size-5 shrink-0" />
                   <span className="text-sm">
-                    {previa.totalLinhas} itens encontrados. As linhas com o
-                    mesmo número de pedido serão agrupadas em um único pedido.
-                    Clientes e produtos existentes serão identificados
-                    automaticamente.
+                    <span className="text-sm">
+  {previa.totalLinhas} itens encontrados. As linhas com o mesmo ID de pedido
+  serão agrupadas em um único pedido. Os clientes serão identificados pelo CPF
+  e os pedidos existentes serão atualizados automaticamente.
+</span>
                   </span>
                 </div>
               </div>

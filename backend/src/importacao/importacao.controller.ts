@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Get,
   Post,
   UploadedFile,
   UseGuards,
@@ -79,11 +80,18 @@ export class ImportacaoController {
 
   @Post('produtos/previa')
   @UseInterceptors(uploadCsv())
-  previaProdutos(@UploadedFile() arquivo?: Express.Multer.File) {
+  previaProdutos(
+    @UploadedFile() arquivo: Express.Multer.File | undefined,
+    @UsuarioLogado() usuario: JwtPayload,
+  ) {
     if (!arquivo) {
       throw new BadRequestException('Nenhum arquivo enviado.');
     }
-    return this.importacaoProdutosService.gerarPrevia(arquivo.buffer);
+
+    return this.importacaoProdutosService.gerarPrevia(
+      usuario.contaId,
+      arquivo.buffer,
+    );
   }
 
   // form-data: arquivo (File), mapeamento (texto JSON)
@@ -132,5 +140,10 @@ export class ImportacaoController {
       dto.mapeamento,
       dto.aceitaMarketing === 'true',
     );
+  }
+
+  @Get('produtos/modelo')
+  modeloProdutos(@UsuarioLogado() usuario: JwtPayload) {
+    return this.importacaoProdutosService.gerarModeloCsv(usuario.contaId);
   }
 }

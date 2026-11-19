@@ -35,7 +35,7 @@ const TabelaSkeleton = () => (
     {Array.from({ length: 4 }).map((_, i) => (
       <div
         key={i}
-        className="flex items-center gap-4 border-b p-4 last:border-b-0"
+        className="flex min-w-150 items-center gap-4 border-b p-4 last:border-b-0"
       >
         <Skeleton className="size-10 rounded-md" />
         <div className="flex flex-1 flex-col gap-2">
@@ -114,10 +114,12 @@ const CampanhaTableView = ({
   return (
     <div className="mt-8">
       {/* ABAS */}
-      <div className="flex items-center gap-2 mb-2">
+      <div className="mb-3 flex flex-wrap items-center gap-1 sm:gap-2">
         <Button
           variant="link"
-          className={aba === "campanhas" ? "text-black" : "text-gray-400"}
+          className={`whitespace-nowrap ${
+            aba === "campanhas" ? "text-black" : "text-gray-400"
+          }`}
           onClick={() => setAba("campanhas")}
         >
           Todas as Campanhas
@@ -132,7 +134,7 @@ const CampanhaTableView = ({
       </div>
 
       <div className="flex flex-col gap-2">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
           {/* TÍTULO + SUBTÍTULO */}
           <div className="flex flex-col ml-3">
             {aba === "campanhas" ? (
@@ -147,16 +149,17 @@ const CampanhaTableView = ({
               <>
                 <span className="text-md font-medium">Todas as mensagens</span>
                 <span className="text-sm text-gray-600">
-                  Visualize e gerencie mensagens criadas pela IA.
+                  Visualize e gerencie todas as mensagens criadas pela IA em uma
+                  única tela.
                 </span>
               </>
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex justify-end items-center gap-2">
             {aba === "campanhas" ? (
               <Button
-                className="w-38 truncate justify-end"
+                className="w-full sm:w-38 truncate justify-center"
                 onClick={() => setCampanhaSheet(true)}
               >
                 <Plus />
@@ -169,7 +172,7 @@ const CampanhaTableView = ({
                     <Button
                       className={buttonVariants({
                         variant: "default",
-                        className: "w-38 truncate justify-end",
+                        className: "w-full sm:w-38 truncate justify-center",
                       })}
                     >
                       <Plus /> Nova Mensagem

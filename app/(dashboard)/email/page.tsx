@@ -349,8 +349,8 @@ const Email = () => {
       />
 
       {/* DEFINIÇÕES */}
-      <section className="mt-6 flex gap-4 lg:flex-row">
-        <div className="w-2/3 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="mt-6 flex flex-col gap-4 lg:flex-row">
+        <div className="w-full rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:w-2/3">
           <div className="mb-6">
             <h2 className="text-lg font-semibold">Definições</h2>
             <p className="text-sm text-muted-foreground">
@@ -492,7 +492,7 @@ const Email = () => {
         </div>
 
         {/* DICAS */}
-        <div className="w-1/3">
+        <div className="w-full lg:w-1/3">
           <DicasEngajaento />
         </div>
       </section>
@@ -507,9 +507,9 @@ const Email = () => {
           </p>
 
           {mensagemGerada && (
-            <div className="mt-6 flex gap-6">
+            <div className="mt-6 flex flex-col gap-6 lg:flex-row">
               {/* EMAIL */}
-              <div className="mt-0.5 w-1/2">
+              <div className="mt-0.5 w-full min-w-0 lg:w-1/2">
                 <MoldeEmail
                   assunto={assunto}
                   nome={nomeGrupoSelecionado}
@@ -521,7 +521,7 @@ const Email = () => {
               </div>
 
               {/* EDIÇÃO */}
-              <div className="w-1/2">
+              <div className="w-full min-w-0 lg:w-1/2">
                 {/* TÍTULO */}
                 <div>
                   <Field>
@@ -604,9 +604,10 @@ const Email = () => {
                 </Field>
 
                 {/* AÇÕES */}
-                <div className="mt-4 flex flex-wrap justify-end gap-2">
+                <div className="mt-4 flex justify-end gap-2">
                   <Button
                     variant="outline"
+                    className="min-w-0 flex-1"
                     onClick={adaptarParaWhatsapp}
                     disabled={!mensagemId || salvando || adaptando || gerando}
                   >
@@ -621,6 +622,7 @@ const Email = () => {
                   </Button>
 
                   <Button
+                    className="min-w-0 flex-1"
                     onClick={salvarMensagem}
                     disabled={!mensagemId || salvando || adaptando}
                   >

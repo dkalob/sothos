@@ -16,11 +16,11 @@ interface AssociarClienteTableViewProps {
 
 // Imita o formato da tabela enquanto os dados carregam
 const TabelaSkeleton = () => (
-  <div className="overflow-hidden rounded-md border bg-white">
+  <div className="w-full overflow-x-auto rounded-md border bg-white mt-4">
     {Array.from({ length: 4 }).map((_, i) => (
       <div
         key={i}
-        className="flex items-center gap-4 border-b p-4 last:border-b-0"
+        className="flex min-w-150 items-center gap-4 border-b p-4 last:border-b-0"
       >
         <Skeleton className="size-10 rounded-md" />
         <div className="flex flex-1 flex-col gap-2">
@@ -38,7 +38,9 @@ const TabelaSkeleton = () => (
 const AssociarClienteTableView = ({
   clienteId,
 }: AssociarClienteTableViewProps) => {
-  const [recomendacoes, setRecomendacoes] = useState<ProdutoRecomendado[] | null>(null);
+  const [recomendacoes, setRecomendacoes] = useState<
+    ProdutoRecomendado[] | null
+  >(null);
   const [carregando, setCarregando] = useState(false);
 
   const token = useToken();
@@ -88,22 +90,25 @@ const AssociarClienteTableView = ({
 
   // Nomes de característica que aparecem nos resultados, sem repetir
   const nomesCaracteristicas = Array.from(
-    new Set((recomendacoes ?? []).flatMap((p) => Object.keys(p.caracteristicas))),
+    new Set(
+      (recomendacoes ?? []).flatMap((p) => Object.keys(p.caracteristicas)),
+    ),
   );
 
   return (
-    <div className="mt-8">
+    <div className="mt-6 w-full min-w-0 overflow-hidden sm:mt-8">
       <h2 className="mb-2 text-base font-semibold">Produtos recomendados</h2>
 
       {carregando && <TabelaSkeleton />}
 
       {!carregando && recomendacoes && recomendacoes.length === 0 && (
-        <div className="flex items-center gap-1 justify-center h-100">
-                <TriangleAlert size={18} className="text-primary font-semibold"/>
-                <p className="text-sm text-muted-foreground font-semibold">
-                Este cliente não possui vendas, então não há base para recomendar produtos.
-                </p>
-              </div>
+        <div className="flex min-h-48 flex-col items-center justify-center gap-2 px-4 text-center sm:min-h-64">
+          <TriangleAlert size={18} className="text-primary font-semibold" />
+          <p className="text-sm text-muted-foreground font-semibold">
+            Este cliente não possui vendas, então não há base para recomendar
+            produtos.
+          </p>
+        </div>
       )}
 
       {!carregando && recomendacoes && recomendacoes.length > 0 && (
