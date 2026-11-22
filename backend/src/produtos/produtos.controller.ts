@@ -34,6 +34,11 @@ export class ProdutosController {
     return this.produtosService.getCard(usuario.contaId)
   }
 
+  @Get(':id/insights')
+  async getInsightsProduto(@Param('id') id: string, @UsuarioLogado() usuario: { contaId: string }) {
+    return this.produtosService.getInsightsProduto(usuario.contaId,id);
+  }
+
   @Get(':id')
   async findOne(@Param("id") id: string, @UsuarioLogado() usuario: { contaId: string }, ) {
     return this.produtosService.findOne(id, usuario.contaId);

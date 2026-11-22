@@ -93,6 +93,7 @@ const Indicadores = () => {
 
   // META
   const [meta, setMeta] = useState(0);
+  const [metaCarregada, setMetaCarregada] = useState(false);
 
   // DADOS DOS CARDS
   const [clientes, setClientes] = useState<ClientesCard | null>(null);
@@ -103,9 +104,32 @@ const Indicadores = () => {
 
   const [carregando, setCarregando] = useState(true);
 
+  // RECUPERAR META SALVA
+  useEffect(() => {
+    const metaSalva = localStorage.getItem("indicadores-meta");
+
+    if (metaSalva !== null) {
+      const valor = Number(metaSalva);
+
+      if (Number.isFinite(valor) && valor >= 0) {
+        setMeta(valor);
+      }
+    }
+
+    setMetaCarregada(true);
+  }, []);
+
+  // SALVAR META SEMPRE QUE ELA MUDAR
+  useEffect(() => {
+    if (!metaCarregada) return;
+
+    localStorage.setItem("indicadores-meta", String(meta));
+  }, [meta, metaCarregada]);
+
   // BUSCAR INDICADORES
   useEffect(() => {
-    if (!token) return;
+    if (!token || !metaCarregada) return;
+
     const tokenAutenticado = token;
 
     let ativo = true;
@@ -173,7 +197,7 @@ const Indicadores = () => {
     return () => {
       ativo = false;
     };
-  }, [token, periodo, meta]);
+  }, [token, periodo, meta, metaCarregada]);
 
   // FORMATAR MOEDA
   const formatarMoeda = (valor: number) =>

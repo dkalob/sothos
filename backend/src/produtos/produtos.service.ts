@@ -279,6 +279,93 @@ export class ProdutosService {
 
   }
 
+  async getInsightsProduto(contaId: string, produtoId: string) {
+    const statusValidos = [
+      StatusPedido.PAGO,
+      StatusPedido.ENVIADO,
+      StatusPedido.ENTREGUE,
+    ];
+
+    const produto = await this.prisma.produto.findFirst({
+      where: {
+        id: produtoId,
+        contaId,
+      },
+      select: {
+        id: true,
+        categoria: {
+          select: {
+            nome: true,
+          },
+        },
+      },
+    });
+
+    if (!produto) {
+      throw new NotFoundException('Produto não encontrado');
+    }
+
+    const [vendas, pedidos, ultimaCompra] = await Promise.all([
+      this.prisma.itemPedido.aggregate({
+        where: {
+          produtoId,
+          pedido: {
+            is: {
+              contaId,
+              status: { in: statusValidos },
+            },
+          },
+        },
+        _sum: {
+          valorTotal: true,
+        },
+      }),
+
+      this.prisma.pedido.count({
+        where: {
+          contaId,
+          status: { in: statusValidos },
+          itens: {
+            some: {
+              produtoId,
+            },
+          },
+        },
+      }),
+
+      this.prisma.itemPedido.findFirst({
+        where: {
+          produtoId,
+          pedido: {
+            is: {
+              contaId,
+              status: { in: statusValidos },
+            },
+          },
+        },
+        orderBy: {
+          pedido: {
+            realizadoEm: 'desc',
+          },
+        },
+        select: {
+          pedido: {
+            select: {
+              realizadoEm: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      valorVendido: Number(vendas._sum.valorTotal ?? 0),
+      categoria: produto.categoria?.nome ?? 'Sem categoria',
+      pedidos,
+      ultimaCompra: ultimaCompra?.pedido.realizadoEm ?? null,
+    };
+  }
+
   async getCard(contaId: string) {
     const agora = new Date();
 
