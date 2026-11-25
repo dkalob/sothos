@@ -9,6 +9,15 @@ import { PedidoDto } from './dto/pedido.dto';
 import { StatusPedido } from '@prisma/client';
 import { RfmService } from '../rfm/rfm.service';
 
+// A tela envia só a data ("2026-11-24"). Sem fuso, o JavaScript a lê como
+// meia-noite UTC, que no Brasil é 21h do dia anterior. Aqui ela é lida no
+// horário de Brasília (-03:00), o mesmo critério da importação por CSV.
+function converterDataPedido(texto: string): Date {
+  return /^\d{4}-\d{2}-\d{2}$/.test(texto)
+    ? new Date(`${texto}T00:00:00-03:00`)
+    : new Date(texto);
+}
+
 @Injectable()
 export class PedidosService {
   private readonly logger = new Logger(PedidosService.name);
@@ -38,7 +47,7 @@ export class PedidosService {
           valorFrete: dto.valorFrete,
           valorDesconto: dto.valorDesconto,
           valorTotal,
-          realizadoEm: new Date(dto.realizadoEm),
+          realizadoEm: converterDataPedido(dto.realizadoEm),
           itens: {
             create: dto.itens.map((item) => ({
               produtoId: item.produtoId,
@@ -55,10 +64,12 @@ export class PedidosService {
         },
       });
 
-      await this.atualizarRfm(contaId);
-
       return pedidoCriado;
     });
+
+    // Fora da transação: o RFM só enxerga o pedido depois que ele é
+    // gravado de fato (mesma ordem usada em update e remove).
+    await this.atualizarRfm(contaId);
 
     return pedido;
   }
@@ -198,7 +209,7 @@ export class PedidosService {
           valorFrete: dto.valorFrete,
           valorDesconto: dto.valorDesconto,
           valorTotal,
-          realizadoEm: new Date(dto.realizadoEm),
+          realizadoEm: converterDataPedido(dto.realizadoEm),
           itens: {
             create: dto.itens.map((item) => ({
               produtoId: item.produtoId,

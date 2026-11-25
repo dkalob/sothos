@@ -4,6 +4,13 @@ import { ClienteDto } from './dto/client.dto';
 import { RfmService } from '../rfm/rfm.service';
 import { StatusPedido } from '@prisma/client';
 
+// Pedidos que contam como compra (mesma regra do RFM, RN009)
+const STATUS_VALIDOS: StatusPedido[] = [
+  StatusPedido.PAGO,
+  StatusPedido.ENVIADO,
+  StatusPedido.ENTREGUE,
+];
+
 @Injectable()
 export class ClientesService {
   private readonly logger = new Logger(ClientesService.name);
@@ -37,6 +44,7 @@ export class ClientesService {
           select: {
             valorTotal: true,
             realizadoEm: true,
+            status: true,
           },
         },
 
@@ -63,11 +71,16 @@ export class ClientesService {
     });
 
     return clientes.map((cliente) => {
+      // Só pedidos válidos contam como compra (RN009)
+      const pedidosValidos = cliente.pedidos.filter((pedido) =>
+        STATUS_VALIDOS.includes(pedido.status),
+      );
+
       // Quantidade de pedidos
-      const pedidos = cliente.pedidos.length;
+      const pedidos = pedidosValidos.length;
 
       // Valor total gasto
-      const valor = cliente.pedidos.reduce(
+      const valor = pedidosValidos.reduce(
         (total, pedido) => total + Number(pedido.valorTotal),
         0,
       );
@@ -158,6 +171,7 @@ export class ClientesService {
             id: true,
             valorTotal: true,
             realizadoEm: true,
+            status: true,
           },
           orderBy: {
             realizadoEm: 'desc',
@@ -196,7 +210,11 @@ export class ClientesService {
       throw new NotFoundException('Cliente não encontrado');
     }
 
-    const pedidos = cliente.pedidos;
+    // Indicadores só com pedidos válidos (RN009); o histórico
+    // devolvido abaixo continua com todos os pedidos.
+    const pedidos = cliente.pedidos.filter((pedido) =>
+      STATUS_VALIDOS.includes(pedido.status),
+    );
 
     const totalGasto = pedidos.reduce(
       (total, pedido) => total + Number(pedido.valorTotal),

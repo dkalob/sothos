@@ -77,11 +77,20 @@ type PedidoDetalhado = {
   }[];
 };
 
+// Data no formato do campo (aaaa-mm-dd) pelo horário do navegador.
+// toISOString() usaria UTC e, depois das 21h, mostraria o dia seguinte.
+function dataLocal(data: Date): string {
+  const ano = data.getFullYear();
+  const mes = String(data.getMonth() + 1).padStart(2, "0");
+  const dia = String(data.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
+}
+
 const initialForm: OrderForm = {
   cliente: "",
   itens: [],
   idPedido: "",
-  data: new Date().toISOString().split("T")[0],
+  data: dataLocal(new Date()),
   temFrete: false,
   frete: "",
   temDesconto: false,
@@ -150,7 +159,7 @@ const OrderSheet = ({
 
           idPedido: pedido.numero ?? "",
 
-          data: pedido.realizadoEm.split("T")[0],
+          data: dataLocal(new Date(pedido.realizadoEm)),
 
           temFrete: Number(pedido.valorFrete) > 0,
           frete: Number(pedido.valorFrete) || "",

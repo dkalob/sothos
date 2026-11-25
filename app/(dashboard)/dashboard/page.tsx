@@ -252,7 +252,7 @@ const Indicadores = () => {
         {/* LUCRO */}
         <PageCards
           icon={Wallet}
-          title="Lucro Total"
+          title="Faturamento Total"
           loading={carregando}
           value={formatarMoeda(lucro?.faturamento.value ?? 0)}
           trend={lucro?.faturamento.trend ?? trendPadrao}
