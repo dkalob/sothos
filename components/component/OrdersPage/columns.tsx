@@ -5,6 +5,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreVertical, Pen, Trash2, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +34,44 @@ export type OrderTableColumns = {
   produto: string;
   valor: number;
   data: Date;
+  status: StatusPedido;
+};
+
+export type StatusPedido =
+  | "PENDENTE"
+  | "PAGO"
+  | "ENVIADO"
+  | "ENTREGUE"
+  | "CANCELADO"
+  | "DEVOLVIDO";
+
+// Rótulo e cor de cada situação do pedido.
+// Pago, enviado e entregue contam no RFM (RN009); os demais, não.
+const statusConfig: Record<StatusPedido, { rotulo: string; cor: string }> = {
+  PENDENTE: {
+    rotulo: "Pendente",
+    cor: "bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300",
+  },
+  PAGO: {
+    rotulo: "Pago",
+    cor: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300",
+  },
+  ENVIADO: {
+    rotulo: "Enviado",
+    cor: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+  },
+  ENTREGUE: {
+    rotulo: "Entregue",
+    cor: "bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300",
+  },
+  CANCELADO: {
+    rotulo: "Cancelado",
+    cor: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
+  },
+  DEVOLVIDO: {
+    rotulo: "Devolvido",
+    cor: "bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+  },
 };
 
 // Abaixo é como será a formatação das colunas. Sempre usar acessorKey
@@ -75,6 +114,21 @@ export const columnsOrder = (
       }).format(amount);
 
       return <div className="font-medium">{formatted}</div>;
+    },
+  },
+  {
+    accessorKey: "status",
+    header: "Situação",
+    cell: ({ row }) => {
+      const status = row.getValue("status") as StatusPedido;
+      const config = statusConfig[status];
+
+      // Valor desconhecido: mostra o texto recebido, sem cor
+      if (!config) {
+        return <Badge variant="outline">{status ?? "-"}</Badge>;
+      }
+
+      return <Badge className={config.cor}>{config.rotulo}</Badge>;
     },
   },
   {

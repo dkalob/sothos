@@ -267,6 +267,16 @@ const ImportarPedidosSheet = ({
         return;
       }
 
+      // Com avisos, o painel continua aberto para o usuário lê-los (RN002)
+      if (resposta.totalAvisos > 0) {
+        toast.add({
+          title: "Importação concluída com avisos",
+          type: "warning",
+        });
+
+        return;
+      }
+
       toast.add({
         title: "Pedidos importados com sucesso!",
         type: "success",

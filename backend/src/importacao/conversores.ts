@@ -144,17 +144,24 @@ export function converterStatus(
   envio: string,
 ): { status: StatusPedido; reconhecido: boolean } {
   const pe = normalizarTexto(pedido);
-  const pg = normalizarTexto(pagamento);
-  const en = normalizarTexto(envio);
+  // Planilhas com uma única coluna de status (como o modelo do Sothos)
+  // não trazem pagamento e envio separados: nesse caso, a situação do
+  // pagamento e do envio é lida no próprio status do pedido.
+  const semPagamento = normalizarTexto(pagamento) === '';
+  const pg = semPagamento ? pe : normalizarTexto(pagamento);
+  const en = normalizarTexto(envio) === '' ? pe : normalizarTexto(envio);
   const tem = (texto: string, ...palavras: string[]) =>
     palavras.some((p) => texto.includes(p));
 
   if (tem(pe, 'cancel')) return { status: StatusPedido.CANCELADO, reconhecido: true };
   if (tem(pg, 'vencid', 'recusad')) return { status: StatusPedido.CANCELADO, reconhecido: true };
-  if (tem(pg, 'estorn')) return { status: StatusPedido.DEVOLVIDO, reconhecido: true };
+  if (tem(pg, 'estorn', 'devolv')) return { status: StatusPedido.DEVOLVIDO, reconhecido: true };
   if (tem(pg, 'pendente', 'analise', 'contestad')) return { status: StatusPedido.PENDENTE, reconhecido: true };
 
-  if (tem(pg, 'recebid', 'confirmad', 'pago')) {
+  // Pedido enviado ou entregue já foi pago, mesmo sem coluna de pagamento
+  const pagoPeloEnvio = semPagamento && tem(pe, 'enviad', 'entregue', 'retirad');
+
+  if (tem(pg, 'recebid', 'confirmad', 'pago') || pagoPeloEnvio) {
     if (tem(en, 'entregue', 'retirad')) return { status: StatusPedido.ENTREGUE, reconhecido: true };
     if (tem(en, 'enviad')) return { status: StatusPedido.ENVIADO, reconhecido: true };
     return { status: StatusPedido.PAGO, reconhecido: true };
