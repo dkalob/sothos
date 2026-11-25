@@ -246,6 +246,17 @@ const ImportarClientesSheet = ({
         return;
       }
 
+      // Com avisos, o painel continua aberto para o usuário lê-los (RN002)
+      if (resultado.totalAvisos > 0) {
+        toast.add({
+          title: "Importação concluída com avisos",
+          type: "warning",
+        });
+
+        await onClientesImportados();
+        return;
+      }
+
       toast.add({
         title: "Clientes importados com sucesso!",
         type: "success",

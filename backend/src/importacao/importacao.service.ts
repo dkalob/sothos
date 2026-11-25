@@ -458,13 +458,22 @@ export class ImportacaoService {
 
     const existentes = await this.prisma.cliente.findMany({
       where: { contaId },
-      select: { id: true, cpf: true },
+      select: { id: true, cpf: true, email: true },
     });
 
     const idPorCpf = new Map<string, string>();
+    // Clientes sem CPF (vindos da importação de clientes ou do cadastro
+    // manual sem CPF) são encontrados pelo e-mail, para não duplicar.
+    const idPorEmailSemCpf = new Map<string, string>();
 
     for (const cliente of existentes) {
-      if (!cliente.cpf) continue;
+      if (!cliente.cpf) {
+        const email = cliente.email.trim().toLowerCase();
+        if (email && !idPorEmailSemCpf.has(email)) {
+          idPorEmailSemCpf.set(email, cliente.id);
+        }
+        continue;
+      }
 
       const cpf = this.normalizarCpf(cliente.cpf);
 
@@ -476,7 +485,10 @@ export class ImportacaoService {
     const resposta = new Map<string, string>();
 
     for (const [cpf, l] of maisRecente) {
-      const id = idPorCpf.get(cpf);
+      const id = idPorCpf.get(cpf) ?? idPorEmailSemCpf.get(l.email);
+      // O cliente encontrado pelo e-mail passa a ter CPF: não pode ser
+      // usado de novo por outro CPF nesta mesma importação.
+      if (id) idPorEmailSemCpf.delete(l.email);
 
       if (id) {
         await this.prisma.cliente.update({
@@ -519,7 +531,6 @@ export class ImportacaoService {
   }
 
   // Produto é identificado pelo nome sem a variação:
-  // "VESTIDO LUCE (Rosa, M)" e "VESTIDO LUCE (Preto, G)" -> "VESTIDO LUCE".
   private async salvarProdutos(
     contaId: string,
     lojaId: string,
