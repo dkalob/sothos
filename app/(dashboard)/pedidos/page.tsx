@@ -93,7 +93,7 @@ const Pedidos = () => {
         {/* PEDIDOS REALIZADOS */}
         <PageCards
           icon={Store}
-          title="Pedidos Realizados"
+          title="Pedidos Realizados no mês atual"
           loading={carregando}
           value={carregando ? "..." : dashboard?.pedidos.value ?? 0}
           trend={dashboard?.pedidos.trend ?? {
@@ -115,7 +115,7 @@ const Pedidos = () => {
         {/* CLIENTES COMPRADORES */}
         <PageCards
           icon={UserRound}
-          title="Clientes que realizaram compra esse mês"
+          title="Clientes que realizaram compra no mês atual"
           loading={carregando}
           value={carregando ? "..." : `${dashboard?.clientesCompradores.value ?? 0}%`}
           trend={dashboard?.clientesCompradores.trend ?? {
@@ -131,7 +131,7 @@ const Pedidos = () => {
         {/* FATURAMENTO */}
         <PageCards
           icon={DollarSign}
-          title="Valor arrecadado"
+          title="Valor arrecadado no mês atual"
           loading={carregando}
           value={carregando ? "..." : formatarMoeda(dashboard?.faturamento.value ?? 0)}
           trend={dashboard?.faturamento.trend ?? {
@@ -149,7 +149,7 @@ const Pedidos = () => {
         {/* PRODUTOS ADQUIRIDOS */}
         <PageCards
           icon={ShoppingBasket}
-          title="Produtos adquiridos em compras"
+          title="Produtos adquiridos em compras no mês atual"
           loading={carregando}
           value={carregando ? "..." : dashboard?.produtos.value ?? 0}
           trend={dashboard?.produtos.trend ?? {

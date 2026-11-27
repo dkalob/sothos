@@ -31,6 +31,14 @@ export function converterValor(texto: string): string | null {
   return t;
 }
 
+// ---------- CPF ----------
+export function converterCpf(texto: string): string | null {
+  const cpf = texto.replace(/\D/g, '');
+
+  return cpf.length === 11 ? cpf : null;
+
+}
+
 // ---------- QUANTIDADE ----------
 export function converterQuantidade(texto: string): number | null {
   const t = texto.trim();

@@ -43,6 +43,7 @@ interface ImportarClientesSheetProps {
 type CampoCliente =
   | "email"
   | "nome"
+  | "cpf"
   | "telefone"
   | "cidade"
   | "estado"
@@ -82,8 +83,8 @@ type ResultadoImportacao = {
 };
 
 const modeloCsv = [
-  "E-mail;Nome;Telefone;Cidade;Estado;Aceita Marketing;Data de Cadastro",
-  "ana@email.com;Ana Silva;11999999999;São Paulo;SP;Sim;15/01/2025",
+  "E-mail;Nome;Cpf;Telefone;Cidade;Estado;Aceita Marketing;Data de Cadastro",
+  "ana@email.com;Ana Silva;12345678900;11999999999;São Paulo;SP;Sim;15/01/2025",
 ].join("\n");
 
 const ImportarClientesSheet = ({

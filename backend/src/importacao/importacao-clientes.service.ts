@@ -28,6 +28,7 @@ type ClienteConvertido = {
   linha: number;
   email: string;
   nome: string;
+  cpf: string | null;
   telefone: string | null;
   cidade: string | null;
   estado: string | null;
@@ -72,7 +73,11 @@ export class ImportacaoClientesService {
     aceitaMarketingGeral: boolean,
   ): Promise<ResultadoImportacaoClientes> {
     const { colunas, linhas } = lerCsv(arquivo);
-    const mapeamento = validarMapeamento(mapeamentoJson, colunas, CAMPOS_CLIENTE);
+    const mapeamento = validarMapeamento(
+      mapeamentoJson,
+      colunas,
+      CAMPOS_CLIENTE,
+    );
     const indice = new Map(colunas.map((c, i) => [c, i]));
 
     const ler = (linha: LinhaCsv, campo: CampoCliente) => {
@@ -93,14 +98,19 @@ export class ImportacaoClientesService {
       const emailTexto = ler(linha, 'email');
       const email = converterEmail(emailTexto);
       if (!emailTexto) problemas.push('e-mail vazio');
-      else if (!email || email.length > 180) problemas.push(`e-mail inválido (${emailTexto})`);
+      else if (!email || email.length > 180)
+        problemas.push(`e-mail inválido (${emailTexto})`);
 
       const nome = ler(linha, 'nome');
       if (!nome) problemas.push('nome vazio');
 
       if (problemas.length > 0) {
         invalidas++;
-        erros.push({ linha: linha.numero, email: emailTexto || undefined, mensagem: problemas.join('; ') });
+        erros.push({
+          linha: linha.numero,
+          email: emailTexto || undefined,
+          mensagem: problemas.join('; '),
+        });
         continue;
       }
 
@@ -108,29 +118,58 @@ export class ImportacaoClientesService {
       const estadoTexto = ler(linha, 'estado');
       const estado = converterEstado(estadoTexto);
       if (estadoTexto && !estado) {
-        avisos.push({ linha: linha.numero, email: email!, mensagem: `estado não reconhecido (${estadoTexto}); ficou em branco` });
+        avisos.push({
+          linha: linha.numero,
+          email: email!,
+          mensagem: `estado não reconhecido (${estadoTexto}); ficou em branco`,
+        });
       }
 
       const aceiteTexto = ler(linha, 'aceitaMarketing');
       const aceite = aceiteTexto ? converterBooleano(aceiteTexto) : null;
       if (aceiteTexto && aceite === null) {
-        avisos.push({ linha: linha.numero, email: email!, mensagem: `aceite de comunicação não reconhecido (${aceiteTexto}); considerado "não informado"` });
+        avisos.push({
+          linha: linha.numero,
+          email: email!,
+          mensagem: `aceite de comunicação não reconhecido (${aceiteTexto}); considerado "não informado"`,
+        });
       }
 
       const dataTexto = ler(linha, 'dataCadastro');
       const criadoEmOrigem = dataTexto ? converterData(dataTexto) : null;
       if (dataTexto && !criadoEmOrigem) {
-        avisos.push({ linha: linha.numero, email: email!, mensagem: `data de cadastro inválida (${dataTexto}); ignorada` });
+        avisos.push({
+          linha: linha.numero,
+          email: email!,
+          mensagem: `data de cadastro inválida (${dataTexto}); ignorada`,
+        });
+      }
+
+      const cpfTexto = ler(linha, 'cpf');
+
+      const cpf = cpfTexto ? cpfTexto.replace(/\D/g, '') : null;
+
+      if (cpf && cpf.length !== 11) {
+        avisos.push({
+          linha: linha.numero,
+          email: email!,
+          mensagem: `CPF inválido (${cpfTexto}); ficou em branco`,
+        });
       }
 
       // E-mail repetido no arquivo: vale a última linha
       if (porEmail.has(email!)) {
-        avisos.push({ linha: linha.numero, email: email!, mensagem: 'e-mail repetido no arquivo; vale esta linha (a última)' });
+        avisos.push({
+          linha: linha.numero,
+          email: email!,
+          mensagem: 'e-mail repetido no arquivo; vale esta linha (a última)',
+        });
       }
       porEmail.set(email!, {
         linha: linha.numero,
         email: email!,
         nome: nome.slice(0, 160),
+        cpf: cpf && cpf.length === 11 ? cpf : null,
         telefone: converterTelefone(ler(linha, 'telefone')),
         cidade: ler(linha, 'cidade').slice(0, 120) || null,
         estado,
@@ -165,7 +204,9 @@ export class ImportacaoClientesService {
         where: { contaId },
         select: { id: true, email: true },
       });
-      const idPorEmail = new Map(existentes.map((c) => [c.email.trim().toLowerCase(), c.id]));
+      const idPorEmail = new Map(
+        existentes.map((c) => [c.email.trim().toLowerCase(), c.id]),
+      );
 
       for (const c of porEmail.values()) {
         // Coluna de aceite preenchida: vale a resposta do cliente (sim ou não).
@@ -185,6 +226,7 @@ export class ImportacaoClientesService {
               data: {
                 nome: c.nome,
                 // undefined = não altera o que já está cadastrado
+                cpf: c.cpf ?? undefined,
                 telefone: c.telefone ?? undefined,
                 cidade: c.cidade ?? undefined,
                 estado: c.estado ?? undefined,
@@ -198,9 +240,13 @@ export class ImportacaoClientesService {
               data: {
                 contaId,
                 lojaId: loja.id,
-                idExterno: c.email.length <= 80 ? c.email : createHash('sha1').update(c.email).digest('hex'),
+                idExterno:
+                  c.email.length <= 80
+                    ? c.email
+                    : createHash('sha1').update(c.email).digest('hex'),
                 nome: c.nome,
                 email: c.email,
+                cpf: c.cpf,
                 telefone: c.telefone,
                 cidade: c.cidade,
                 estado: c.estado,
@@ -213,13 +259,21 @@ export class ImportacaoClientesService {
             resultado.clientesNovos++;
           }
         } catch (erro) {
-          this.logger.error(`Falha ao salvar cliente da linha ${c.linha}`, erro as Error);
+          this.logger.error(
+            `Falha ao salvar cliente da linha ${c.linha}`,
+            erro as Error,
+          );
           resultado.clientesIgnorados++;
-          erros.push({ linha: c.linha, email: c.email, mensagem: 'não foi importado por um erro ao gravar no banco' });
+          erros.push({
+            linha: c.linha,
+            email: c.email,
+            mensagem: 'não foi importado por um erro ao gravar no banco',
+          });
         }
       }
 
-      const processados = resultado.clientesNovos + resultado.clientesAtualizados;
+      const processados =
+        resultado.clientesNovos + resultado.clientesAtualizados;
       await this.prisma.sincronizacao.update({
         where: { id: sincronizacao.id },
         data: {
@@ -231,7 +285,8 @@ export class ImportacaoClientesService {
                 : StatusSincronizacao.CONCLUIDA,
           finalizadaEm: new Date(),
           clientesProcessados: processados,
-          mensagemErro: erros.length > 0 ? `${erros.length} erro(s) na importação` : null,
+          mensagemErro:
+            erros.length > 0 ? `${erros.length} erro(s) na importação` : null,
         },
       });
       await this.prisma.lojaConectada.update({

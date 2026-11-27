@@ -207,6 +207,7 @@ export type CampoCliente =
   | 'email'
   | 'nome'
   | 'telefone'
+  | 'cpf'
   | 'cidade'
   | 'estado'
   | 'aceitaMarketing'
@@ -224,6 +225,12 @@ export const CAMPOS_CLIENTE: DefinicaoCampo<CampoCliente>[] = [
     rotulo: 'Nome',
     obrigatorio: true,
     aliases: ['nome', 'nome do cliente', 'nome completo', 'cliente'],
+  },
+  {
+    campo: 'cpf',
+    rotulo: 'CPF',
+    obrigatorio: false,
+    aliases: ['cpf'],
   },
   {
     campo: 'telefone',

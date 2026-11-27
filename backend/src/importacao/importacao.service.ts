@@ -654,32 +654,7 @@ export class ImportacaoService {
   private normalizarCpf(texto: string): string | null {
     const cpf = texto.replace(/\D/g, '');
 
-    if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) {
-      return null;
-    }
-
-    const calcularDigito = (base: string, pesoInicial: number) => {
-      let soma = 0;
-
-      for (let i = 0; i < base.length; i++) {
-        soma += Number(base[i]) * (pesoInicial - i);
-      }
-
-      const resto = (soma * 10) % 11;
-      return resto === 10 ? 0 : resto;
-    };
-
-    const primeiroDigito = calcularDigito(cpf.substring(0, 9), 10);
-    const segundoDigito = calcularDigito(cpf.substring(0, 10), 11);
-
-    if (
-      primeiroDigito !== Number(cpf[9]) ||
-      segundoDigito !== Number(cpf[10])
-    ) {
-      return null;
-    }
-
-    return cpf;
+    return cpf.length === 11 ? cpf : null;
   }
 
   private hash(texto: string): string {
